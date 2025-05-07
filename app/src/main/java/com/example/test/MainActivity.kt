@@ -11,6 +11,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -240,7 +243,7 @@ fun CodeBlock() {
             )
         }
 
-        // диалог присвоения
+        // диалог присваивания
         if (showNewAssignmentDialog) {
             Dialog(onDismissRequest = {
                 showNewAssignmentDialog = false
@@ -294,6 +297,7 @@ fun CodeBlock() {
                         ) {
                             Button(
                                 onClick = {
+                                    // ну тут все понятно надеюсь
                                     if (selectedTargetVar.isBlank()) {
                                         assignmentError = "Please select a variable"
                                         return@Button
@@ -314,6 +318,7 @@ fun CodeBlock() {
                                             return@Button
                                         }
                                         else {
+                                            // десь происходит проверка валидности арифметического выражения
                                             if (!Regex("\\s*([a-zA-Z_]\\w*|\\d+)(\\s*[+\\-*\\/]" +
                                                         "\\s*([a-zA-Z_]\\w*|\\d+))*\\s*\$").matches(assignmentArithmExpr)){
                                                     assignmentError = "Invalid expression"
@@ -394,7 +399,7 @@ fun VarCard(variable: Variable, hasError: Boolean) {
                 color = if (hasError) Color.Red else MaterialTheme.colorScheme.onPrimaryContainer
             )
             Text(
-                text = "",
+                text = "Integer",
                 fontSize = 12.sp,
                 color = if (hasError) Color.Red else MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -404,6 +409,7 @@ fun VarCard(variable: Variable, hasError: Boolean) {
 
 
 // меню выбора переменной для присвоения
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MenuBoxForAssignmentsBlock(
     options: List<String>,
@@ -412,12 +418,24 @@ fun MenuBoxForAssignmentsBlock(
 ) {
     var expanded by remember {mutableStateOf(false)}
 
-    Box {
+    Box (
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentSize(Alignment.TopStart)
+    ) {
         OutlinedTextField(
             value = selected,
             onValueChange = {},
             readOnly = true,
-            label = {Text("Var")},
+            label = { Text("Var") },
+            // создаю типа кликабельную иконку чтобы сворачивать менюшку
+            trailingIcon = {
+                Icon(
+                    imageVector = if (expanded) Icons.Filled.ArrowDropUp else Icons.Filled.ArrowDropDown,
+                    contentDescription = null,
+                    modifier = Modifier.clickable { expanded = !expanded }
+                )
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { expanded = true }
@@ -430,8 +448,8 @@ fun MenuBoxForAssignmentsBlock(
                     text = {Text(option)},
                     leadingIcon = {Icon(Icons.Outlined.Star, contentDescription = null)},
                         onClick = {
-                        onSelected(option)
-                        expanded = false
+                            onSelected(option)
+                            expanded = false
                     }
 
                 )
