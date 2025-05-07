@@ -4,13 +4,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,8 +29,10 @@ import androidx.compose.ui.window.Dialog
 import com.example.test.ui.theme.TestTheme
 import kotlin.math.roundToInt
 
-data class Variable(val name: String, val value: Int = 0, val pos: IntOffset = IntOffset(0, 0))
+data class Variable(val name: String, val expression: String, val pos: IntOffset = IntOffset(0, 0))
 data class VarError(val msg: String, val blockId: String = "")
+data class AssignmentParam(val targetVar: String, val arithmeticExpression: String, val position:
+IntOffset = IntOffset(0, 0))
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,11 +46,17 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// ребята как же андроид студио тормозит епрст
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CodeBlock() {
     val vars = remember { mutableStateListOf<Variable>() }
     val errors = remember { mutableStateListOf<VarError>() }
+
+    var showNewAssignmentDialog by remember {mutableStateOf(false)}
+    var selectedTargetVar by remember {mutableStateOf("")}
+    var assignmentArithmExpr by remember {mutableStateOf("")}
+    var assignmentError by remember {mutableStateOf("")}
 
     var showNewVarDialog by remember { mutableStateOf(false) }
     var showDeleteAllDialog by remember { mutableStateOf(false) }
@@ -67,6 +80,15 @@ fun CodeBlock() {
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Add")
                 }
+
+                Spacer(modifier = Modifier.width(8.dp))
+                // кнопка присваивания
+                FloatingActionButton(
+                    onClick = { showNewAssignmentDialog = true }
+                ) {
+                    Icon(Icons.Default.Edit, contentDescription = "Assign")
+                }
+
                 Spacer(modifier = Modifier.width(8.dp))
                 FloatingActionButton(
                     onClick = { showDeleteAllDialog = true }
@@ -101,6 +123,7 @@ fun CodeBlock() {
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
+
             }
         }
         if (showNewVarDialog) {
@@ -163,7 +186,8 @@ fun CodeBlock() {
                                             vars.add(
                                                 Variable(
                                                     name = newVarName,
-                                                    pos = if (vars.isEmpty()) IntOffset(10, 50) else IntOffset(vars.last().pos.x + 50, vars.last().pos.y + 50)
+                                                    expression = "",
+                                                    pos = IntOffset(10 + vars.size*60, 50)
                                                 )
                                             )
                                             showNewVarDialog = false
@@ -215,6 +239,120 @@ fun CodeBlock() {
                 }
             )
         }
+
+        // диалог присвоения
+        if (showNewAssignmentDialog) {
+            Dialog(onDismissRequest = {
+                showNewAssignmentDialog = false
+                selectedTargetVar = ""
+                assignmentArithmExpr = ""
+                assignmentError = ""
+            }) {
+                Surface(
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(20.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Create assignments",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Select variable:"
+                        )
+
+                        MenuBoxForAssignmentsBlock(vars.map { it.name }, selectedTargetVar) { selected ->
+                            selectedTargetVar = selected
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        OutlinedTextField(
+                            value = assignmentArithmExpr,
+                            onValueChange = { assignmentArithmExpr = it },
+                            label = { Text("Expression (x + 5)") },
+                            isError = assignmentError != "",
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        if (assignmentError.isNotBlank()) {
+                            Text(
+                                text = assignmentError,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(start = 16.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Button(
+                                onClick = {
+                                    if (selectedTargetVar.isBlank()) {
+                                        assignmentError = "Please select a variable"
+                                        return@Button
+                                    }
+                                    else if (assignmentArithmExpr.isBlank()) {
+                                        assignmentError = "Expression cannot be empty"
+                                        return@Button
+                                    }
+                                    else {
+                                        // здесь чекаем есть ли переменная вообще такая
+                                        val declaredVarsName = vars.map {it.name}.toSet()
+                                        val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
+                                        val findVars = regex.findAll(assignmentArithmExpr).map {it.value}.toSet()
+                                        var notDeclared = findVars - declaredVarsName
+
+                                        if (notDeclared.isNotEmpty()) {
+                                            assignmentError = "Undeclared variable|variables: ${notDeclared.joinToString(", ")}"
+                                            return@Button
+                                        }
+                                        else {
+                                            if (!Regex("\\s*([a-zA-Z_]\\w*|\\d+)(\\s*[+\\-*\\/]" +
+                                                        "\\s*([a-zA-Z_]\\w*|\\d+))*\\s*\$").matches(assignmentArithmExpr)){
+                                                    assignmentError = "Invalid expression"
+                                                return@Button
+                                                }
+                                            else {
+                                                val exp = assignmentArithmExpr.ifBlank { "0" }
+                                                // здесь чекаем для изменения значения выбранной из менюшки переменной
+                                                val index = vars.indexOfFirst { it.name == selectedTargetVar }
+                                                if (index >= 0) {
+                                                    vars[index] = vars[index].copy(expression = assignmentArithmExpr)
+                                                }
+                                                showNewAssignmentDialog= false
+                                                selectedTargetVar = ""
+                                                assignmentError= ""
+                                                assignmentArithmExpr = ""
+                                            }
+                                        }
+                                    }
+                                }
+                            ) {
+                                Text("Create")
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            TextButton(
+                                onClick = {
+                                    showNewAssignmentDialog = false
+                                    selectedTargetVar = ""
+                                    assignmentError= ""
+                                    assignmentArithmExpr = ""
+                                }
+                            ) {
+                                Text("Cancel")
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -249,16 +387,55 @@ fun VarCard(variable: Variable, hasError: Boolean) {
             }
     ) {
         Column {
+            val value = variable.expression.ifBlank { "0" }
             Text(
-                text = "Declare ${variable.name} = 0",
+                text = "Declare ${variable.name} = $value",
                 fontWeight = FontWeight.Bold,
                 color = if (hasError) Color.Red else MaterialTheme.colorScheme.onPrimaryContainer
             )
             Text(
-                text = "Integer",
+                text = "",
                 fontSize = 12.sp,
                 color = if (hasError) Color.Red else MaterialTheme.colorScheme.onPrimaryContainer
             )
+        }
+    }
+}
+
+
+// меню выбора переменной для присвоения
+@Composable
+fun MenuBoxForAssignmentsBlock(
+    options: List<String>,
+    selected: String,
+    onSelected: (String) -> Unit
+) {
+    var expanded by remember {mutableStateOf(false)}
+
+    Box {
+        OutlinedTextField(
+            value = selected,
+            onValueChange = {},
+            readOnly = true,
+            label = {Text("Var")},
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = true }
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = {expanded=false}) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = {Text(option)},
+                    leadingIcon = {Icon(Icons.Outlined.Star, contentDescription = null)},
+                        onClick = {
+                        onSelected(option)
+                        expanded = false
+                    }
+
+                )
+            }
         }
     }
 }
