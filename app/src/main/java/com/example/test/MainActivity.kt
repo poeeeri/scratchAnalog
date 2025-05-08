@@ -153,7 +153,7 @@ fun CodeBlock() {
                         OutlinedTextField(
                             value = newVarName,
                             onValueChange = { newVarName = it },
-                            label = { Text("Variable name") },
+                            label = { Text("Variable name (or several, with \",\")") },
                             isError = newVarError != "",
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -172,32 +172,55 @@ fun CodeBlock() {
                         ) {
                             Button(
                                 onClick = {
-                                    when {
-                                        newVarName.isBlank() -> {
-                                            newVarError = "Variable name must not be empty"
+                                    if (newVarName.isNotBlank()) {
+                                        val varsArray = newVarName.split(',').map { it.trim() }
+                                        var containsError = false
+                                        for (v in varsArray) {
+                                            when {
+                                                v.isBlank() -> {
+                                                    newVarError = "Variable name must not be empty"
+                                                    containsError = true
+                                                    break
+                                                }
+
+                                                vars.any { it.name == v } -> {
+                                                    newVarError =
+                                                        "Variable \"${v}\" already exists"
+                                                    containsError = true
+                                                    break
+                                                }
+
+                                                !v[0].isLetter() && v[0] != '_' -> {
+                                                    newVarError =
+                                                        "Variable name must start with a letter or an underscore"
+                                                    containsError = true
+                                                    break
+                                                }
+
+                                                v.any { !it.isLetterOrDigit() && it != '_' } -> {
+                                                    newVarError =
+                                                        "Variable name must contain only digits, letters or underscores"
+                                                    containsError = true
+                                                    break
+                                                }
+                                            }
                                         }
-                                        vars.any { it.name == newVarName } -> {
-                                            newVarError = "Variable \"${newVarName}\" already exists"
-                                        }
-                                        !newVarName[0].isLetter() && newVarName[0] != '_' -> {
-                                            newVarError = "Variable name must start with a letter or an underscore"
-                                        }
-                                        newVarName.any { !it.isLetterOrDigit() && it != '_' } -> {
-                                            newVarError = "Variable name must contain only digits, letters or underscores"
-                                        }
-                                        else -> {
-                                            vars.add(
-                                                Variable(
-                                                    name = newVarName,
-                                                    expression = "",
-                                                    pos = IntOffset(10 + vars.size*60, 50)
+                                        if (!containsError) {
+                                            varsArray.forEach { v ->
+                                                vars.add(
+                                                    Variable(
+                                                        name = v,
+                                                        expression = "",
+                                                        pos = IntOffset(10 + vars.size * 60, 50)
+                                                    )
                                                 )
-                                            )
+                                            }
                                             showNewVarDialog = false
                                             newVarName = ""
                                             newVarError = ""
                                         }
                                     }
+                                    else newVarError = "Variable name must not be empty"
                                 }
                             ) {
                                 Text("Create")
@@ -321,9 +344,9 @@ fun CodeBlock() {
                                             // десь происходит проверка валидности арифметического выражения
                                             if (!Regex("\\s*([a-zA-Z_]\\w*|\\d+)(\\s*[+\\-*\\/]" +
                                                         "\\s*([a-zA-Z_]\\w*|\\d+))*\\s*\$").matches(assignmentArithmExpr)){
-                                                    assignmentError = "Invalid expression"
+                                                assignmentError = "Invalid expression"
                                                 return@Button
-                                                }
+                                            }
                                             else {
                                                 val exp = assignmentArithmExpr.ifBlank { "0" }
                                                 // здесь чекаем для изменения значения выбранной из менюшки переменной
@@ -447,9 +470,9 @@ fun MenuBoxForAssignmentsBlock(
                 DropdownMenuItem(
                     text = {Text(option)},
                     leadingIcon = {Icon(Icons.Outlined.Star, contentDescription = null)},
-                        onClick = {
-                            onSelected(option)
-                            expanded = false
+                    onClick = {
+                        onSelected(option)
+                        expanded = false
                     }
 
                 )
