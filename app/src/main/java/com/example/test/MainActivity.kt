@@ -1,17 +1,18 @@
 package com.example.test
 
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.IntOffset
+import android.content.Context
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.foundation.layout.*
@@ -31,11 +32,25 @@ import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.Dialog
 import com.example.test.ui.theme.TestTheme
 import kotlin.math.roundToInt
+import java.util.Stack
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 
-data class Variable(val name: String, val expression: String, val pos: IntOffset = IntOffset(0, 0))
+data class Variable(
+    val name: String,
+    val expression: String,
+    val pos: IntOffset = IntOffset(0, 0)
+)
+
 data class VarError(val msg: String, val blockId: String = "")
-data class AssignmentParam(val targetVar: String, val arithmeticExpression: String, val position:
-IntOffset = IntOffset(0, 0))
+
+data class ContextMenuState(
+    val shown: Boolean = false,
+    val position: Offset = Offset.Zero,
+    val variableName: String? = null
+)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,22 +64,49 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
 // ребята как же андроид студио тормозит епрст
+// (」＞＜)」
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CodeBlock() {
     val vars = remember { mutableStateListOf<Variable>() }
     val errors = remember { mutableStateListOf<VarError>() }
 
-    var showNewAssignmentDialog by remember {mutableStateOf(false)}
-    var selectedTargetVar by remember {mutableStateOf("")}
-    var assignmentArithmExpr by remember {mutableStateOf("")}
-    var assignmentError by remember {mutableStateOf("")}
+    var showNewAssignmentDialog by remember { mutableStateOf(false) }
+    var selectedTargetVar by remember { mutableStateOf("") }
+    var assignmentArithmExpr by remember { mutableStateOf("") }
+    var assignmentError by remember { mutableStateOf("") }
 
     var showNewVarDialog by remember { mutableStateOf(false) }
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var newVarName by remember { mutableStateOf("") }
     var newVarError by remember { mutableStateOf("") }
+
+    var contextMenuState by remember { mutableStateOf(ContextMenuState()) }
+
+    val context = LocalContext.current
+
+    //обработчик для изменения переменной
+    fun handleEdit() {
+        contextMenuState.variableName?.let { varName ->
+            val variable = vars.firstOrNull { it.name == varName }
+            variable?.let {
+                selectedTargetVar = varName
+                assignmentArithmExpr = it.expression
+                showNewAssignmentDialog = true
+            }
+        }
+        contextMenuState = ContextMenuState()
+    }
+    //обработчик для удаления переменной
+    fun handleDelete() {
+        contextMenuState.variableName?.let { varName ->
+            vars.removeAll { it.name == varName }
+        }
+        contextMenuState = ContextMenuState()
+    }
 
     Scaffold(
         topBar = {
@@ -85,6 +127,7 @@ fun CodeBlock() {
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
+
                 // кнопка присваивания
                 FloatingActionButton(
                     onClick = { showNewAssignmentDialog = true }
@@ -93,6 +136,23 @@ fun CodeBlock() {
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
+
+                // кнопка для пересчета значений переменных
+                FloatingActionButton(
+                    onClick = {
+                        val result = recalculateAllVariables(vars, context)
+                        result.onSuccess { updated ->
+                            vars.clear()
+                            vars.addAll(updated)
+                        }.onFailure { e ->
+                            Toast.makeText(context, e.message ?: "Error", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                ) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Recalculate All")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+
                 FloatingActionButton(
                     onClick = { showDeleteAllDialog = true }
                 ) {
@@ -114,16 +174,57 @@ fun CodeBlock() {
                     .padding(16.dp)
             ) {
                 vars.forEach { x ->
-                    VarCard(
-                        variable = x,
-                        hasError = errors.any { it.blockId == x.name }
-                    )
+                    key(x.name) {
+                        VarCard(
+                            variable = x,
+                            vars = vars,
+                            hasError = errors.any { it.blockId == x.name },
+
+                            onInteraction = { position, varName ->
+                                contextMenuState = ContextMenuState(
+                                    shown = true,
+                                    position = position,
+                                    variableName = varName
+                                )
+                            }
+                        )
+                    }
+                }
+                //контекстное меню для изменения или удаления переменной
+                if (contextMenuState.shown){
+                    val density = LocalDensity.current
+                    val menuOffset = with(density){
+                        DpOffset(
+                            x = (contextMenuState.position.x + 100).toDp(),
+                            y = (contextMenuState.position.y + 100).toDp()
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = true,
+                        onDismissRequest = { contextMenuState = ContextMenuState()},
+                        offset = menuOffset
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Change") },
+                            onClick = {
+                                handleEdit()
+                                contextMenuState = ContextMenuState()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Delete") },
+                            onClick = {
+                                handleDelete()
+                                contextMenuState = ContextMenuState()
+                            }
+                        )
+                    }
                 }
                 if (vars.isEmpty()) {
                     Text(
                         text = "Tap + to add a variable",
                         color = Color.Gray,
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
                     )
                 }
 
@@ -205,16 +306,18 @@ fun CodeBlock() {
                                                 }
                                             }
                                         }
+
                                         if (!containsError) {
                                             varsArray.forEach { v ->
                                                 vars.add(
                                                     Variable(
                                                         name = v,
                                                         expression = "",
-                                                        pos = IntOffset(10 + vars.size * 60, 50)
+                                                        pos = IntOffset(10 + vars.size, vars.size*220)
                                                     )
                                                 )
                                             }
+                                            
                                             showNewVarDialog = false
                                             newVarName = ""
                                             newVarError = ""
@@ -341,14 +444,13 @@ fun CodeBlock() {
                                             return@Button
                                         }
                                         else {
-                                            // десь происходит проверка валидности арифметического выражения
-                                            if (!Regex("\\s*([a-zA-Z_]\\w*|\\d+)(\\s*[+\\-*\\/]" +
+                                            // здесь происходит проверка валидности арифметического выражения
+                                            if (!Regex("\\s*([a-zA-Z_]\\w*|\\d+)(\\s*[+\\-*\\/\\%]" +
                                                         "\\s*([a-zA-Z_]\\w*|\\d+))*\\s*\$").matches(assignmentArithmExpr)){
                                                 assignmentError = "Invalid expression"
                                                 return@Button
                                             }
                                             else {
-                                                val exp = assignmentArithmExpr.ifBlank { "0" }
                                                 // здесь чекаем для изменения значения выбранной из менюшки переменной
                                                 val index = vars.indexOfFirst { it.name == selectedTargetVar }
                                                 if (index >= 0) {
@@ -384,10 +486,13 @@ fun CodeBlock() {
     }
 }
 
+
 @Composable
-fun VarCard(variable: Variable, hasError: Boolean) {
+fun VarCard(variable: Variable, vars: List<Variable>, hasError: Boolean,  onInteraction: (Offset, String) -> Unit) {
     var x by remember { mutableFloatStateOf(variable.pos.x.toFloat()) }
     var y by remember { mutableFloatStateOf(variable.pos.y.toFloat()) }
+    var blockPosition by remember { mutableStateOf(Offset.Zero) }
+
     Box(
         modifier = Modifier
             .offset {
@@ -406,6 +511,22 @@ fun VarCard(variable: Variable, hasError: Boolean) {
                 shape = RoundedCornerShape(8.dp)
             )
             .padding(12.dp)
+
+            .onGloballyPositioned { coords ->
+                blockPosition = coords.localToWindow(Offset.Zero)
+            }
+
+            .pointerInput(Unit){
+                detectTapGestures (
+                    onDoubleTap = {
+                        onInteraction(blockPosition, variable.name)
+                    },
+                    onPress = {
+                        tryAwaitRelease()
+                    }
+                )
+            }
+
             .pointerInput(Unit) {
                 detectDragGestures { change, drag ->
                     change.consume()
@@ -430,9 +551,7 @@ fun VarCard(variable: Variable, hasError: Boolean) {
     }
 }
 
-
 // меню выбора переменной для присвоения
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MenuBoxForAssignmentsBlock(
     options: List<String>,
@@ -474,7 +593,6 @@ fun MenuBoxForAssignmentsBlock(
                         onSelected(option)
                         expanded = false
                     }
-
                 )
             }
         }
@@ -487,4 +605,249 @@ fun GreetingPreview() {
     TestTheme {
         CodeBlock()
     }
+}
+
+//приоритеты операций
+fun getPriority(operator: Char): Int = when(operator){
+    '+','-' -> 1
+    '*','/', '%' -> 2
+    else -> 0
+}
+
+//преобразуем выражение в обратную польскую запись
+fun convertToReversePolishNotation(expression: String, context: Context) : String{
+    val output = StringBuilder()
+    val stack = Stack<Char>()
+    var i = 0
+
+    if (expression.isBlank()){
+        Toast.makeText(context, "Expression cannot be blank", Toast.LENGTH_LONG).show()
+    }
+
+    while (i < expression.length) {
+        val c = expression[i]
+
+        when {
+            c.isDigit()-> {
+                while (i < expression.length && expression[i].isDigit()){
+                    output.append(expression[i++])
+                }
+                output.append(' ')
+                continue
+            }
+
+            c.isLetter()->{
+                while (i <expression.length && (expression[i].isLetterOrDigit() || expression[i] == '_')){
+                    output.append(expression[i++])
+                }
+                output.append(' ')
+                continue
+            }
+
+            c == '(' -> {
+                stack.push(c)
+                i++
+            }
+
+            c == ')' ->{
+                while (stack.isNotEmpty() && stack.peek() != '('){
+                    output.append(stack.pop()).append(' ')
+                }
+                if (stack.isEmpty() || stack.peek() != '('){
+                    Toast.makeText(context, "Extra closing parenthesis", Toast.LENGTH_LONG).show()
+                }
+                stack.pop()
+                i++
+            }
+
+            c in "+-*/%" ->{
+                while (stack.isNotEmpty() && stack.peek() != '(' && getPriority(stack.peek()) >= getPriority(c)){
+                    output.append(stack.pop()).append(' ')
+                }
+                stack.push(c)
+                i++
+            }
+
+            c.isWhitespace()-> {
+                i++
+            }
+
+            else-> {
+                Toast.makeText(context, "Invalid character '$c' in expression", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    while(stack.isNotEmpty()){
+        val operator = stack.pop()
+        when (operator){
+            '(' -> {
+                Toast.makeText(context, "Extra opening parenthesis", Toast.LENGTH_LONG).show()
+            }
+            ')' -> {
+                Toast.makeText(context, "Extra closing parenthesis", Toast.LENGTH_LONG).show()
+            }
+        }
+        output.append(operator).append(' ')
+    }
+    return output.toString().trim().also{
+        if (it.isEmpty()) {
+            Toast.makeText(context, "Empty RPN expression", Toast.LENGTH_LONG).show()
+        }
+    }
+}
+
+// вычисляем значение арифметического выражения
+fun calculateArithmeticExpression(expression: String, vars: List<Variable>,  callStack: Set<String> = emptySet(), computedCache: MutableMap<String, Int> = mutableMapOf(), context: Context):Int{
+    if (vars.any {it.name.isEmpty()}){
+        Toast.makeText(context, "Variable with empty name found", Toast.LENGTH_LONG).show()
+    }
+
+    val stack = mutableListOf<Int>()
+    val tokens = expression.split(" ").filter { it.isNotBlank() }
+
+    if (tokens.isEmpty()){
+        Toast.makeText(context, "Empty expression", Toast.LENGTH_LONG).show()
+    }
+
+    for (token in tokens) {
+        try {
+            when {
+                token.toIntOrNull() != null -> {
+                    stack.add(token.toInt())
+                }
+
+                vars.any { it.name == token } -> {
+                    val variable = vars.first {it.name == token}
+                    val value = if (variable.expression.isBlank()){
+                        0
+                    } else{
+                        calculateArithmeticExpression(variable.expression, vars, context=context)
+                    }
+                    stack.add(value)
+                }
+
+                token == "+" -> {
+                    val b = stack.removeAt(stack.lastIndex)
+                    val a = stack.removeAt(stack.lastIndex)
+                    stack.add(a + b)
+                }
+
+                token == "-" -> {
+                    val b = stack.removeAt(stack.lastIndex)
+                    val a = stack.removeAt(stack.lastIndex)
+                    stack.add(a - b)
+                }
+
+                token == "*" -> {
+                    val b = stack.removeAt(stack.lastIndex)
+                    val a = stack.removeAt(stack.lastIndex)
+                    stack.add(a * b)
+                }
+
+                token == "/" -> {
+                    val b = stack.removeAt(stack.lastIndex)
+                    if (b == 0) {
+                        Toast.makeText(context, "Division by zero", Toast.LENGTH_LONG).show()
+                    }
+                    val a = stack.removeAt(stack.lastIndex)
+                    stack.add(a / b)
+                }
+
+                token == "%" -> {
+                    val b = stack.removeAt(stack.lastIndex)
+                    if (b == 0) {
+                        Toast.makeText(context, "Division by zero", Toast.LENGTH_LONG).show()
+                    }
+                    val a = stack.removeAt(stack.lastIndex)
+                    stack.add(a % b)
+                }
+            }
+        } catch (e: NoSuchElementException){
+            Toast.makeText(context, "Variable '$token' not found", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    val result = stack.singleOrNull()
+    if (result == null){
+        Toast.makeText(context, "Invalid expression format", Toast.LENGTH_LONG).show()
+        return 0
+    }
+    return result
+}
+
+//находим зависимость переменной от других переменных
+fun extractDependencies(expression: String): Set<String>{
+    return Regex("[a-zA-Z_]\\w*")
+        .findAll(expression)
+        .map { it.value }
+        .toSet()
+}
+// здесь мы пересчитываем все переменные
+fun recalculateAllVariables(vars: List<Variable>, context: Context) : Result<List<Variable>> {
+    if (vars.isEmpty()) return Result.success(emptyList())
+
+    val graph = mutableMapOf<String, Set<String>>()
+    for (variable in vars) {
+        graph[variable.name] = extractDependencies(variable.expression)
+    }
+
+    return runCatching {
+        val updatedVars = vars.map { it.copy() }.toMutableList()
+        val sortedOrder = topologicalSort(graph)
+        val computedValues = mutableMapOf<String, Int>()
+        for (varName in sortedOrder) {
+            val variable = updatedVars.first { it.name == varName }
+            try {
+                var processed = variable.expression
+                computedValues.forEach { (name, value) ->
+                    processed = processed.replace(name, value.toString())
+                }
+                val rpn = convertToReversePolishNotation(processed, context)
+                val value = calculateArithmeticExpression(
+                    rpn,
+                    vars.filter { computedValues.containsKey(it.name) },
+                    context = context
+                )
+                computedValues[varName] = value
+                updatedVars.replaceAll {
+                    if (it.name == varName)
+                        it.copy(expression = value.toString())
+                    else
+                        it
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+        updatedVars
+    }
+}
+
+//используем сортировку переменных, чтобы считать их в правильном порядке, если они связаны между собой
+fun dfs(graph: Map<String, Set<String>>, node: String, visited: MutableMap<String, Int>, order: MutableList<String>){
+    when (visited[node]){
+        1 -> throw IllegalArgumentException("Cyclic dependency")
+        2 -> return
+    }
+
+    visited[node] = 1
+    graph[node]?.forEach{
+        neighbor -> dfs(graph, neighbor, visited, order)
+    }
+
+    visited[node] = 2
+    order.add(node)
+}
+
+fun topologicalSort(graph: Map<String, Set<String>>) : List<String> {
+    val visited = mutableMapOf<String, Int>()
+    val order = mutableListOf<String>()
+
+    for (node in graph.keys){
+        if (visited[node] == null){
+            dfs(graph, node, visited, order)
+        }
+    }
+    return order
 }
