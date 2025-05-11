@@ -16,7 +16,9 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Star
@@ -30,6 +32,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.Dialog
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.HorizontalDivider
 import com.example.test.ui.theme.TestTheme
 import kotlin.math.roundToInt
 import java.util.Stack
@@ -37,6 +41,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import java.util.UUID
 
 data class Variable(
     val name: String,
@@ -44,12 +49,26 @@ data class Variable(
     val pos: IntOffset = IntOffset(0, 0)
 )
 
-data class VarError(val msg: String, val blockId: String = "")
+data class VarError(
+    val msg: String,
+    val blockId: String = ""
+)
 
 data class ContextMenuState(
     val shown: Boolean = false,
     val position: Offset = Offset.Zero,
-    val variableName: String? = null
+    val variableName: String? = null,
+    val ifBlockId: String? = null
+)
+
+data class IfBlock(
+    val id: String = UUID.randomUUID().toString(),
+    val condition: String = "",
+    val leftExpression: String = "",
+    val rightExpression: String = "",
+    val comparisonOperator: String = "",
+    val commands: MutableList<String> = mutableStateListOf(),
+    val pos: IntOffset = IntOffset(0, 0)
 )
 
 class MainActivity : ComponentActivity() {
@@ -67,17 +86,28 @@ class MainActivity : ComponentActivity() {
 
 // ребята как же андроид студио тормозит епрст
 // (」＞＜)」
+// как же андроид студио жрёт заряд батареи...
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CodeBlock() {
     val vars = remember { mutableStateListOf<Variable>() }
+    val ifBlocks = remember { mutableStateListOf<IfBlock>() }
     val errors = remember { mutableStateListOf<VarError>() }
 
     var showNewAssignmentDialog by remember { mutableStateOf(false) }
     var selectedTargetVar by remember { mutableStateOf("") }
     var assignmentArithmExpr by remember { mutableStateOf("") }
     var assignmentError by remember { mutableStateOf("") }
+
+    var showNewIfDialog by remember { mutableStateOf(false) }
+    var selectedIfBlock by remember { mutableStateOf("") }
+    var leftIfExpression by remember { mutableStateOf("") }
+    var rightIfExpression by remember { mutableStateOf("") }
+    var selectedComparisonOperator by remember { mutableStateOf("==") }
+    var ifBlockError by remember { mutableStateOf("") }
+    var curBlockCommands = remember { mutableStateListOf<String>() }
+    var newIfCommand by remember { mutableStateOf("") }
 
     var showNewVarDialog by remember { mutableStateOf(false) }
     var showDeleteAllDialog by remember { mutableStateOf(false) }
@@ -108,6 +138,29 @@ fun CodeBlock() {
         contextMenuState = ContextMenuState()
     }
 
+    // Обработка изменения условия
+    fun handleEditIfBlock() {
+        contextMenuState.ifBlockId?.let { blockId ->
+            val block = ifBlocks.firstOrNull { it.id == blockId }
+            block?.let {
+                selectedIfBlock = blockId
+                leftIfExpression = it.leftExpression
+                rightIfExpression = it.rightExpression
+                selectedComparisonOperator = it.comparisonOperator
+                curBlockCommands.clear()
+                curBlockCommands.addAll(it.commands)
+                showNewIfDialog = true
+            }
+        }
+    }
+
+    // Обработка удаления условия
+    fun handleDeleteIfBlock() {
+        contextMenuState.ifBlockId?.let { blockId ->
+            ifBlocks.removeAll { it.id == blockId }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -128,6 +181,15 @@ fun CodeBlock() {
 
                 Spacer(modifier = Modifier.width(8.dp))
 
+                // Это для добавления условия
+                FloatingActionButton(
+                    onClick = { showNewIfDialog = true }
+                ) {
+                    Icon(Icons.Default.Code, contentDescription = "Add If Block")
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
                 // кнопка присваивания
                 FloatingActionButton(
                     onClick = { showNewAssignmentDialog = true }
@@ -144,6 +206,18 @@ fun CodeBlock() {
                         result.onSuccess { updated ->
                             vars.clear()
                             vars.addAll(updated)
+                            // Также с условиями!
+                            ifBlocks.forEach { block ->
+                                val conditionRes = evaluateIfCondition(
+                                    block.leftExpression,
+                                    block.rightExpression,
+                                    block.comparisonOperator,
+                                    vars,
+                                    context
+                                )
+                                if (conditionRes)
+                                    executeIfCommands(block.commands, vars, context)
+                            }
                         }.onFailure { e ->
                             Toast.makeText(context, e.message ?: "Error", Toast.LENGTH_LONG).show()
                         }
@@ -204,20 +278,38 @@ fun CodeBlock() {
                         onDismissRequest = { contextMenuState = ContextMenuState()},
                         offset = menuOffset
                     ) {
-                        DropdownMenuItem(
-                            text = { Text("Change") },
-                            onClick = {
-                                handleEdit()
-                                contextMenuState = ContextMenuState()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Delete") },
-                            onClick = {
-                                handleDelete()
-                                contextMenuState = ContextMenuState()
-                            }
-                        )
+                        if (contextMenuState.variableName != null) {
+                            DropdownMenuItem(
+                                text = { Text("Change") },
+                                onClick = {
+                                    handleEdit()
+                                    contextMenuState = ContextMenuState()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Delete") },
+                                onClick = {
+                                    handleDelete()
+                                    contextMenuState = ContextMenuState()
+                                }
+                            )
+                        }
+                        else if (contextMenuState.ifBlockId != null) {
+                            DropdownMenuItem(
+                                text = { Text("Edit") },
+                                onClick = {
+                                    handleEditIfBlock()
+                                    contextMenuState = ContextMenuState()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Delete") },
+                                onClick = {
+                                    handleDeleteIfBlock()
+                                    contextMenuState = ContextMenuState()
+                                }
+                            )
+                        }
                     }
                 }
                 if (vars.isEmpty()) {
@@ -227,7 +319,21 @@ fun CodeBlock() {
                         modifier = Modifier.align(Alignment.Center),
                     )
                 }
-
+                ifBlocks.forEach { block ->
+                    key(block.hashCode()) {
+                        IfBlockCard(
+                            ifBlock = block,
+                            vars = vars,
+                            onInteraction = { position, blockId ->
+                                contextMenuState = ContextMenuState(
+                                    shown = true,
+                                    position = position,
+                                    ifBlockId = blockId
+                                )
+                            }
+                        )
+                    }
+                }
             }
         }
         if (showNewVarDialog) {
@@ -343,6 +449,223 @@ fun CodeBlock() {
                 }
             }
         }
+        if (showNewIfDialog) {
+            Dialog(onDismissRequest = {
+                showNewIfDialog = false
+                leftIfExpression = ""
+                rightIfExpression = ""
+                selectedComparisonOperator = "=="
+                ifBlockError = ""
+                curBlockCommands.clear()
+                newIfCommand = ""
+                selectedIfBlock = ""
+            }) {
+                Surface(
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(20.dp)
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        Text(
+                            text = "Create If Block",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        // Left part
+                        OutlinedTextField(
+                            value = leftIfExpression,
+                            onValueChange = { leftIfExpression = it },
+                            label = { Text("Left Expression") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        val comparisonOpers = listOf("==", "!=", ">", "<", ">=", "<=")
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentSize(Alignment.TopStart)
+                        ) {
+                            var expanded by remember { mutableStateOf(false) }
+                            OutlinedTextField(
+                                value = selectedComparisonOperator,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Comparison Operator") },
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = if (expanded)
+                                            Icons.Filled.ArrowDropUp
+                                        else Icons.Filled.ArrowDropDown,
+                                        contentDescription = null,
+                                        modifier = Modifier.clickable {
+                                            expanded = !expanded
+                                        }
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { expanded = true }
+                            )
+                            DropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                comparisonOpers.forEach { oper ->
+                                    DropdownMenuItem(
+                                        text = { Text(oper) },
+                                        onClick = {
+                                            selectedComparisonOperator = oper
+                                            expanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        // Right part
+                        OutlinedTextField(
+                            value = rightIfExpression,
+                            onValueChange = { rightIfExpression = it },
+                            label = { Text("Right Expression") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Commands (if condition is true):",
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        curBlockCommands.forEachIndexed { i, com ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "${i + 1}. ${com}",
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(
+                                    onClick = { curBlockCommands.removeAt(i) }
+                                ) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Remove Command")
+                                }
+                            }
+                            HorizontalDivider()
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = newIfCommand,
+                                onValueChange = { newIfCommand = it },
+                                label = { Text("New Command") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(
+                                onClick = {
+                                    if (newIfCommand.isNotBlank())
+                                        curBlockCommands.add(newIfCommand)
+                                }
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Add Command")
+                            }
+                        }
+                        if (ifBlockError.isNotBlank()) {
+                            Text(
+                                text = ifBlockError,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(start = 16.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Button(
+                                onClick = {
+                                    if (leftIfExpression.isBlank()) {
+                                        ifBlockError = "Left part must not be empty"
+                                        return@Button
+                                    }
+                                    if (rightIfExpression.isBlank()) {
+                                        ifBlockError = "Right part must not be empty"
+                                        return@Button
+                                    }
+
+                                    val declaredVarsNames = vars.map { it.name }.toSet()
+                                    val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
+                                    val leftPartVars = regex.findAll(leftIfExpression).map { it.value }.toSet()
+                                    val rightPartVars = regex.findAll(rightIfExpression).map { it.value }.toSet()
+                                    val notDeclared = (leftPartVars + rightPartVars) - declaredVarsNames
+                                    if (notDeclared.isNotEmpty()) {
+                                        ifBlockError = "Undeclared variable(-s): ${notDeclared.joinToString(", ")}"
+                                        return@Button
+                                    }
+                                    if (selectedIfBlock.isNotEmpty()) {
+                                        val i = ifBlocks.indexOfFirst { it.id == selectedIfBlock }
+                                        if (i >= 0) {
+                                            ifBlocks[i] = ifBlocks[i].copy(
+                                                leftExpression = leftIfExpression,
+                                                rightExpression = rightIfExpression,
+                                                comparisonOperator = selectedComparisonOperator,
+                                                commands = curBlockCommands.toMutableStateList(),
+                                                pos = IntOffset(
+                                                    ifBlocks[i].pos.x,
+                                                    ifBlocks[i].pos.y
+                                                )
+                                            )
+                                        }
+                                    }
+                                    else {
+                                        ifBlocks.add(
+                                            IfBlock(
+                                                leftExpression = leftIfExpression,
+                                                rightExpression = rightIfExpression,
+                                                comparisonOperator = selectedComparisonOperator,
+                                                commands = curBlockCommands.toMutableStateList(),
+                                                pos = IntOffset(10, 10 + ifBlocks.size * 220)
+                                            )
+                                        )
+                                    }
+                                    showNewIfDialog = false
+                                    leftIfExpression = ""
+                                    rightIfExpression = ""
+                                    selectedComparisonOperator = "=="
+                                    ifBlockError = ""
+                                    newIfCommand = ""
+                                }
+                            ) {
+                                Text("Create")
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            TextButton(
+                                onClick = {
+                                    showNewIfDialog = false
+                                    leftIfExpression = ""
+                                    rightIfExpression = ""
+                                    selectedComparisonOperator = "=="
+                                    ifBlockError = ""
+                                    curBlockCommands.clear()
+                                    newIfCommand = ""
+                                }
+                            ) {
+                                Text("Cancel")
+                            }
+                        }
+                    }
+                }
+            }
+        }
         if (showDeleteAllDialog) {
             AlertDialog(
                 onDismissRequest = { showDeleteAllDialog = false },
@@ -353,6 +676,7 @@ fun CodeBlock() {
                         onClick = {
                             showDeleteAllDialog = false
                             vars.clear()
+                            ifBlocks.clear()
                             errors.removeAll { true }
                         }
                     ) {
@@ -486,7 +810,6 @@ fun CodeBlock() {
     }
 }
 
-
 @Composable
 fun VarCard(variable: Variable, vars: List<Variable>, hasError: Boolean,  onInteraction: (Offset, String) -> Unit) {
     var x by remember { mutableFloatStateOf(variable.pos.x.toFloat()) }
@@ -547,6 +870,224 @@ fun VarCard(variable: Variable, vars: List<Variable>, hasError: Boolean,  onInte
                 fontSize = 12.sp,
                 color = if (hasError) Color.Red else MaterialTheme.colorScheme.onPrimaryContainer
             )
+        }
+    }
+}
+
+@Composable
+fun IfBlockCard(ifBlock: IfBlock, vars: List<Variable>, onInteraction: (Offset, String) -> Unit) {
+    var x by remember { mutableFloatStateOf(ifBlock.pos.x.toFloat()) }
+    var y by remember { mutableFloatStateOf(ifBlock.pos.y.toFloat()) }
+    var expanded by remember { mutableStateOf(true) }
+    var blockPosition by remember { mutableStateOf(Offset.Zero) }
+
+    Column(
+        modifier = Modifier
+            .offset {
+                IntOffset(
+                    x.roundToInt(),
+                    y.roundToInt()
+                )
+            }
+            .onGloballyPositioned { coords ->
+                blockPosition = coords.localToWindow(Offset.Zero)
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onDoubleTap = {
+                        onInteraction(blockPosition, ifBlock.id)
+                    },
+                    onPress = {
+                        tryAwaitRelease()
+                    }
+                )
+            }
+            .pointerInput(Unit) {
+                detectDragGestures { change, drag ->
+                    change.consume()
+                    x += drag.x
+                    y += drag.y
+                }
+            }
+    ) {
+        Box(
+            modifier = Modifier
+                .background(
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                    shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
+                )
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline,
+                    shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
+                )
+                .padding(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "If ${ifBlock.leftExpression} " +
+                            "${ifBlock.comparisonOperator} " +
+                            "${ifBlock.rightExpression}",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                IconButton(
+                    onClick = { expanded = !expanded }
+                ) {
+                    Icon(
+                        imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (expanded) "Collapse" else "Expand"
+                    )
+                }
+            }
+        }
+        if (expanded) {
+            Box(
+                modifier = Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline,
+                        shape = RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
+                    )
+                    .padding(12.dp)
+            ) {
+                Column (
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Then:",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    if (ifBlock.commands.isEmpty()) {
+                        Text(
+                            text = "No commands",
+                            color = Color.Gray,
+                            fontSize = 12.sp
+                        )
+                    }
+                    else {
+                        ifBlock.commands.forEachIndexed { i, com ->
+                            Text(
+                                text = "${i + 1}. ${com}",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            if (i < ifBlock.commands.size - 1)
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+fun evaluateIfCondition(
+    leftExpression: String,
+    rightExpression: String,
+    comparisonOperator: String,
+    vars: List<Variable>,
+    context: Context
+): Boolean {
+    try {
+        val leftRpn = convertToReversePolishNotation(leftExpression, context)
+        val rightRpn = convertToReversePolishNotation(rightExpression, context)
+
+        val leftValue = calculateArithmeticExpression(leftRpn, vars, context = context)
+        val rightValue = calculateArithmeticExpression(rightRpn, vars, context = context)
+        return when (comparisonOperator) {
+            "==" -> leftValue == rightValue
+            "!=" -> leftValue != rightValue
+            ">" -> leftValue > rightValue
+            "<" -> leftValue < rightValue
+            ">=" -> leftValue >= rightValue
+            "<=" -> leftValue <= rightValue
+            else -> {
+                Toast.makeText(
+                    context,
+                    "Invalid comparison operator: ${comparisonOperator}",
+                    Toast.LENGTH_LONG
+                ).show()
+                false
+            }
+        }
+    }
+    catch (e: Exception) {
+        Toast.makeText(
+            context,
+            "Error evaluating condition: ${e.message}",
+            Toast.LENGTH_LONG
+        ).show()
+        return false
+    }
+}
+
+fun executeIfCommands(commands: List<String>, vars: MutableList<Variable>, context: Context) {
+    commands.forEach { com ->
+        try {
+            val assignmentRegex = Regex("\\s*([a-zA-Z_]\\w*)\\s*=\\s*(.+)\\s*")
+            val matchRes = assignmentRegex.matchEntire(com)
+
+            if (matchRes != null) {
+                val (varName, expr) = matchRes.destructured
+                val i = vars.indexOfFirst { it.name == varName }
+                if (i == -1) {
+                    Toast.makeText(
+                        context,
+                        "Variable \"${varName}\" not found in command: ${com}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return@forEach
+                }
+
+                val rpn = convertToReversePolishNotation(expr, context)
+                if (rpn.isBlank()) {
+                    Toast.makeText(
+                        context,
+                        "Invalid expression in command: ${com}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return@forEach
+                }
+
+                val declaredVars = vars.map { it.name }.toSet()
+                val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
+                val exprVars = regex.findAll(expr).map { it.value }.toSet()
+                val notDeclared = exprVars - declaredVars
+                if (notDeclared.isNotEmpty()) {
+                    Toast.makeText(
+                        context,
+                        "Undeclared variable(-s) in command: ${notDeclared.joinToString(", ")}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return@forEach
+                }
+
+                val newValue = calculateArithmeticExpression(rpn, vars, context = context)
+                vars[i] = vars[i].copy(expression = newValue.toString())
+            } else {
+                Toast.makeText(
+                    context,
+                    "Unsupported command format: ${com}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+        catch (e: Exception) {
+            Toast.makeText(
+                context,
+                "Error executing command \"${com}\": ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 }
