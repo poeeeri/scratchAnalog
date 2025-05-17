@@ -375,3 +375,59 @@ fun recCalAll(state: CodeBlockState, context: Context) {
         Toast.makeText(context, e.message ?: "Error", Toast.LENGTH_LONG).show()
     }
 }
+
+// проверка на валидность арифм операций со скобками
+fun isValidArithmExpression(state: CodeBlockState) : Boolean {
+    state.assignmentArithmExpr = rewriteExpression(state.assignmentArithmExpr)
+    var lvl = 0;
+
+    // проверяем на скобочные пары
+    for (char in state.assignmentArithmExpr) {
+        when(char) {
+            '(' -> lvl++
+            ')' -> if (--lvl < 0)
+                return false
+        }
+    }
+    if (lvl != 0) return false
+
+    val regex = Regex("[A-Za-z_]\\w*|\\d+(?:\\.\\d+)?|[()+\\-%*/]")
+    val tokens = regex.findAll(state.assignmentArithmExpr).map { it.value }.toList()
+    if (tokens.isEmpty()) return false
+
+    // машина состояний которая ждет после числа/переменной оператор и наоборот
+    var expect = true
+    for (t in tokens) {
+        if (expect) {
+            when {
+                t.matches(Regex("\\d+")) || t.matches(Regex("(?!_|\\d+)([a-zA-Z_]\\w*)"))
+                    -> expect = false
+
+                t == "(" -> expect = true
+                t == "+" || t == "-" -> expect = true
+                else -> return false
+            }
+        }
+        else {
+            when (t) {
+                "+", "-", "/", "%", "*" -> expect = true
+                ")" -> expect = false
+                else -> return false
+            }
+        }
+    }
+    return !expect
+}
+
+// перезаписываем такую запись как например 2(1+3) в 2*(1+3)
+fun rewriteExpression(expression: String) : String {
+    var str = expression
+    str = Regex("([A-Za-z_]\\w*|\\d+)\\s*\\(").replace(str) { m ->
+        "${m.groupValues[1]}*("
+    }
+
+    str = Regex("(\\d+(?:\\.\\d+)?)([A-Za-z_]\\w*)").replace(str) { m ->
+        "${m.groupValues[1]}*${m.groupValues[2]}"
+    }
+    return str;
+}

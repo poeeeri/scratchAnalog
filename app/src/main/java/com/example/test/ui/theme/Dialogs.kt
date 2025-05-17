@@ -52,6 +52,8 @@ import androidx.core.content.ContextCompat.getString
 import com.example.test.CodeBlockState
 import com.example.test.IfBlock
 import com.example.test.Variable
+import com.example.test.utils.isValidArithmExpression
+import kotlin.math.exp
 
 @Composable
 fun NewAssignmentDialog(state: CodeBlockState) {
@@ -536,56 +538,3 @@ fun DeleteAllDialog(state: CodeBlockState) {
     )
 }
 
-// проверка на валидность арифм операций со скобками
-fun isValidArithmExpression(state: CodeBlockState) : Boolean {
-    state.assignmentArithmExpr = rewriteExpression(state.assignmentArithmExpr)
-    var lvl = 0;
-
-    // проверяем на скобочные пары
-    for (char in state.assignmentArithmExpr) {
-        when(char) {
-            '(' -> lvl++
-            ')' -> if (--lvl < 0)
-                return false
-        }
-    }
-    if (lvl != 0) return false
-
-    val regex = Regex("[A-Za-z_]\\w*|\\d+(?:\\.\\d+)?|[()+\\-%*/]")
-    val tokens = regex.findAll(state.assignmentArithmExpr).map { it.value }.toList()
-    if (tokens.isEmpty()) return false
-
-    // машина состояний которая ждет после числа/переменной оператор и наоборот
-    var expect = true
-    for (t in tokens) {
-        if (expect) {
-            when {
-                t.matches(Regex("\\d+")) || t.matches(Regex("(?!_|\\d+)([a-zA-Z_]\\w*)"))
-                    -> expect = false
-
-                t == "(" -> expect = true
-                t == "+" || t == "-" -> expect = true
-                else -> return false
-            }
-        }
-        else {
-            when (t) {
-                "+", "-", "/", "%", "*" -> expect = true
-                ")" -> expect = false
-                else -> return false
-            }
-        }
-    }
-    return !expect
-}
-
-// перезаписываем такую запись как например 2(1+3) в 2*(1+3)
-fun rewriteExpression(expression: String) : String {
-    val regexForDigit = Regex("([A-Za-z_]\\w*|\\d+)\\(|(\\d+)([A-Za-z_]\\w*)")
-    return regexForDigit.replace(expression) { m ->
-        if (m.groupValues[1].isEmpty())
-            "${m.groupValues[1]}*("
-        else
-            "${m.groupValues[2]}*${m.groupValues[3]}"
-    }
-}

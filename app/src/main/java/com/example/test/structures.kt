@@ -39,6 +39,7 @@ class CodeBlockState {
 }
 
 data class Variable(
+    val id: String = UUID.randomUUID().toString(),
     val name: String,
     val expression: String,
     val pos: IntOffset = IntOffset(0, 0)
