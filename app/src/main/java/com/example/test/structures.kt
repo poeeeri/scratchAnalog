@@ -42,7 +42,7 @@ data class Variable(
     val id: String = UUID.randomUUID().toString(),
     val name: String,
     val expression: String,
-    val pos: IntOffset = IntOffset(0, 0)
+    var pos: IntOffset = IntOffset(0, 0)
 )
 
 data class VarError(
@@ -64,5 +64,5 @@ data class IfBlock(
     val rightExpression: String = "",
     val comparisonOperator: String = "",
     val commands: MutableList<String> = mutableStateListOf(),
-    val pos: IntOffset = IntOffset(0, 0)
+    var pos: IntOffset = IntOffset(0, 0)
 )

@@ -1,4 +1,4 @@
-package com.example.test.ui.theme
+package com.example.test.ui.theme.menu
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box

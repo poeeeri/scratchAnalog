@@ -1,4 +1,4 @@
-package com.example.test.ui.theme
+package com.example.test.ui.theme.blocks
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

@@ -1,4 +1,4 @@
-package com.example.test.ui.theme
+package com.example.test.ui.theme.menu
 
 import com.example.test.R
 import androidx.compose.material3.DropdownMenu

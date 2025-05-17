@@ -48,12 +48,11 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.core.content.ContextCompat.getString
 import com.example.test.CodeBlockState
 import com.example.test.IfBlock
 import com.example.test.Variable
+import com.example.test.ui.theme.menu.MenuBoxForAssignments
 import com.example.test.utils.isValidArithmExpression
-import kotlin.math.exp
 
 @Composable
 fun NewAssignmentDialog(state: CodeBlockState) {
@@ -82,7 +81,10 @@ fun NewAssignmentDialog(state: CodeBlockState) {
                     text = "Select variable:"
                 )
 
-                MenuBoxForAssignments(state.vars.map { it.name }, state.selectedTargetVar) { selected ->
+                MenuBoxForAssignments(
+                    state.vars.map { it.name },
+                    state.selectedTargetVar
+                ) { selected ->
                     state.selectedTargetVar = selected
                 }
 
@@ -460,15 +462,17 @@ fun IfDialog(state: CodeBlockState) {
                                         leftExpression = state.leftIfExpression,
                                         rightExpression = state.rightIfExpression,
                                         comparisonOperator = state.selectedComparisonOperator,
-                                        commands = state.curBlockCommands.toMutableStateList(),
+                                        commands = state.curBlockCommands,
                                         pos = IntOffset(
                                             state.ifBlock[i].pos.x,
                                             state.ifBlock[i].pos.y
                                         )
                                     )
                                 }
+                                state.curBlockCommands.add(state.newIfCommand)
                             }
                             else {
+                                state.curBlockCommands.add(state.newIfCommand)
                                 state.ifBlock.add(
                                     IfBlock(
                                         leftExpression = state.leftIfExpression,
@@ -537,4 +541,3 @@ fun DeleteAllDialog(state: CodeBlockState) {
         }
     )
 }
-

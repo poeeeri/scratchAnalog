@@ -1,4 +1,4 @@
-package com.example.test.ui.theme
+package com.example.test.ui.theme.blocks
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -135,7 +135,9 @@ fun IfBlockCard(ifBlock: IfBlock, vars: List<Variable>, onInteraction: (Offset, 
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+
                     Spacer(modifier = Modifier.height(4.dp))
+
                     if (ifBlock.commands.isEmpty()) {
                         Text(
                             text = "No commands",
@@ -158,3 +160,4 @@ fun IfBlockCard(ifBlock: IfBlock, vars: List<Variable>, onInteraction: (Offset, 
         }
     }
 }
+
