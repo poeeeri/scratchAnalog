@@ -28,7 +28,7 @@ fun FloatingActivationButtons(state: CodeBlockState, context: Context) {
             Icon(Icons.Default.Loop, contentDescription = "Add While Block")
         }
 
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(4.dp))
 
         FloatingActionButton(
             onClick = { state.showNewVarDialog = true }
@@ -36,7 +36,7 @@ fun FloatingActivationButtons(state: CodeBlockState, context: Context) {
             Icon(Icons.Default.Add, contentDescription = "Add")
         }
 
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(4.dp))
 
         // Это для добавления условия
         FloatingActionButton(
@@ -45,7 +45,7 @@ fun FloatingActivationButtons(state: CodeBlockState, context: Context) {
             Icon(Icons.Default.Code, contentDescription = "Add If Block")
         }
 
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(4.dp))
 
         // кнопка присваивания
         FloatingActionButton(
@@ -54,7 +54,7 @@ fun FloatingActivationButtons(state: CodeBlockState, context: Context) {
             Icon(Icons.Default.Edit, contentDescription = "Assign")
         }
 
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(4.dp))
 
         // кнопка для пересчета значений переменных
         FloatingActionButton(
@@ -64,7 +64,7 @@ fun FloatingActivationButtons(state: CodeBlockState, context: Context) {
         ) {
             Icon(Icons.Default.Refresh, contentDescription = "Recalculate All")
         }
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(4.dp))
 
         FloatingActionButton(
             onClick = { state.showDeleteAllDialog = true }
