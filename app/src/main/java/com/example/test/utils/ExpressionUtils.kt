@@ -2,6 +2,7 @@ package com.example.test.utils
 
 import com.example.test.R
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.example.test.CodeBlockState
@@ -80,6 +81,9 @@ fun executeIfCommands(
             }
 
             is WhileBlockCommand -> {
+                Log.d("EXEC", "while-condition: ${command.whileBlock.leftExpression} ${command.whileBlock.comparisonOperator} ${command.whileBlock.rightExpression}")
+                Log.d("EXEC", "while-body size = ${command.whileBlock.commands.size}")
+
                 while (evaluateIfCondition(
                         command.whileBlock.leftExpression,
                         command.whileBlock.rightExpression,
@@ -356,7 +360,16 @@ fun recCalAll(state: CodeBlockState, context: Context) {
             if (conditionRes)
                 executeIfCommands(block.commands, state.vars, context)
         }
-    }.onFailure { e ->
+        // и с циклом while
+        state.whileBlocks.forEach {
+            block -> executeIfCommands(
+                listOf(WhileBlockCommand(block)),
+                state.vars,
+                context
+            )
+        }
+    }.
+    onFailure { e ->
         Toast.makeText(context, e.message ?: "Error", Toast.LENGTH_LONG).show()
     }
 }
