@@ -33,6 +33,10 @@ fun handleEditIfBlock(state: CodeBlockState) {
             state.leftIfExpression = it.leftExpression
             state.rightIfExpression = it.rightExpression
             state.selectedComparisonOperator = it.comparisonOperator
+            state.curBlockCommands.clear()
+            state.curBlockCommands.addAll(block.commands)
+            state.targetCommandsList = block.commands
+
             state.showNewIfDialog = true
         }
     }

@@ -26,7 +26,24 @@
     <string name="err_var_token_not_found">Variable \"%1$s\" not found</string>
     <string name="err_invalid_exp_format">Invalid expression format</string>
     <string name="err_cyclic_dependency">Cyclic dependency</string>
-<!--    <string name=""></string>-->
+    <string name="unknown_block">Unknown block</string>
+    <string name="choose_command">Choose command</string>
+    <string name="please_select_var">Please select a variable</string>
+    <string name="exp_cannot_be_empty">Expression cannot be empty</string>
+    <string name="create_assign">Create assignments</string>
+    <string name="select_var">Select variable:</string>
+    <string name="delete_all">Delete All</string>
+    <string name="are_you_sure">Are you sure you want to remove all elements? This cannot be undone!</string>
+    <string name="create_while_block">Create While Block</string>
+    <string name="left_expression">Left Expression</string>
+    <string name="commands_if_true">Commands (if condition is true):</string>
+    <string name="no_commands">No commands</string>
+    <string name="create">Create</string>
+    <string name="cancel">Cancel</string>
+    <string name="commands_while">Commands (inside while):</string>
+    <string name="remove_command">%1$s. Unknown block</string>
+    <string name="expression">%1$s. %2$s = %3$s</string>
+    <!--    <string name=""></string>-->
 <!--    <string name=""></string>-->
 <!--    <string name=""></string>-->
 </resources>

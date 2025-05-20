@@ -48,6 +48,24 @@ fun Menu(state: CodeBlockState) {
                     }
                 )
             }
+
+            if (state.contextMenuState.whileBlockId != null) {
+                DropdownMenuItem(
+                    text = { Text(edit) },
+                    onClick = {
+                        handleWhileEdit(state)
+                        state.contextMenuState = ContextMenuState()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(delete) },
+                    onClick = {
+                        handleWhileDelete(state)
+                        state.contextMenuState = ContextMenuState()
+                    }
+                )
+            }
+
             else if (state.contextMenuState.ifBlockId != null) {
                 DropdownMenuItem(
                     text = { Text(edit) },
@@ -65,5 +83,28 @@ fun Menu(state: CodeBlockState) {
                 )
             }
         }
+    }
+}
+
+
+fun handleWhileEdit(state: CodeBlockState) {
+    state.contextMenuState.whileBlockId?.let { blockId ->
+        val block = state.whileBlocks.firstOrNull { it.id == blockId }
+        block?.let{
+            state.selectedWhileOperator = it.comparisonOperator
+            state.leftWhileExpression = it.leftExpression
+            state.rightWhileExpression = it.rightExpression
+            state.curWhileCommands.clear()
+            state.selectedWhileTargetId = blockId
+            state.showNewWhileDialog = true
+            state.curBlockCommands.addAll(block.commands)
+            state.targetCommandsList = block.commands
+        }
+    }
+}
+
+fun handleWhileDelete(state: CodeBlockState) {
+    state.contextMenuState.whileBlockId?.let { blockId ->
+        state.whileBlocks.removeAll{it.id == blockId }
     }
 }

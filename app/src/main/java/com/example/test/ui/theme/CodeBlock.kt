@@ -17,14 +17,17 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.test.ContextMenuState
 import com.example.test.CodeBlockState
+import com.example.test.WhileBlock
 import com.example.test.ui.theme.blocks.IfBlockCard
 import com.example.test.ui.theme.blocks.VarCard
+import com.example.test.ui.theme.blocks.WhileBlockCard
 import com.example.test.ui.theme.menu.Menu
 
 // запоминает состояния при перерисовке компосэбл
@@ -57,52 +60,83 @@ fun CodeBlock() {
     // читабельность, как и сказали сделать на прошлой сдаче прогресса.
     // если что в string.xml хранятся значения строк и их айдишники, все строки записываем туда
     if (states.showNewVarDialog) VarDialog(states, context)
-    if (states.showNewIfDialog) IfDialog(states)
+    if (states.showNewIfDialog) IfDialog(states, context)
     if (states.showDeleteAllDialog) DeleteAllDialog(states)
     if (states.showNewAssignmentDialog) NewAssignmentDialog(states)
+    if (states.showNewWhileDialog) WhileDialog(states, context)
 }
 
 @Composable
 fun Canvas(state: CodeBlockState, modifier: Modifier) {
+    val onInteraction: (Offset, String) -> Unit = { position, id ->
+        state.contextMenuState = when {
+            state.vars.any { it.name == id } -> ContextMenuState(
+                shown = true,
+                position = position,
+                variableName = id
+            )
+
+            state.ifBlock.any { it.id == id } -> ContextMenuState(
+                shown = true,
+                position = position,
+                ifBlockId = id
+            )
+
+            state.whileBlocks.any { it.id == id } -> ContextMenuState(
+                shown = true,
+                position = position,
+                whileBlockId = id
+            )
+
+            else -> ContextMenuState(
+                shown = true,
+                position = position
+            )
+        }
+    }
     Box(
         modifier = modifier
             .fillMaxWidth()
             .background(Color.LightGray)
             .padding(16.dp)
     ) {
+
+
+        // рисуем блоки
         state.vars.forEach { x ->
             key(x.name) {
                 VarCard(
                     variable = x,
                     vars = state.vars,
                     hasError = state.errors.any { it.blockId == x.name },
-
-                    onInteraction = { position, varName ->
-                        state.contextMenuState = ContextMenuState(
-                            shown = true,
-                            position = position,
-                            variableName = varName
-                        )
-                    }
+                    onInteraction = onInteraction
                 )
             }
         }
-        //контекстное меню для изменения или удаления переменной
+
         state.ifBlock.forEach { block ->
             key(block.id) {
                 IfBlockCard(
+                    state = state,
                     ifBlock = block,
                     vars = state.vars,
-                ) { position, blockId ->
-                    state.contextMenuState = ContextMenuState(
-                        shown = true,
-                        position = position,
-                        ifBlockId = blockId
-                    )
-                }
+                    onInteraction = onInteraction
+                )
             }
         }
-        if (state.vars.isEmpty()) {
+
+        state.whileBlocks.forEach { block ->
+            key(block.id) {
+                WhileBlockCard(
+                    whileBlock = block,
+                    state = state,
+                    onInteraction = onInteraction,
+                    vars = state.vars
+                )
+            }
+        }
+
+        if (state.vars.isEmpty() && state.ifBlock.isEmpty() && state.whileBlocks.isEmpty()) {
             Text(
                 text = stringResource(R.string.tap_plus_to_add),
                 color = Color.Gray,
@@ -111,7 +145,3 @@ fun Canvas(state: CodeBlockState, modifier: Modifier) {
         }
     }
 }
-
-
-
-

@@ -74,13 +74,15 @@ fun VarCard(variable: Variable, vars: List<Variable>, hasError: Boolean,  onInte
                     change.consume()
                     x += drag.x
                     y += drag.y
+                    variable.pos = IntOffset(x.roundToInt(), y.roundToInt())
                 }
             }
     ) {
         Column {
-            val value = variable.expression.ifBlank { "0" }
+            if (variable.expression == "") variable.expression = "0"
+            val value = variable.expression
             Text(
-                text = "${variable.name} = $value",
+                text = "Int ${variable.name} = $value",
                 fontWeight = FontWeight.Bold,
                 color = if (hasError) Color.Red else MaterialTheme.colorScheme.onPrimaryContainer
             )

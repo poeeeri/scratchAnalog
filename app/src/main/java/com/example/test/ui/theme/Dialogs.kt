@@ -36,10 +36,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toMutableStateList
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -49,11 +50,354 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.test.CodeBlockState
+import com.example.test.CommandBlock
 import com.example.test.IfBlock
+import com.example.test.IfBlockCommand
+import com.example.test.VarBlockCommand
 import com.example.test.Variable
+import com.example.test.WhileBlock
+import com.example.test.WhileBlockCommand
 import com.example.test.ui.theme.menu.MenuBoxForAssignments
 import com.example.test.utils.isValidArithmExpression
 
+@SuppressLint("StringFormatInvalid")
+@Composable
+fun IfDialog(state: CodeBlockState, ctx: Context) {
+    Dialog(onDismissRequest = {
+        state.showNewIfDialog = false
+        state.leftIfExpression = ""
+        state.rightIfExpression = ""
+        state.selectedComparisonOperator = "=="
+        state.ifBlockError = ""
+        state.curBlockCommands.clear()
+        state.newIfCommand = ""
+        state.selectedIfBlock = ""
+    }) {
+        Surface(
+            color = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(20.dp)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text = "Create If Block",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                // Left part
+                OutlinedTextField(
+                    value = state.leftIfExpression,
+                    onValueChange = { state.leftIfExpression = it },
+                    label = { Text("Left Expression") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                val comparisonOpers = listOf("==", "!=", ">", "<", ">=", "<=")
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentSize(Alignment.TopStart)
+                ) {
+                    var expanded by remember { mutableStateOf(false) }
+                    OutlinedTextField(
+                        value = state.selectedComparisonOperator,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Comparison Operator") },
+                        trailingIcon = {
+                            Icon(
+                                imageVector = if (expanded)
+                                    Icons.Filled.ArrowDropUp
+                                else Icons.Filled.ArrowDropDown,
+                                contentDescription = null,
+                                modifier = Modifier.clickable {
+                                    expanded = !expanded
+                                }
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { expanded = true }
+                    )
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        comparisonOpers.forEach { oper ->
+                            DropdownMenuItem(
+                                text = { Text(oper) },
+                                onClick = {
+                                    state.selectedComparisonOperator = oper
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                // Right part
+                // Я русский я иду до конца!!!!
+                OutlinedTextField(
+                    value = state.rightIfExpression,
+                    onValueChange = { state.rightIfExpression = it },
+                    label = { Text("Right Expression") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = stringResource(R.string.commands_if_true),
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                state.curBlockCommands.forEachIndexed { i, com ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (com is VarBlockCommand) {
+                            Text(
+                                text = "${i + 1}. ${com.variable.name} = ${com.variable.expression}",
+                                modifier = Modifier.weight(1f)
+                            )
+                        } else {
+                            Text(
+                                text = "${i + 1}. Command block",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        IconButton(
+                            onClick = { state.curBlockCommands.removeAt(i) }
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "Remove Command")
+                        }
+                    }
+                    HorizontalDivider()
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = state.newIfCommand,
+                        onValueChange = { state.newIfCommand = it },
+                        label = { Text("New Command") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(
+                        onClick = {
+                            val newCommand = state.newWhileCommand.trim()
+                            if (newCommand.isNotBlank()) {
+                                val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
+                                val usedVars = regex.findAll(newCommand).map {it.value }.toSet()
+
+                                val declaredVars = state.vars.map{it.name}.toSet()
+                                val notDeclared = usedVars-declaredVars
+
+                                if (notDeclared.isNotEmpty()) {
+                                    state.whileBlockError = ctx.getString(R.string.err_undeclared_var, notDeclared.joinToString(", "))
+                                    return@IconButton
+                                }
+                            }
+
+                            if (state.newIfCommand.isNotBlank()) {
+                                val parts = state.newIfCommand.split("=")
+                                val name = parts.getOrNull(0)?.trim() ?: "var"
+
+                                val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                state.curBlockCommands.add(
+                                    VarBlockCommand(
+                                        Variable(
+                                            name = name,
+                                            expression = expr,
+                                            pos = IntOffset(0, state.curBlockCommands.size * 220)
+                                        )
+                                    )
+                                )
+                                state.newIfCommand = ""
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Command")
+                    }
+                }
+                if (state.ifBlockError.isNotBlank()) {
+                    Text(
+                        text = state.ifBlockError,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(start = 16.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Button(
+                        onClick = {
+                            if (state.leftIfExpression.isBlank()) {
+                                state.ifBlockError = "Left part must not be empty"
+                                return@Button
+                            }
+                            if (state.rightIfExpression.isBlank()) {
+                                state.ifBlockError = "Right part must not be empty"
+                                return@Button
+                            }
+
+                            val declaredVarsNames = state.vars.map { it.name }.toSet()
+                            val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
+                            val leftPartVars = regex.findAll(state.leftIfExpression).map { it.value }.toSet()
+                            val rightPartVars = regex.findAll(state.rightIfExpression).map { it.value }.toSet()
+                            val notDeclared = (leftPartVars + rightPartVars) - declaredVarsNames
+                            if (notDeclared.isNotEmpty()) {
+                                state.ifBlockError = "Undeclared variable(-s): ${notDeclared.joinToString(", ")}"
+                                return@Button
+                            }
+                            if (state.selectedIfBlock.isNotEmpty()) {
+                                val i = state.ifBlock.indexOfFirst { it.id == state.selectedIfBlock }
+                                if (i >= 0) {
+                                    state.ifBlock[i] = state.ifBlock[i].copy(
+                                        leftExpression = state.leftIfExpression,
+                                        rightExpression = state.rightIfExpression,
+                                        comparisonOperator = state.selectedComparisonOperator,
+                                        commands = state.curBlockCommands,
+                                        pos = IntOffset(
+                                            state.ifBlock[i].pos.x,
+                                            state.ifBlock[i].pos.y
+                                        )
+                                    )
+                                }
+                                if (state.newIfCommand.isNotBlank()) {
+                                    val parts = state.newIfCommand.split("=")
+                                    val name = parts.getOrNull(0)?.trim() ?: "var"
+
+                                    val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                    state.curBlockCommands.add(
+                                        VarBlockCommand(
+                                            Variable(
+                                                name = name,
+                                                expression = expr,
+                                                pos = IntOffset(0, state.curBlockCommands.size * 60)
+                                            )
+                                        )
+                                    )
+                                    state.newIfCommand = ""
+                                }
+                            }
+                            else {
+                                if (state.newIfCommand.isNotBlank()) {
+                                    val parts = state.newIfCommand.split("=")
+                                    val name = parts.getOrNull(0)?.trim() ?: "var"
+
+                                    val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                    state.curBlockCommands.add(
+                                        VarBlockCommand(
+                                            Variable(
+                                                name = name,
+                                                expression = expr,
+                                                pos = IntOffset(0, state.curBlockCommands.size * 60)
+                                            )
+                                        )
+                                    )
+                                    state.newIfCommand = ""
+                                }
+
+                                // делаю копию команд чтобы при нажатии на креэйт не сохранялся пустой список
+                                val commandsCopy: SnapshotStateList<CommandBlock> = mutableStateListOf<CommandBlock>().apply {
+                                    addAll(state.curWhileCommands)
+                                }
+
+                                // тут уже создаю саму карту с командой для иф-блока
+                                val newIf = IfBlock(
+                                    leftExpression = state.leftIfExpression,
+                                    rightExpression = state.rightIfExpression,
+                                    comparisonOperator = state.selectedComparisonOperator,
+                                    commands = commandsCopy,
+                                    pos = IntOffset(10, 10 + state.ifBlock.size * 220)
+                                )
+
+                                // проерка куда вставлять блок, будет ли он являться независимым
+                                // илли вложенным
+                                if (state.targetCommandsList != null) {
+                                    state.targetCommandsList?.add(IfBlockCommand(newIf))
+                                }
+                                else {
+                                    state.ifBlock.add(newIf)
+                                }
+                            }
+                            // здесь просто создаем новый список команд и его копию чтобы он не обнулялся при редактировании блока
+                            if (state.selectedIfBlock.isNotEmpty()) {
+                                val i = state.ifBlock.indexOfFirst { it.id == state.selectedIfBlock }
+                                if (i >= 0) {
+                                    val newCommands = mutableStateListOf<CommandBlock>().apply {
+                                        addAll(state.curBlockCommands)
+                                    }
+                                    state.ifBlock[i] = state.ifBlock[i].copy(
+                                        leftExpression = state.leftIfExpression,
+                                        rightExpression = state.rightIfExpression,
+                                        comparisonOperator = state.selectedComparisonOperator,
+                                        commands = newCommands,
+                                        pos = state.ifBlock[i].pos
+                                    )
+                                }
+                            }
+                            state.showNewIfDialog = false
+                            state.leftIfExpression = ""
+                            state.rightIfExpression = ""
+                            state.selectedComparisonOperator = "=="
+                            state.curBlockCommands.clear()
+                            state.newIfCommand = ""
+                            state.selectedIfBlock = ""
+                            state.targetCommandsList = null
+                        }
+                    ) {
+                        Text(stringResource(R.string.create))
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    TextButton(
+                        onClick = {
+                            if (state.selectedIfBlock.isNotEmpty()) {
+                                val i = state.ifBlock.indexOfFirst { it.id == state.selectedIfBlock }
+                                if (i >= 0) {
+                                    val newCommands = mutableStateListOf<CommandBlock>().apply {
+                                        addAll(state.curBlockCommands)
+                                    }
+                                    state.ifBlock[i] = state.ifBlock[i].copy(
+                                        leftExpression = state.leftIfExpression,
+                                        rightExpression = state.rightIfExpression,
+                                        comparisonOperator = state.selectedComparisonOperator,
+                                        commands = newCommands,
+                                        pos = state.ifBlock[i].pos
+                                    )
+                                }
+                            }
+                            state.showNewIfDialog = false
+                            state.leftIfExpression = ""
+                            state.rightIfExpression = ""
+                            state.selectedComparisonOperator = "=="
+                            state.ifBlockError = ""
+                            state.curBlockCommands.clear()
+                            state.newIfCommand = ""
+                            state.selectedIfBlock = ""
+                            state.targetCommandsList = null
+                        }
+                    ) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@SuppressLint("StringFormatInvalid")
 @Composable
 fun NewAssignmentDialog(state: CodeBlockState) {
     Dialog(onDismissRequest = {
@@ -72,13 +416,13 @@ fun NewAssignmentDialog(state: CodeBlockState) {
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "Create assignments",
+                    text = stringResource(R.string.create_assign),
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Select variable:"
+                    text = stringResource(R.string.select_var)
                 )
 
                 MenuBoxForAssignments(
@@ -93,7 +437,7 @@ fun NewAssignmentDialog(state: CodeBlockState) {
                 OutlinedTextField(
                     value = state.assignmentArithmExpr,
                     onValueChange = { state.assignmentArithmExpr = it },
-                    label = { Text("Expression (x + 5)") },
+                    label = { Text("Expression 7(2x + 5)") },
                     isError = state.assignmentError != "",
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -114,11 +458,11 @@ fun NewAssignmentDialog(state: CodeBlockState) {
                         onClick = {
                             // ну тут все понятно надеюсь
                             if (state.selectedTargetVar.isBlank()) {
-                                state.assignmentError = "Please select a variable"
+                                state.assignmentError = R.string.please_select_var.toString()
                                 return@Button
                             }
                             else if (state.assignmentArithmExpr.isBlank()) {
-                                state.assignmentError = "Expression cannot be empty"
+                                state.assignmentError = R.string.exp_cannot_be_empty.toString()
                                 return@Button
                             }
                             else {
@@ -293,20 +637,53 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
 }
 
 @Composable
-fun IfDialog(state: CodeBlockState) {
+fun DeleteAllDialog(state: CodeBlockState) {
+    AlertDialog(
+        onDismissRequest = { state.showDeleteAllDialog = false },
+        title = { Text(stringResource(R.string.delete_all)) },
+        text = { Text(stringResource(R.string.are_you_sure)) },
+        confirmButton = {
+            Button(
+                onClick = {
+                    state.showDeleteAllDialog = false
+                    state.whileBlocks.clear()
+                    state.vars.clear()
+                    state.ifBlock.clear()
+                    state.targetCommandsList = null
+                    state.selectedIfBlock = ""
+                    state.errors.removeAll { true }
+
+                }
+            ) {
+                Text(stringResource(R.string.delete_all))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = { state.showDeleteAllDialog = false }
+            ) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@SuppressLint("StringFormatInvalid")
+@Composable
+fun WhileDialog(state: CodeBlockState, ctx: Context) {
     Dialog(onDismissRequest = {
-        state.showNewIfDialog = false
-        state.leftIfExpression = ""
-        state.rightIfExpression = ""
-        state.selectedComparisonOperator = "=="
-        state.ifBlockError = ""
-        state.curBlockCommands.clear()
-        state.newIfCommand = ""
-        state.selectedIfBlock = ""
+        state.showNewWhileDialog = false
+        state.leftWhileExpression = ""
+        state.rightWhileExpression = ""
+        state.selectedWhileTargetId = ""
+        state.newWhileCommand = ""
+        state.curWhileCommands.clear()
+        state.selectedWhileOperator = "=="
+        state.whileBlockError = ""
     }) {
-        Surface(
+        Surface (
             color = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(8.dp)
+            shape = MaterialTheme.shapes.medium
         ) {
             Column(
                 modifier = Modifier
@@ -315,19 +692,20 @@ fun IfDialog(state: CodeBlockState) {
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = "Create If Block",
+                    text = stringResource(R.string.create_while_block),
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                // Left part
+
                 OutlinedTextField(
-                    value = state.leftIfExpression,
-                    onValueChange = { state.leftIfExpression = it },
+                    value = state.leftWhileExpression,
+                    onValueChange = { state.leftWhileExpression = it },
                     label = { Text("Left Expression") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
+
                 val comparisonOpers = listOf("==", "!=", ">", "<", ">=", "<=")
                 Box(
                     modifier = Modifier
@@ -336,7 +714,7 @@ fun IfDialog(state: CodeBlockState) {
                 ) {
                     var expanded by remember { mutableStateOf(false) }
                     OutlinedTextField(
-                        value = state.selectedComparisonOperator,
+                        value = state.selectedWhileOperator,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Comparison Operator") },
@@ -363,7 +741,7 @@ fun IfDialog(state: CodeBlockState) {
                             DropdownMenuItem(
                                 text = { Text(oper) },
                                 onClick = {
-                                    state.selectedComparisonOperator = oper
+                                    state.selectedWhileOperator = oper
                                     expanded = false
                                 }
                             )
@@ -374,170 +752,276 @@ fun IfDialog(state: CodeBlockState) {
                 // Right part
                 // Я русский я иду до конца!!!!
                 OutlinedTextField(
-                    value = state.rightIfExpression,
-                    onValueChange = { state.rightIfExpression = it },
+                    value = state.rightWhileExpression,
+                    onValueChange = { state.rightWhileExpression = it },
                     label = { Text("Right Expression") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Commands (if condition is true):",
-                    fontWeight = FontWeight.Bold
-                )
+                Text(text = stringResource(R.string.commands_while),
+                    fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
-                state.curBlockCommands.forEachIndexed { i, com ->
+
+                state.curWhileCommands.forEachIndexed { i, com ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "${i + 1}. ${com}",
-                            modifier = Modifier.weight(1f)
-                        )
+                        if (com is VarBlockCommand) {
+                            var istr = i + 1
+                            var varName = com.variable.name
+                            var varExpr = com.variable.expression
+                            Text(
+                                text = ctx.getString(R.string.expression, istr.toString(), varName, varExpr),
+                                modifier = Modifier.weight(1f)
+                            )
+                        } else {
+                            var istr = i + 1
+                            Text(
+                                text = ctx.getString(R.string.remove_command, istr.toString()),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                         IconButton(
-                            onClick = { state.curBlockCommands.removeAt(i) }
+                            onClick = { state.curWhileCommands.removeAt(i) }
                         ) {
                             Icon(Icons.Default.Delete, contentDescription = "Remove Command")
                         }
                     }
                     HorizontalDivider()
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+
+                Spacer(Modifier.height(8.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedTextField(
-                        value = state.newIfCommand,
-                        onValueChange = { state.newIfCommand = it },
-                        label = { Text("New Command") },
+                        value = state.newWhileCommand,
+                        onValueChange = { state.newWhileCommand = it
+                            state.whileBlockError = "" },
+                        label = { Text("New Var Expression") },
                         modifier = Modifier.weight(1f)
                     )
                     IconButton(
                         onClick = {
-                            if (state.newIfCommand.isNotBlank())
-                                state.curBlockCommands.add(state.newIfCommand)
+                            val newCommand = state.newWhileCommand.trim()
+                            if (newCommand.isNotBlank()) {
+                                val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
+                                val usedVars = regex.findAll(newCommand).map {it.value }.toSet()
+
+                                val declaredVars = state.vars.map{it.name}.toSet()
+                                val notDeclared = usedVars-declaredVars
+
+                                if (notDeclared.isNotEmpty()) {
+                                    state.whileBlockError = ctx.getString(R.string.err_undeclared_var, notDeclared.joinToString(", "))
+                                    return@IconButton
+                                }
+                            }
+
+                            if (state.newWhileCommand.isNotBlank()) {
+                                val parts = state.newWhileCommand.split("=")
+                                val name = parts.getOrNull(0)?.trim() ?: "var"
+                                val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                state.curWhileCommands.add(
+                                    VarBlockCommand(
+                                        Variable(
+                                            name = name,
+                                            expression = expr,
+                                            pos = IntOffset(0, state.curWhileCommands.size * 220)
+                                        )
+                                    )
+                                )
+                                state.newWhileCommand = ""
+                            }
                         }
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Add Command")
                     }
                 }
-                if (state.ifBlockError.isNotBlank()) {
-                    Text(
-                        text = state.ifBlockError,
+                if (state.whileBlockError.isNotBlank()) {
+                    Text (
+                        text = state.whileBlockError,
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(start = 16.dp)
+                        modifier = Modifier.padding(top = 8.dp)
                     )
                 }
+
                 Spacer(modifier = Modifier.height(16.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
                     Button(
                         onClick = {
-                            if (state.leftIfExpression.isBlank()) {
-                                state.ifBlockError = "Left part must not be empty"
+
+                            //=====================
+                            if (state.leftWhileExpression.isBlank()) {
+                                state.whileBlockError = "Left part must not be empty"
                                 return@Button
                             }
-                            if (state.rightIfExpression.isBlank()) {
-                                state.ifBlockError = "Right part must not be empty"
+                            if (state.rightWhileExpression.isBlank()) {
+                                state.whileBlockError = "Right part must not be empty"
                                 return@Button
                             }
 
                             val declaredVarsNames = state.vars.map { it.name }.toSet()
                             val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
-                            val leftPartVars = regex.findAll(state.leftIfExpression).map { it.value }.toSet()
-                            val rightPartVars = regex.findAll(state.rightIfExpression).map { it.value }.toSet()
+                            val leftPartVars = regex.findAll(state.leftWhileExpression).map { it.value }.toSet()
+                            val rightPartVars = regex.findAll(state.rightWhileExpression).map { it.value }.toSet()
                             val notDeclared = (leftPartVars + rightPartVars) - declaredVarsNames
                             if (notDeclared.isNotEmpty()) {
-                                state.ifBlockError = "Undeclared variable(-s): ${notDeclared.joinToString(", ")}"
+                                state.whileBlockError = "Undeclared variable(-s): ${notDeclared.joinToString(", ")}"
                                 return@Button
                             }
-                            if (state.selectedIfBlock.isNotEmpty()) {
-                                val i = state.ifBlock.indexOfFirst { it.id == state.selectedIfBlock }
+                            if (state.selectedWhileTargetId.isNotEmpty()) {
+                                val i = state.whileBlocks.indexOfFirst { it.id == state.selectedWhileTargetId }
                                 if (i >= 0) {
-                                    state.ifBlock[i] = state.ifBlock[i].copy(
-                                        leftExpression = state.leftIfExpression,
-                                        rightExpression = state.rightIfExpression,
-                                        comparisonOperator = state.selectedComparisonOperator,
-                                        commands = state.curBlockCommands,
+                                    state.whileBlocks[i] = state.whileBlocks[i].copy(
+                                        leftExpression = state.leftWhileExpression,
+                                        rightExpression = state.rightWhileExpression,
+                                        comparisonOperator = state.selectedWhileOperator,
+                                        commands = state.curWhileCommands,
                                         pos = IntOffset(
-                                            state.ifBlock[i].pos.x,
-                                            state.ifBlock[i].pos.y
+                                            state.whileBlocks[i].pos.x,
+                                            state.whileBlocks[i].pos.y
                                         )
                                     )
                                 }
-                                state.curBlockCommands.add(state.newIfCommand)
+                                if (state.newWhileCommand.isNotBlank()) {
+                                    val parts = state.newWhileCommand.split("=")
+                                    val name = parts.getOrNull(0)?.trim() ?: "var"
+
+                                    val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                    state.curWhileCommands.add(
+                                        VarBlockCommand(
+                                            Variable(
+                                                name = name,
+                                                expression = expr,
+                                                pos = IntOffset(0, state.curWhileCommands.size * 60)
+                                            )
+                                        )
+                                    )
+                                    state.newWhileCommand = ""
+                                }
                             }
                             else {
-                                state.curBlockCommands.add(state.newIfCommand)
-                                state.ifBlock.add(
-                                    IfBlock(
-                                        leftExpression = state.leftIfExpression,
-                                        rightExpression = state.rightIfExpression,
-                                        comparisonOperator = state.selectedComparisonOperator,
-                                        commands = state.curBlockCommands.toMutableStateList(),
-                                        pos = IntOffset(10, 10 + state.ifBlock.size * 220)
-                                    )
-                                )
-                            }
-                            state.showNewIfDialog = false
-                            state.leftIfExpression = ""
-                            state.rightIfExpression = ""
-                            state.selectedComparisonOperator = "=="
-                            state.ifBlockError = ""
-                            state.newIfCommand = ""
-                        }
-                    ) {
-                        Text("Create")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
+                                if (state.newWhileCommand.isNotBlank()) {
+                                    val parts = state.newWhileCommand.split("=")
+                                    val name = parts.getOrNull(0)?.trim() ?: "var"
 
+                                    val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                    state.curWhileCommands.add(
+                                        VarBlockCommand(
+                                            Variable(
+                                                name = name,
+                                                expression = expr,
+                                                pos = IntOffset(0, state.curWhileCommands.size * 60)
+                                            )
+                                        )
+                                    )
+                                    state.newWhileCommand = ""
+                                }
+                                val commandsCopy: SnapshotStateList<CommandBlock> = mutableStateListOf<CommandBlock>().apply {
+                                    addAll(state.curWhileCommands)
+                                }
+
+                                // тут уже создаю саму карту
+                                val newIf = WhileBlock(
+                                    leftExpression = state.leftWhileExpression,
+                                    rightExpression = state.rightWhileExpression,
+                                    comparisonOperator = state.selectedWhileOperator,
+                                    commands = commandsCopy,
+                                    pos = IntOffset(10, 10 + state.whileBlocks.size * 120)
+                                )
+
+                                // проерка куда вставлять блок, будет ли он являться независимым
+                                // илли вложенным
+                                if (state.targetCommandsList != null) {
+                                    state.targetCommandsList?.add(WhileBlockCommand(newIf))
+                                }
+                                else {
+                                    state.whileBlocks.add(newIf)
+                                }
+                            }
+                            if (state.selectedWhileTargetId.isNotEmpty()) {
+                                val i = state.whileBlocks.indexOfFirst { it.id == state.selectedWhileTargetId }
+                                if (i >= 0) {
+                                    val newCommands = mutableStateListOf<CommandBlock>().apply {
+                                        addAll(state.curWhileCommands)
+                                    }
+                                    state.whileBlocks[i] = state.whileBlocks[i].copy(
+                                        leftExpression = state.leftWhileExpression,
+                                        rightExpression = state.rightWhileExpression,
+                                        comparisonOperator = state.selectedWhileOperator,
+                                        commands = newCommands,
+                                        pos = state.whileBlocks[i].pos
+                                    )
+                                }
+                            }
+                            if (state.selectedWhileTargetId.isNotEmpty()) {
+                                val i = state.whileBlocks.indexOfFirst { it.id == state.selectedWhileTargetId }
+                                if (i >= 0) {
+                                    val newCommands = mutableStateListOf<CommandBlock>().apply {
+                                        addAll(state.curWhileCommands)
+                                    }
+                                    state.whileBlocks[i] = state.whileBlocks[i].copy(
+                                        leftExpression = state.leftWhileExpression,
+                                        rightExpression = state.rightWhileExpression,
+                                        comparisonOperator = state.selectedWhileOperator,
+                                        commands = newCommands,
+                                        pos = state.whileBlocks[i].pos
+                                    )
+                                }
+                            }
+                            state.showNewWhileDialog = false
+                            state.leftWhileExpression = ""
+                            state.rightWhileExpression = ""
+                            state.selectedWhileOperator = "=="
+                            state.whileBlockError = ""
+                            state.curWhileCommands.clear()
+                            state.newWhileCommand = ""
+                            state.targetCommandsList = null
+                        }
+
+                    ) {
+                        Text(stringResource(R.string.create))
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
                     TextButton(
                         onClick = {
-                            state.showNewIfDialog = false
-                            state.leftIfExpression = ""
-                            state.rightIfExpression = ""
-                            state.selectedComparisonOperator = "=="
-                            state.ifBlockError = ""
-                            state.curBlockCommands.clear()
-                            state.newIfCommand = ""
+                            if (state.selectedWhileTargetId.isNotEmpty()) {
+                                val i = state.whileBlocks.indexOfFirst { it.id == state.selectedWhileTargetId }
+                                if (i >= 0) {
+                                    val newCommands = mutableStateListOf<CommandBlock>().apply {
+                                        addAll(state.curWhileCommands)
+                                    }
+                                    state.whileBlocks[i] = state.whileBlocks[i].copy(
+                                        leftExpression = state.leftWhileExpression,
+                                        rightExpression = state.rightWhileExpression,
+                                        comparisonOperator = state.selectedWhileOperator,
+                                        commands = newCommands,
+                                        pos = state.whileBlocks[i].pos
+                                    )
+                                }
+                            }
+                            state.showNewWhileDialog = false
+                            state.leftWhileExpression = ""
+                            state.rightWhileExpression = ""
+                            state.selectedWhileOperator = "=="
+                            state.whileBlockError = ""
+                            state.curWhileCommands.clear()
+                            state.newWhileCommand = ""
+                            state.targetCommandsList = null
                         }
                     ) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.cancel))
                     }
                 }
             }
         }
     }
-}
-
-@Composable
-fun DeleteAllDialog(state: CodeBlockState) {
-    AlertDialog(
-        onDismissRequest = { state.showDeleteAllDialog = false },
-        title = { Text("Delete All") },
-        text = { Text("Are you sure you want to remove all elements? This cannot be undone!") },
-        confirmButton = {
-            Button(
-                onClick = {
-                    state.showDeleteAllDialog = false
-                    state.vars.clear()
-                    state.ifBlock.clear()
-                    state.errors.removeAll { true }
-                }
-            ) {
-                Text("Delete All")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = { state.showDeleteAllDialog = false }
-            ) {
-                Text("Cancel")
-            }
-        }
-    )
 }

@@ -3,9 +3,13 @@ package com.example.test.utils
 import com.example.test.R
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.example.test.CodeBlockState
+import com.example.test.CommandBlock
+import com.example.test.IfBlockCommand
+import com.example.test.VarBlockCommand
 import com.example.test.Variable
+import com.example.test.WhileBlockCommand
 import java.util.Stack
 
 fun evaluateIfCondition(
@@ -48,63 +52,44 @@ fun evaluateIfCondition(
     }
 }
 
-fun executeIfCommands(commands: List<String>, vars: MutableList<Variable>, context: Context) {
-    commands.forEach { com ->
-        try {
-            val assignmentRegex = Regex("\\s*([a-zA-Z_]\\w*)\\s*=\\s*(.+)\\s*")
-            val matchRes = assignmentRegex.matchEntire(com)
-
-            if (matchRes != null) {
-                val (varName, expr) = matchRes.destructured
-                val i = vars.indexOfFirst { it.name == varName }
-                if (i == -1) {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.err_not_found_in_com, varName, com),
-                        Toast.LENGTH_LONG
-                    ).show()
-                    return@forEach
+// проходится по командам по порядку их добавления и вложенности и присваивает переменной
+fun executeIfCommands(
+    commands: List<CommandBlock>,
+    vars: SnapshotStateList<Variable>,
+    context: Context
+) {
+    commands.forEach { command ->
+        when(command) {
+            is VarBlockCommand-> {
+                val index = vars.indexOfFirst { it.name == command.variable.name }
+                if (index >= 0) {
+                    vars[index]= vars[index].copy(expression = command.variable.expression)
                 }
-
-                val rpn = convertToReversePolishNotation(expr, context)
-                if (rpn.isBlank()) {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.err_invalid_exp_in_com, com),
-                        Toast.LENGTH_LONG
-                    ).show()
-                    return@forEach
-                }
-
-                val declaredVars = vars.map { it.name }.toSet()
-                val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
-                val exprVars = regex.findAll(expr).map { it.value }.toSet()
-                val notDeclared = exprVars - declaredVars
-                if (notDeclared.isNotEmpty()) {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.err_undeclared_var, notDeclared.joinToString(", ")),
-                        Toast.LENGTH_LONG
-                    ).show()
-                    return@forEach
-                }
-
-                val newValue = calculateArithmeticExpression(rpn, vars, context = context)
-                vars[i] = vars[i].copy(expression = newValue.toString())
-            } else {
-                Toast.makeText(
-                    context,
-                    R.string.err_undeclared_var,
-                    Toast.LENGTH_LONG
-                ).show()
             }
-        }
-        catch (e: Exception) {
-            Toast.makeText(
-                context,
-                context.getString(R.string.err_executing_com, com, e.message),
-                Toast.LENGTH_LONG
-            ).show()
+            is IfBlockCommand -> {
+                val cond = evaluateIfCondition(
+                    command.ifBlock.leftExpression,
+                    command.ifBlock.rightExpression,
+                    command.ifBlock.comparisonOperator,
+                    vars,
+                    context
+                )
+                if (cond) {
+                    executeIfCommands(command.ifBlock.commands, vars, context)
+                }
+            }
+
+            is WhileBlockCommand -> {
+                while (evaluateIfCondition(
+                        command.whileBlock.leftExpression,
+                        command.whileBlock.rightExpression,
+                        command.whileBlock.comparisonOperator,
+                        vars,
+                        context
+                    )) {
+                    executeIfCommands(command.whileBlock.commands, vars, context)
+                }
+            }
         }
     }
 }
