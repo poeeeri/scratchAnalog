@@ -191,7 +191,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                     )
                     IconButton(
                         onClick = {
-                            val newCommand = state.newWhileCommand.trim()
+                            val newCommand = state.newIfCommand.trim()
                             if (newCommand.isNotBlank()) {
                                 val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
                                 val usedVars = regex.findAll(newCommand).map {it.value }.toSet()
@@ -200,7 +200,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                 val notDeclared = usedVars-declaredVars
 
                                 if (notDeclared.isNotEmpty()) {
-                                    state.whileBlockError = ctx.getString(R.string.err_undeclared_var, notDeclared.joinToString(", "))
+                                    state.ifBlockError = ctx.getString(R.string.err_undeclared_var, notDeclared.joinToString(", "))
                                     return@IconButton
                                 }
                             }
@@ -310,7 +310,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
 
                                 // делаю копию команд чтобы при нажатии на креэйт не сохранялся пустой список
                                 val commandsCopy: SnapshotStateList<CommandBlock> = mutableStateListOf<CommandBlock>().apply {
-                                    addAll(state.curWhileCommands)
+                                    addAll(state.curBlockCommands)
                                 }
 
                                 // тут уже создаю саму карту с командой для иф-блока

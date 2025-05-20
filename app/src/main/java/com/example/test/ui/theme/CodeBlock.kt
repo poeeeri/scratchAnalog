@@ -24,7 +24,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.test.ContextMenuState
 import com.example.test.CodeBlockState
-import com.example.test.WhileBlock
 import com.example.test.ui.theme.blocks.IfBlockCard
 import com.example.test.ui.theme.blocks.VarCard
 import com.example.test.ui.theme.blocks.WhileBlockCard
@@ -56,9 +55,6 @@ fun CodeBlock() {
         Menu(states)
     }
 
-    // я для каждого диалогового окна написала свою функцию, чтобы кодблок не был большим и улучшить
-    // читабельность, как и сказали сделать на прошлой сдаче прогресса.
-    // если что в string.xml хранятся значения строк и их айдишники, все строки записываем туда
     if (states.showNewVarDialog) VarDialog(states, context)
     if (states.showNewIfDialog) IfDialog(states, context)
     if (states.showDeleteAllDialog) DeleteAllDialog(states)

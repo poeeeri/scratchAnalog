@@ -27,6 +27,9 @@ fun FloatingActivationButtons(state: CodeBlockState, context: Context) {
         ) {
             Icon(Icons.Default.Loop, contentDescription = "Add While Block")
         }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
         FloatingActionButton(
             onClick = { state.showNewVarDialog = true }
         ) {
