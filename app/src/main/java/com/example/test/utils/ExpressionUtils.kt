@@ -146,9 +146,6 @@ fun executeIfCommands(
             }
 
             is WhileBlockCommand -> {
-                Log.d("EXEC", "while-condition: ${command.whileBlock.leftExpression} ${command.whileBlock.comparisonOperator} ${command.whileBlock.rightExpression}")
-                Log.d("EXEC", "while-body size = ${command.whileBlock.commands.size}")
-
                 while (evaluateIfCondition(
                         command.whileBlock.leftExpression,
                         command.whileBlock.rightExpression,

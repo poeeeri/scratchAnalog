@@ -119,7 +119,7 @@ fun WhileBlockCard(
             Box (
                 modifier = Modifier
                     .background(
-                        color = MaterialTheme.colorScheme.tertiaryContainer,
+                        color = MaterialTheme.colorScheme.surfaceVariant,
                         shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
                     )
                     .border(
@@ -136,6 +136,7 @@ fun WhileBlockCard(
                     Text(
                         text = "Do:",
                         fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     IconButton( onClick = {
                         state.targetCommandsList = whileBlock.commands
@@ -154,6 +155,7 @@ fun WhileBlockCard(
                         )
                     }
                     else {
+                        // для отрисовки карточек внутри блока
                         whileBlock.commands.forEach { cmd ->
                             when(cmd) {
                                 is WhileBlockCommand -> WhileBlockCard(

@@ -982,8 +982,6 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                 ) {
                     Button(
                         onClick = {
-
-                            //=====================
                             if (state.leftWhileExpression.isBlank()) {
                                 state.whileBlockError = "Left part must not be empty"
                                 return@Button
@@ -1078,21 +1076,8 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                                     state.whileBlocks.add(newIf)
                                 }
                             }
-                            if (state.selectedWhileTargetId.isNotEmpty()) {
-                                val i = state.whileBlocks.indexOfFirst { it.id == state.selectedWhileTargetId }
-                                if (i >= 0) {
-                                    val newCommands = mutableStateListOf<CommandBlock>().apply {
-                                        addAll(state.curWhileCommands)
-                                    }
-                                    state.whileBlocks[i] = state.whileBlocks[i].copy(
-                                        leftExpression = state.leftWhileExpression,
-                                        rightExpression = state.rightWhileExpression,
-                                        comparisonOperator = state.selectedWhileOperator,
-                                        commands = newCommands,
-                                        pos = state.whileBlocks[i].pos
-                                    )
-                                }
-                            }
+                            // здесь мы просто копируем блок с командами чтобы сохранялись
+                            // корректные списки а не обнулялись
                             if (state.selectedWhileTargetId.isNotEmpty()) {
                                 val i = state.whileBlocks.indexOfFirst { it.id == state.selectedWhileTargetId }
                                 if (i >= 0) {

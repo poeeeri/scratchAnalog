@@ -166,6 +166,7 @@ fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, o
                         )
                     }
                     else {
+                        // для отрисовки карточек внутри блока
                         ifBlock.commands.forEach {cmd ->
                             when(cmd) {
                                 is VarBlockCommand -> VarCard(
