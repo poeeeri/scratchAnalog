@@ -48,3 +48,23 @@ fun handleDeleteIfBlock(state: CodeBlockState) {
         state.ifBlock.removeAll { it.id == blockId }
     }
 }
+
+fun handleEditArrayBlock(state: CodeBlockState) {
+    state.contextMenuState.arrayBlockId?.let { blockId ->
+        val block = state.arrays.firstOrNull { it.id == blockId }
+        block?.let {
+            state.selectedArrayId = blockId
+            state.newArrayName = it.name
+            state.newArraySize = it.size.toString()
+            state.showEditArrayDialog = true
+        }
+    }
+    state.contextMenuState = ContextMenuState()
+}
+
+fun handleDeleteArrayBlock(state: CodeBlockState) {
+    state.contextMenuState.arrayBlockId?.let { blockId ->
+        state.arrays.removeAll { it.id == blockId }
+    }
+    state.contextMenuState = ContextMenuState()
+}
