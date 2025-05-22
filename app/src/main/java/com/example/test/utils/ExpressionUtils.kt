@@ -1,5 +1,6 @@
 package com.example.test.utils
 
+import android.Manifest
 import com.example.test.R
 import android.content.Context
 import android.util.Log
@@ -140,9 +141,29 @@ fun getPriority(operator: Char): Int = when(operator){
     else -> 0
 }
 
+// Предварительно обрабатываем выражение с массивами
+fun preprocessArrayExpression(expression: String) : String {
+    val arrPattern = Regex("([a-zA-Z_]\\w*)\\s*\\[(.*?)\\]")
+
+    var res = expression
+    var offset = 0
+    arrPattern.findAll(expression).forEach { matchRes ->
+        val arrName = matchRes.groupValues[1]
+        val idExpr = matchRes.groupValues[2].trim()
+
+        val arrayToken = "${arrName}[${idExpr}]"
+        val startPos = matchRes.range.first + offset
+        val endPos = matchRes.range.last + offset + 1
+        res = res.substring(0, startPos) + arrayToken + res.substring(endPos)
+        offset += arrayToken.length - (endPos - startPos)
+    }
+    return res
+}
+
 //преобразуем выражение в обратную польскую запись
 fun convertToReversePolishNotation(expression: String, context: Context) : String{
-    val processedExpr = rewriteExpression(expression)
+    val preprocessedExpr = preprocessArrayExpression(expression)
+    val processedExpr = rewriteExpression(preprocessedExpr)
 
     val output = StringBuilder()
     val stack = Stack<Char>()
@@ -164,12 +185,39 @@ fun convertToReversePolishNotation(expression: String, context: Context) : Strin
                 continue
             }
 
-            c.isLetter() ->{
+            c.isLetter() || c == '_' ->{
+                val start = i
                 while (i <processedExpr.length && (processedExpr[i].isLetterOrDigit() || processedExpr[i] == '_')){
                     output.append(processedExpr[i++])
                 }
+                if (i < processedExpr.length && processedExpr[i] == '[') {
+                    output.append('[')
+                    i++
+
+                    var bracketLevel = 1
+                    while (i < processedExpr.length && bracketLevel > 0) {
+                        if (processedExpr[i] == '[') bracketLevel++
+                        else if (processedExpr[i] == ']') bracketLevel--
+
+                        if (bracketLevel > 0) output.append(processedExpr[i++])
+                        else {
+                            output.append(']')
+                            i++
+                        }
+                    }
+                }
                 output.append(' ')
                 continue
+            }
+
+            c == '[' -> {
+                output.append("[ ")
+                i++
+            }
+
+            c == ']' -> {
+                output.append("] ")
+                i++
             }
 
             c == '(' -> {
@@ -202,6 +250,7 @@ fun convertToReversePolishNotation(expression: String, context: Context) : Strin
 
             else-> {
                 Toast.makeText(context, context.getString(R.string.err_invalid_character, c), Toast.LENGTH_LONG).show()
+                break
             }
         }
     }
@@ -222,6 +271,46 @@ fun convertToReversePolishNotation(expression: String, context: Context) : Strin
         if (it.isEmpty()) {
             Toast.makeText(context, R.string.empty_rpn_exp, Toast.LENGTH_LONG).show()
         }
+    }
+}
+
+fun getArrayElementValue(
+    arrName: String,
+    indexExpression: String,
+    arrays: List<ArrayBlock>,
+    vars: List<Variable>,
+    context: Context
+): Int {
+    try {
+        val mas = arrays.firstOrNull { it.name == arrName }
+        if (mas == null) {
+            Toast.makeText(
+                context,
+                "Array not found: $arrName",
+                Toast.LENGTH_LONG
+            ).show()
+            return 0
+        }
+
+        val idRpn = convertToReversePolishNotation(indexExpression, context)
+        val i = calculateArithmeticExpression(idRpn, vars, context = context, arrays = arrays)
+        if (i < 0 || i >= mas.size) {
+            Toast.makeText(
+                context,
+                "Array index out of bounds: $i",
+                Toast.LENGTH_LONG
+            ).show()
+            return 0
+        }
+        return mas.elems.getOrNull(i)?.toIntOrNull() ?: 0
+    }
+    catch (e: Exception) {
+        Toast.makeText(
+            context,
+            "Error accessing array element: ${e.message}",
+            Toast.LENGTH_LONG
+        ).show()
+        return 0
     }
 }
 
@@ -285,85 +374,148 @@ fun calculateArithmeticExpression(
         Toast.makeText(context, R.string.err_var_with_enpty_name_found, Toast.LENGTH_LONG).show()
     }
 
+    val arrayAccessPattern = Regex("([a-zA-Z_]\\w*)\\[(.*)\\]")
+
     val stack = mutableListOf<Int>()
     val tokens = expression.split(" ").filter { it.isNotBlank() }
+    Log.d("CalcExpr", "Tokens: $tokens")
 
     if (tokens.isEmpty()){
+        Log.e("CalcExpr", "Empty expression")
         Toast.makeText(context, R.string.err_empty_exp, Toast.LENGTH_LONG).show()
+        return 0
     }
 
     for (token in tokens) {
         try {
+            val arrMatch = arrayAccessPattern.matchEntire(token)
             when {
+                arrMatch != null -> {
+                    val arrName = arrMatch.groupValues[1]
+                    val idExpr = arrMatch.groupValues[2]
+
+                    val mas = arrays.firstOrNull { it.name == arrName }
+                    if (mas != null) {
+                        val idRpn = convertToReversePolishNotation(idExpr, context)
+                        val i = calculateArithmeticExpression(idRpn, vars, context = context, arrays = arrays)
+
+                        if (i >= 0 && i < mas.size) {
+                            val value = mas.elems.getOrNull(i)?.toIntOrNull() ?: 0
+                            stack.add(value)
+                        }
+                        else {
+                            Toast.makeText(
+                                context,
+                                "Array index out of bounds: $i",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            stack.add(0)
+                        }
+                    }
+                    else {
+                        Log.e("CalcExpr", "Array not found: $arrName")
+                        Toast.makeText(
+                            context,
+                            "Array not found: $arrName",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        stack.add(0)
+                    }
+                }
+
                 token.toIntOrNull() != null -> {
+                    Log.d("CalcExpr", "Numeric token: $token")
                     stack.add(token.toInt())
                 }
 
                 vars.any { it.name == token } -> {
                     val variable = vars.first {it.name == token}
+                    Log.d("CalcExpr", "Variable token: ${variable.name} = ${variable.expression}")
                     val value = if (variable.expression.isBlank()){
                         0
                     } else{
-                        calculateArithmeticExpression(variable.expression, vars, context=context)
+                        val rpn = convertToReversePolishNotation(variable.expression, context)
+                        Log.d("CalcExpr", "Variable expression RPN: $rpn")
+                        calculateArithmeticExpression(rpn, vars, context=context)
                     }
+                    Log.d("CalcExpr", "Variable value: $value")
                     stack.add(value)
                 }
 
                 token == "+" -> {
                     val b = stack.removeAt(stack.lastIndex)
                     val a = stack.removeAt(stack.lastIndex)
+                    Log.d("CalcExpr", "Operation: $a + $b = ${a + b}")
                     stack.add(a + b)
                 }
 
                 token == "-" -> {
                     val b = stack.removeAt(stack.lastIndex)
                     val a = stack.removeAt(stack.lastIndex)
+                    Log.d("CalcExpr", "Operation: $a - $b = ${a - b}")
                     stack.add(a - b)
                 }
 
                 token == "*" -> {
                     val b = stack.removeAt(stack.lastIndex)
                     val a = stack.removeAt(stack.lastIndex)
+                    Log.d("CalcExpr", "Operation: $a * $b = ${a * b}")
                     stack.add(a * b)
                 }
 
                 token == "/" -> {
                     val b = stack.removeAt(stack.lastIndex)
                     if (b == 0) {
+                        Log.e("CalcExpr", "Division by zero")
                         Toast.makeText(context, R.string.err_div_by_zero, Toast.LENGTH_LONG).show()
                     }
                     val a = stack.removeAt(stack.lastIndex)
+                    Log.d("CalcExpr", "Operation: $a / $b = ${a / b}")
                     stack.add(a / b)
                 }
 
                 token == "%" -> {
                     val b = stack.removeAt(stack.lastIndex)
                     if (b == 0) {
+                        Log.e("CalcExpr", "Modulo by zero")
                         Toast.makeText(context, R.string.err_div_by_zero, Toast.LENGTH_LONG).show()
                     }
                     val a = stack.removeAt(stack.lastIndex)
+                    Log.d("CalcExpr", "Operation: $a % $b = ${a % b}")
                     stack.add(a % b)
                 }
             }
-        } catch (e: NoSuchElementException){
+            Log.d("CalcExpr", "Stack after token: $stack")
+        }
+        catch (e: NoSuchElementException){
+            Log.e("CalcExpr", "Error processing token $token: ${e.message}", e)
             Toast.makeText(context, context.getString(R.string.err_var_token_not_found, token), Toast.LENGTH_LONG).show()
+        }
+        catch (e: Exception) {
+            Log.e("CalcExpr", "Unexpected error processing token $token: ${e.message}", e)
+            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+            return 0
         }
     }
 
     val result = stack.singleOrNull()
     if (result == null){
+        Log.e("CalcExpr", "Invalid expression format. Stack: $stack")
         Toast.makeText(context, R.string.err_invalid_exp_format, Toast.LENGTH_LONG).show()
         return 0
     }
+    Log.d("CalcExpr", "Final result: $result")
     return result
 }
 
 //находим зависимость переменной от других переменных
 fun extractDependencies(expression: String): Set<String>{
-    return Regex("[a-zA-Z_]\\w*")
-        .findAll(expression)
-        .map { it.value }
-        .toSet()
+    val varPattern = Regex("[a-zA-Z_]\\w*")
+    val arrPattern = Regex("([a-zA-Z_]\\w*)\\s*\\[")
+
+    val vars = varPattern.findAll(expression).map { it.value }.toSet()
+    val arrVars = arrPattern.findAll(expression).map { it.groupValues[1] }.toSet()
+    return vars + arrVars
 }
 // здесь мы пересчитываем все переменные
 fun recalculateAllVariables(
@@ -377,14 +529,22 @@ fun recalculateAllVariables(
     for (variable in vars) {
         graph[variable.name] = extractDependencies(variable.expression)
     }
+    for (array in arrays) {
+        graph[array.name] = emptySet()
+    }
 
     return runCatching {
         val updatedVars = vars.map { it.copy() }.toMutableList()
         val sortedOrder = topologicalSort(graph)
         val computedValues = mutableMapOf<String, Int>()
+
+        val arrayNames = arrays.map { it.name }.toSet()
         for (varName in sortedOrder) {
-            val variable = updatedVars.first { it.name == varName }
+            if (arrayNames.contains(varName)) continue
+
+            val variable = updatedVars.firstOrNull { it.name == varName }
             if (variable == null) {
+                Log.e("RecalculateVars", "Variable $varName not found in collection")
                 Toast.makeText(
                     context,
                     "Variable $varName not found",
@@ -393,23 +553,43 @@ fun recalculateAllVariables(
                 continue
             }
             try {
-                var processed = variable.expression
-                computedValues.forEach { (name, value) ->
-                    processed = processed.replace(name, value.toString())
+                val arrayAccessPattern = Regex("([a-zA-Z_]\\w*)\\[(.*?)\\]")
+                val arrMatch = arrayAccessPattern.matchEntire(variable.expression.trim())
+                if (arrMatch != null) {
+                    val arrName = arrMatch.groupValues[1]
+                    val idExpr = arrMatch.groupValues[2]
+                    val value = getArrayElementValue(
+                        arrName,
+                        idExpr,
+                        arrays,
+                        updatedVars,
+                        context
+                    )
+                    computedValues[varName] = value
+                    updatedVars.replaceAll {
+                        if (it.name == varName) it.copy(expression = value.toString())
+                        else it
+                    }
                 }
-                val rpn = convertToReversePolishNotation(processed, context)
-                val value = calculateArithmeticExpression(
-                    rpn,
-                    vars.filter { computedValues.containsKey(it.name) },
-                    context = context,
-                    arrays = arrays
-                )
-                computedValues[varName] = value
-                updatedVars.replaceAll {
-                    if (it.name == varName)
-                        it.copy(expression = value.toString())
-                    else
-                        it
+                else {
+                    var processed = variable.expression
+                    computedValues.forEach { (name, value) ->
+                        processed = processed.replace(name, value.toString())
+                    }
+                    val rpn = convertToReversePolishNotation(processed, context)
+                    val value = calculateArithmeticExpression(
+                        rpn,
+                        vars.filter { computedValues.containsKey(it.name) },
+                        context = context,
+                        arrays = arrays
+                    )
+                    computedValues[varName] = value
+                    updatedVars.replaceAll {
+                        if (it.name == varName)
+                            it.copy(expression = value.toString())
+                        else
+                            it
+                    }
                 }
             } catch (e: Exception) {
                 Toast.makeText(context, "${e.message}", Toast.LENGTH_LONG).show()
@@ -476,14 +656,17 @@ fun recCalAll(state: CodeBlockState, context: Context) {
         }
     }.
     onFailure { e ->
+        Log.e("RecCalAll", "Error recalculating variables: ${e.message}", e)
         Toast.makeText(context, e.message ?: "Error", Toast.LENGTH_LONG).show()
     }
 }
 
 // проверка на валидность арифм операций со скобками
 fun isValidArithmExpression(state: CodeBlockState) : Boolean {
-    state.assignmentArithmExpr = rewriteExpression(state.assignmentArithmExpr)
-    var lvl = 0;
+    val processedExpr = preprocessArrayExpression(state.assignmentArithmExpr)
+    state.assignmentArithmExpr = rewriteExpression(processedExpr)
+    var lvl = 0
+    var bracketLevel = 0
 
     // проверяем на скобочные пары
     for (char in state.assignmentArithmExpr) {
@@ -491,11 +674,14 @@ fun isValidArithmExpression(state: CodeBlockState) : Boolean {
             '(' -> lvl++
             ')' -> if (--lvl < 0)
                 return false
+            '[' -> bracketLevel++
+            ']' -> if (--bracketLevel < 0)
+                return false
         }
     }
-    if (lvl != 0) return false
+    if (lvl != 0 || bracketLevel != 0) return false
 
-    val regex = Regex("[A-Za-z_]\\w*|\\d+(?:\\.\\d+)?|[()+\\-%*/]")
+    val regex = Regex("[A-Za-z_]\\w*(?:\\[(?:[^\\[\\]]+)\\])?|\\d+(?:\\.\\d+)?|[()+\\-%*/\\[\\]]")
     val tokens = regex.findAll(state.assignmentArithmExpr).map { it.value }.toList()
     if (tokens.isEmpty()) return false
 
@@ -504,10 +690,12 @@ fun isValidArithmExpression(state: CodeBlockState) : Boolean {
     for (t in tokens) {
         if (expect) {
             when {
-                t.matches(Regex("\\d+")) || t.matches(Regex("(?!_|\\d+)([a-zA-Z_]\\w*)"))
+                t.matches(Regex("\\d+")) || t.matches(Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")) ||
+                        t.matches(Regex("(?!_|\\d+)([a-zA-Z_]\\w*)\\[.*\\]"))
                     -> expect = false
 
                 t == "(" -> expect = true
+                t == "[" -> expect = true
                 t == "+" || t == "-" -> expect = true
                 else -> return false
             }
@@ -516,6 +704,7 @@ fun isValidArithmExpression(state: CodeBlockState) : Boolean {
             when (t) {
                 "+", "-", "/", "%", "*" -> expect = true
                 ")" -> expect = false
+                "]" -> expect = false
                 else -> return false
             }
         }

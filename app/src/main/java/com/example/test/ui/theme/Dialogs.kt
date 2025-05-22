@@ -259,9 +259,15 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                             }
 
                             val declaredVarsNames = state.vars.map { it.name }.toSet() + state.arrays.map{it.name}.toSet()
-                            val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
-                            val leftPartVars = regex.findAll(state.leftIfExpression).map { it.value }.toSet()
-                            val rightPartVars = regex.findAll(state.rightIfExpression).map { it.value }.toSet()
+                            val regex = Regex("([a-zA-Z_]\\w*)(?:\\s*\\[.*?\\])?")
+                            val leftPartVars = regex.findAll(state.leftIfExpression).map {
+                                if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
+                                else it.value
+                            }.toSet()
+                            val rightPartVars = regex.findAll(state.rightIfExpression).map {
+                                if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
+                                else it.value
+                            }.toSet()
                             val notDeclared = (leftPartVars + rightPartVars) - declaredVarsNames
                             if (notDeclared.isNotEmpty()) {
                                 state.ifBlockError = "Undeclared variable(-s): ${notDeclared.joinToString(", ")}"
@@ -407,7 +413,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
 
 @SuppressLint("StringFormatInvalid")
 @Composable
-fun NewAssignmentDialog(state: CodeBlockState) {
+fun NewAssignmentDialog(state: CodeBlockState, ctx: Context) {
     Dialog(onDismissRequest = {
         state.showNewAssignmentDialog = false
         state.selectedTargetVar = ""
@@ -474,10 +480,37 @@ fun NewAssignmentDialog(state: CodeBlockState) {
                                 return@Button
                             }
                             else {
+                                val arrayAssignPattern = Regex("([a-zA-Z_]\\w*)\\s*\\[(.*?)\\]\\s*=\\s*(.*)")
+                                val arrMatch = arrayAssignPattern.matchEntire(state.assignmentArithmExpr)
+
+                                if (arrMatch != null) {
+                                    val arrName = arrMatch.groupValues[1]
+                                    val idExpr = arrMatch.groupValues[2]
+                                    val valueExpr = arrMatch.groupValues[3]
+
+                                    val success = setArrayElement(
+                                        arrName,
+                                        idExpr,
+                                        valueExpr,
+                                        state.arrays.toMutableList(),
+                                        state.vars,
+                                        ctx
+                                    )
+                                    if (success) {
+                                        state.showNewAssignmentDialog = false
+                                        state.selectedTargetVar = ""
+                                        state.assignmentError = ""
+                                        state.assignmentArithmExpr = ""
+                                    }
+                                    return@Button
+                                }
                                 // здесь чекаем есть ли переменная вообще такая
                                 val declaredVarsName = state.vars.map {it.name}.toSet() + state.arrays.map {it.name}.toSet()
-                                val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
-                                val findVars = regex.findAll(state.assignmentArithmExpr).map {it.value}.toSet()
+                                val regex = Regex("([a-zA-Z_]\\w*)(?:\\s*\\[.*?\\])?")
+                                val findVars = regex.findAll(state.assignmentArithmExpr).map {
+                                    if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
+                                    else it.value
+                                }.toSet()
                                 var notDeclared = findVars - declaredVarsName
 
                                 if (notDeclared.isNotEmpty()) {
@@ -889,9 +922,15 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                             }
 
                             val declaredVarsNames = state.vars.map { it.name }.toSet() + state.arrays.map{it.name}.toSet()
-                            val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
-                            val leftPartVars = regex.findAll(state.leftWhileExpression).map { it.value }.toSet()
-                            val rightPartVars = regex.findAll(state.rightWhileExpression).map { it.value }.toSet()
+                            val regex = Regex("([a-zA-Z_]\\w*)(?:\\s*\\[.*?\\])?")
+                            val leftPartVars = regex.findAll(state.leftWhileExpression).map {
+                                if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
+                                else it.value
+                            }.toSet()
+                            val rightPartVars = regex.findAll(state.rightWhileExpression).map {
+                                if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
+                                else it.value
+                            }.toSet()
                             val notDeclared = (leftPartVars + rightPartVars) - declaredVarsNames
                             if (notDeclared.isNotEmpty()) {
                                 state.whileBlockError = "Undeclared variable(-s): ${notDeclared.joinToString(", ")}"
@@ -1460,24 +1499,18 @@ fun ArrayAccessDialog(state: CodeBlockState, ctx: Context) {
                             val targetId = state.vars.indexOfFirst { it.name == state.targetVarName }
                             if (targetId >= 0) {
                                 val arrayAccessExpression = "${state.selectedArrayName}[${state.arrayIndexExpression}]"
-                                try {
-                                    val rpn = convertToReversePolishNotation(arrayAccessExpression, ctx)
-                                    calculateArithmeticExpression(rpn, state.vars, context = ctx, arrays = state.arrays)
-                                    state.vars[targetId] = state.vars[targetId].copy(
-                                        expression = arrayAccessExpression
-                                    )
+                                state.vars[targetId] = state.vars[targetId].copy(
+                                    expression = arrayAccessExpression
+                                )
 
-                                    state.showArrayAccessDialog = false
-                                    state.selectedArrayName = ""
-                                    state.arrayIndexExpression = ""
-                                    state.targetVarName = ""
-                                    state.arrayAccessError = ""
-                                }
-                                catch (e: Exception) {
-                                    state.arrayAccessError = "Error processing array access: ${e.message}"
-                                }
+                                state.showArrayAccessDialog = false
+                                state.selectedArrayName = ""
+                                state.arrayIndexExpression = ""
+                                state.targetVarName = ""
+                                state.arrayAccessError = ""
                             } else {
                                 state.arrayAccessError = "Target variable not found"
+                                return@Button
                             }
                         }
                     ) {

@@ -84,7 +84,7 @@ fun CodeBlock() {
     if (states.showNewVarDialog) VarDialog(states, context)
     if (states.showNewIfDialog) IfDialog(states, context)
     if (states.showDeleteAllDialog) DeleteAllDialog(states)
-    if (states.showNewAssignmentDialog) NewAssignmentDialog(states)
+    if (states.showNewAssignmentDialog) NewAssignmentDialog(states, context)
     if (states.showNewWhileDialog) WhileDialog(states, context)
     if (states.showNewArrayDialog) NewArrayDialog(states, context)
     if (states.showEditArrayDialog) EditArrayDialog(states, context)
