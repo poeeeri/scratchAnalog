@@ -163,6 +163,28 @@ fun preprocessArrayExpression(expression: String) : String {
     return res
 }
 
+// Тоже самое, но это для UI (чтобы 1* не было :))))
+fun preprocessArrayExprForDisplay(expression: String) : String {
+    val cleanedExpr = if (expression.startsWith("1*"))
+        expression.substring(2)
+    else expression
+    val arrPattern = Regex("([a-zA-Z_]\\w*)\\s*\\[(.*?)\\]")
+
+    var res = cleanedExpr
+    var offset = 0
+    arrPattern.findAll(cleanedExpr).forEach { matchRes ->
+        val arrName = matchRes.groupValues[1]
+        val idExpr = matchRes.groupValues[2]
+
+        val arrayToken = "${arrName}[${idExpr}]"
+        val startPos = matchRes.range.first + offset
+        val endPos = matchRes.range.last + offset + 1
+        res = res.substring(0, startPos) + arrayToken + res.substring(endPos)
+        offset += arrayToken.length - (endPos - startPos)
+    }
+    return res
+}
+
 //преобразуем выражение в обратную польскую запись
 fun convertToReversePolishNotation(expression: String, context: Context) : String{
     val preprocessedExpr = preprocessArrayExpression(expression)
@@ -668,7 +690,7 @@ fun recCalAll(state: CodeBlockState, context: Context) {
 
 // проверка на валидность арифм операций со скобками
 fun isValidArithmExpression(state: CodeBlockState) : Boolean {
-    val processedExpr = preprocessArrayExpression(state.assignmentArithmExpr)
+    val processedExpr = preprocessArrayExprForDisplay(state.assignmentArithmExpr)
     state.assignmentArithmExpr = rewriteExpression(processedExpr)
     var lvl = 0
     var bracketLevel = 0

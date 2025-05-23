@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import com.example.test.*
+import com.example.test.utils.preprocessArrayExprForDisplay
 import kotlin.math.roundToInt
 
 @Composable
@@ -144,8 +145,9 @@ fun ArrayCard(
                                     modifier = Modifier.width(32.dp)
                                 )
                                 var elemValue by remember { mutableStateOf(arrayBlock.elems[i]) }
+                                val displayValue = preprocessArrayExprForDisplay(elemValue)
                                 OutlinedTextField(
-                                    value = elemValue,
+                                    value = displayValue,
                                     onValueChange = {
                                         elemValue = it
                                         arrayBlock.elems[i] = it

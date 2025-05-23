@@ -65,6 +65,7 @@ import com.example.test.ui.theme.menu.MenuBoxForAssignments
 import com.example.test.utils.calculateArithmeticExpression
 import com.example.test.utils.convertToReversePolishNotation
 import com.example.test.utils.isValidArithmExpression
+import com.example.test.utils.preprocessArrayExprForDisplay
 import com.example.test.utils.setArrayElement
 import java.util.UUID
 
@@ -169,7 +170,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                     ) {
                         if (com is VarBlockCommand) {
                             Text(
-                                text = "${i + 1}. ${com.variable.name} = ${com.variable.expression}",
+                                text = "${i + 1}. ${com.variable.name} = ${preprocessArrayExprForDisplay(com.variable.expression)}",
                                 modifier = Modifier.weight(1f)
                             )
                         } else {
@@ -449,7 +450,7 @@ fun NewAssignmentDialog(state: CodeBlockState, ctx: Context) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
-                    value = state.assignmentArithmExpr,
+                    value = preprocessArrayExprForDisplay(state.assignmentArithmExpr),
                     onValueChange = { state.assignmentArithmExpr = it },
                     label = { Text("Expression 7(2x + 5)") },
                     isError = state.assignmentError != "",
@@ -823,7 +824,7 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                         if (com is VarBlockCommand) {
                             var istr = i + 1
                             var varName = com.variable.name
-                            var varExpr = com.variable.expression
+                            var varExpr = preprocessArrayExprForDisplay(com.variable.expression)
                             Text(
                                 text = ctx.getString(R.string.expression, istr.toString(), varName, varExpr),
                                 modifier = Modifier.weight(1f)
@@ -1409,7 +1410,7 @@ fun ArrayAccessDialog(state: CodeBlockState, ctx: Context) {
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
-                    value = state.arrayIndexExpression,
+                    value = preprocessArrayExprForDisplay(state.arrayIndexExpression),
                     onValueChange = { state.arrayIndexExpression = it },
                     label = { Text(stringResource(R.string.id_expr)) },
                     isError = state.arrayAccessError.isNotEmpty(),
@@ -1606,7 +1607,7 @@ fun ArraySetDialog(state: CodeBlockState, ctx: Context) {
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
-                    value = state.arrayIndexExpression,
+                    value = preprocessArrayExprForDisplay(state.arrayIndexExpression),
                     onValueChange = { state.arrayIndexExpression = it },
                     label = { Text("Index Expression") },
                     isError = state.arraySetError.isNotEmpty(),
@@ -1614,7 +1615,7 @@ fun ArraySetDialog(state: CodeBlockState, ctx: Context) {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
-                    value = state.arrayValueExpression,
+                    value = preprocessArrayExprForDisplay(state.arrayValueExpression),
                     onValueChange = { state.arrayValueExpression = it },
                     label = { Text("Value Expression") },
                     isError = state.arraySetError.isNotEmpty(),
