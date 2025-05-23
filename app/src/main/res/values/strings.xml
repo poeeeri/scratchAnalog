@@ -43,6 +43,18 @@
     <string name="commands_while">Commands (inside while):</string>
     <string name="remove_command">%1$s. Unknown block</string>
     <string name="expression">%1$s. %2$s = %3$s</string>
+    <string name="create_array">Create Array</string>
+    <string name="update">Update</string>
+    <string name="edit_array">Edit Array</string>
+    <string name="array_name">Name of array</string>
+    <string name="array_size">Size of array</string>
+    <string name="access_arr_elem">Access array element</string>
+    <string name="select_arr">Select array</string>
+    <string name="value_expr">Value expression</string>
+    <string name="id_expr">Index expression</string>
+    <string name="var_name">Variable name</string>
+    <string name="set_arr_elem">Set Array element</string>
+    <string name="store_in_var">Store in Variable</string>
     <!--    <string name=""></string>-->
 <!--    <string name=""></string>-->
 <!--    <string name=""></string>-->
