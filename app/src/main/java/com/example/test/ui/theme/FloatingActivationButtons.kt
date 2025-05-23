@@ -18,43 +18,11 @@ import androidx.compose.ui.unit.dp
 import com.example.test.CodeBlockState
 import com.example.test.utils.recCalAll
 import androidx.compose.material.icons.filled.Loop
+import androidx.compose.material.icons.filled.PlayArrow
 
 @Composable
 fun FloatingActivationButtons(state: CodeBlockState, context: Context) {
     Row {
-        FloatingActionButton(
-            onClick = { state.showNewWhileDialog = true }
-        ) {
-            Icon(Icons.Default.Loop, contentDescription = "Add While Block")
-        }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        FloatingActionButton(
-            onClick = { state.showNewVarDialog = true }
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Add")
-        }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // Это для добавления условия
-        FloatingActionButton(
-            onClick = { state.showNewIfDialog = true }
-        ) {
-            Icon(Icons.Default.Code, contentDescription = "Add If Block")
-        }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // кнопка присваивания
-        FloatingActionButton(
-            onClick = { state.showNewAssignmentDialog = true }
-        ) {
-            Icon(Icons.Default.Edit, contentDescription = "Assign")
-        }
-
-        Spacer(modifier = Modifier.width(8.dp))
 
         // кнопка для пересчета значений переменных
         FloatingActionButton(
@@ -62,9 +30,9 @@ fun FloatingActivationButtons(state: CodeBlockState, context: Context) {
                 recCalAll(state, context)
             }
         ) {
-            Icon(Icons.Default.Refresh, contentDescription = "Recalculate All")
+            Icon(Icons.Default.PlayArrow, contentDescription = "Recalculate All")
         }
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(4.dp))
 
         FloatingActionButton(
             onClick = { state.showDeleteAllDialog = true }

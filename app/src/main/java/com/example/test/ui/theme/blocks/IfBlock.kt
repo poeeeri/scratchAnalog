@@ -52,6 +52,7 @@ import androidx.compose.material3.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import com.example.test.*
+import com.example.test.utils.preprocessArrayExprForDisplay
 
 @Composable
 fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, onInteraction: (Offset, String) -> Unit) {
@@ -109,9 +110,9 @@ fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, o
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "If (${ifBlock.leftExpression} " +
+                    text = "If (${preprocessArrayExprForDisplay(ifBlock.leftExpression)} " +
                             "${ifBlock.comparisonOperator} " +
-                            "${ifBlock.rightExpression})",
+                            "${preprocessArrayExprForDisplay(ifBlock.rightExpression)})",
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onTertiaryContainer
                 )

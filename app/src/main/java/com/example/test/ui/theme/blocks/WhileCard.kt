@@ -37,6 +37,7 @@ import com.example.test.VarBlockCommand
 import com.example.test.Variable
 import com.example.test.WhileBlock
 import com.example.test.WhileBlockCommand
+import com.example.test.utils.preprocessArrayExprForDisplay
 import kotlin.math.roundToInt
 
 @Composable
@@ -105,9 +106,9 @@ fun WhileBlockCard(
                 }
                 Text (
                     modifier = Modifier.fillMaxWidth(),
-                    text = "while (${whileBlock.leftExpression}" +
+                    text = "while (${preprocessArrayExprForDisplay(whileBlock.leftExpression)}" +
                             " ${whileBlock.comparisonOperator} "+
-                            "${whileBlock.rightExpression})",
+                            "${preprocessArrayExprForDisplay(whileBlock.rightExpression)})",
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )

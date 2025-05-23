@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.test.Variable
+import com.example.test.utils.preprocessArrayExprForDisplay
 import kotlin.math.roundToInt
 
 @Composable
@@ -80,7 +81,7 @@ fun VarCard(variable: Variable, vars: List<Variable>, hasError: Boolean,  onInte
     ) {
         Column {
             if (variable.expression == "") variable.expression = "0"
-            val value = variable.expression
+            val value = preprocessArrayExprForDisplay(variable.expression)
             Text(
                 text = "Int ${variable.name} = $value",
                 fontWeight = FontWeight.Bold,
