@@ -143,11 +143,14 @@ fun getPriority(operator: Char): Int = when(operator){
 
 // Предварительно обрабатываем выражение с массивами
 fun preprocessArrayExpression(expression: String) : String {
+    val startsWithArray = expression.trim().matches(Regex("^[a-zA-Z_]\\w*\\s*\\[.*"))
+    val modifiedExpr = if (startsWithArray) "1*${expression}" else expression
+
     val arrPattern = Regex("([a-zA-Z_]\\w*)\\s*\\[(.*?)\\]")
 
-    var res = expression
+    var res = modifiedExpr
     var offset = 0
-    arrPattern.findAll(expression).forEach { matchRes ->
+    arrPattern.findAll(modifiedExpr).forEach { matchRes ->
         val arrName = matchRes.groupValues[1]
         val idExpr = matchRes.groupValues[2].trim()
 
@@ -186,7 +189,6 @@ fun convertToReversePolishNotation(expression: String, context: Context) : Strin
             }
 
             c.isLetter() || c == '_' ->{
-                val start = i
                 while (i <processedExpr.length && (processedExpr[i].isLetterOrDigit() || processedExpr[i] == '_')){
                     output.append(processedExpr[i++])
                 }
@@ -208,16 +210,6 @@ fun convertToReversePolishNotation(expression: String, context: Context) : Strin
                 }
                 output.append(' ')
                 continue
-            }
-
-            c == '[' -> {
-                output.append("[ ")
-                i++
-            }
-
-            c == ']' -> {
-                output.append("] ")
-                i++
             }
 
             c == '(' -> {
@@ -374,10 +366,13 @@ fun calculateArithmeticExpression(
         Toast.makeText(context, R.string.err_var_with_enpty_name_found, Toast.LENGTH_LONG).show()
     }
 
+    val startsWithArray = expression.trim().matches(Regex("^[a-zA-Z]\\w*\\s*\\[.*"))
+    val processedExpr = if (startsWithArray) "1 ${expression}" else expression
+
     val arrayAccessPattern = Regex("([a-zA-Z_]\\w*)\\[(.*)\\]")
 
     val stack = mutableListOf<Int>()
-    val tokens = expression.split(" ").filter { it.isNotBlank() }
+    val tokens = processedExpr.split(" ").filter { it.isNotBlank() }
     Log.d("CalcExpr", "Tokens: $tokens")
 
     if (tokens.isEmpty()){
@@ -443,56 +438,68 @@ fun calculateArithmeticExpression(
                 }
 
                 token == "+" -> {
+                    if (stack.size < 2) {
+                        Toast.makeText(context, "Error: Not enough operands for +", Toast.LENGTH_LONG).show()
+                        return 0
+                    }
                     val b = stack.removeAt(stack.lastIndex)
                     val a = stack.removeAt(stack.lastIndex)
-                    Log.d("CalcExpr", "Operation: $a + $b = ${a + b}")
                     stack.add(a + b)
                 }
 
                 token == "-" -> {
+                    if (stack.size < 2) {
+                        Toast.makeText(context, "Error: Not enough operands for -", Toast.LENGTH_LONG).show()
+                        return 0
+                    }
                     val b = stack.removeAt(stack.lastIndex)
                     val a = stack.removeAt(stack.lastIndex)
-                    Log.d("CalcExpr", "Operation: $a - $b = ${a - b}")
                     stack.add(a - b)
                 }
 
                 token == "*" -> {
+                    if (stack.size < 2) {
+                        Toast.makeText(context, "Error: Not enough operands for *", Toast.LENGTH_LONG).show()
+                        return 0
+                    }
                     val b = stack.removeAt(stack.lastIndex)
                     val a = stack.removeAt(stack.lastIndex)
-                    Log.d("CalcExpr", "Operation: $a * $b = ${a * b}")
                     stack.add(a * b)
                 }
 
                 token == "/" -> {
+                    if (stack.size < 2) {
+                        Toast.makeText(context, "Error: Not enough operands for /", Toast.LENGTH_LONG).show()
+                        return 0
+                    }
                     val b = stack.removeAt(stack.lastIndex)
                     if (b == 0) {
                         Log.e("CalcExpr", "Division by zero")
                         Toast.makeText(context, R.string.err_div_by_zero, Toast.LENGTH_LONG).show()
                     }
                     val a = stack.removeAt(stack.lastIndex)
-                    Log.d("CalcExpr", "Operation: $a / $b = ${a / b}")
                     stack.add(a / b)
                 }
 
                 token == "%" -> {
+                    if (stack.size < 2) {
+                        Toast.makeText(context, "Error: Not enough operands for %", Toast.LENGTH_LONG).show()
+                        return 0
+                    }
                     val b = stack.removeAt(stack.lastIndex)
                     if (b == 0) {
                         Log.e("CalcExpr", "Modulo by zero")
                         Toast.makeText(context, R.string.err_div_by_zero, Toast.LENGTH_LONG).show()
                     }
                     val a = stack.removeAt(stack.lastIndex)
-                    Log.d("CalcExpr", "Operation: $a % $b = ${a % b}")
                     stack.add(a % b)
                 }
             }
-            Log.d("CalcExpr", "Stack after token: $stack")
         }
         catch (e: NoSuchElementException){
-            Log.e("CalcExpr", "Error processing token $token: ${e.message}", e)
             Toast.makeText(context, context.getString(R.string.err_var_token_not_found, token), Toast.LENGTH_LONG).show()
         }
         catch (e: Exception) {
-            Log.e("CalcExpr", "Unexpected error processing token $token: ${e.message}", e)
             Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
             return 0
         }
@@ -500,11 +507,9 @@ fun calculateArithmeticExpression(
 
     val result = stack.singleOrNull()
     if (result == null){
-        Log.e("CalcExpr", "Invalid expression format. Stack: $stack")
         Toast.makeText(context, R.string.err_invalid_exp_format, Toast.LENGTH_LONG).show()
         return 0
     }
-    Log.d("CalcExpr", "Final result: $result")
     return result
 }
 
@@ -722,5 +727,6 @@ fun rewriteExpression(expression: String) : String {
     str = Regex("(\\d+(?:\\.\\d+)?)([A-Za-z_]\\w*)").replace(str) { m ->
         "${m.groupValues[1]}*${m.groupValues[2]}"
     }
+    str = preprocessArrayExpression(str)
     return str;
 }
