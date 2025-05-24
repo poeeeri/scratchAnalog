@@ -32,6 +32,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.test.ContextMenuState
 import com.example.test.CodeBlockState
 import com.example.test.ui.theme.blocks.ArrayCard
@@ -40,9 +42,16 @@ import com.example.test.ui.theme.blocks.VarCard
 import com.example.test.ui.theme.blocks.WhileBlockCard
 import com.example.test.ui.theme.menu.Menu
 
+class CodeBlockViewModel : ViewModel() {
+    val codeBlockState = CodeBlockState()
+}
+
 // запоминает состояния при перерисовке компосэбл
 @Composable
-fun rememberCodeBlockState(): CodeBlockState = remember {CodeBlockState()}
+fun rememberCodeBlockState(): CodeBlockState {
+    val viewModel: CodeBlockViewModel = viewModel()
+    return viewModel.codeBlockState
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
