@@ -91,11 +91,9 @@ fun VarCard(
     ) {
         Column {
             if (variable.expression == "") variable.expression = "0"
-            val value = remember(variable.expression, variable.type, vars) {
-                if (variable.expression.isEmpty())
-                    if (variable.type == VariableType.INT) "0" else "0.0"
-                else preprocessArrayExprForDisplay(variable.expression)
-            }
+            val value = if (variable.expression != "0")
+                preprocessArrayExprForDisplay(variable.expression)
+            else "0"
             Text(
                 text = "${variable.type.toString().capitalize()} ${variable.name} = $value",
                 fontWeight = FontWeight.Bold,
