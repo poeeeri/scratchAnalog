@@ -33,6 +33,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -59,6 +60,7 @@ import com.example.test.IfBlock
 import com.example.test.IfBlockCommand
 import com.example.test.VarBlockCommand
 import com.example.test.Variable
+import com.example.test.VariableType
 import com.example.test.WhileBlock
 import com.example.test.WhileBlockCommand
 import com.example.test.ui.theme.menu.MenuBoxForAssignments
@@ -219,6 +221,30 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                 val name = parts.getOrNull(0)?.trim() ?: "var"
 
                                 val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                val existingVar = state.vars.find { it.name == name }
+                                if (existingVar != null) {
+                                    try {
+                                        val rpn = convertToReversePolishNotation(
+                                            expr,
+                                            ctx
+                                        )
+                                        val calculatedValue = calculateArithmeticExpression(
+                                            rpn,
+                                            state.vars,
+                                            context = ctx,
+                                            arrays = state.arrays
+                                        )
+                                        if (existingVar.type == VariableType.INT &&
+                                            calculatedValue != calculatedValue.toInt().toDouble()) {
+                                            state.ifBlockError = "Cannot convert float to int"
+                                            return@IconButton
+                                        }
+                                    }
+                                    catch (e: Exception) {
+                                        return@IconButton
+                                    }
+                                }
+
                                 state.curBlockCommands.add(
                                     VarBlockCommand(
                                         Variable(
@@ -292,7 +318,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                     val parts = state.newIfCommand.split("=")
                                     val name = parts.getOrNull(0)?.trim() ?: "var"
 
-                                    val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                    val expr = parts.getOrNull(1)?.trim() ?: "0.0"
                                     state.curBlockCommands.add(
                                         VarBlockCommand(
                                             Variable(
@@ -310,7 +336,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                     val parts = state.newIfCommand.split("=")
                                     val name = parts.getOrNull(0)?.trim() ?: "var"
 
-                                    val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                    val expr = parts.getOrNull(1)?.trim() ?: "0.0"
                                     state.curBlockCommands.add(
                                         VarBlockCommand(
                                             Variable(
@@ -525,15 +551,39 @@ fun NewAssignmentDialog(state: CodeBlockState, ctx: Context) {
                                         return@Button
                                     }
                                     else {
-                                        // здесь чекаем для изменения значения выбранной из менюшки переменной
-                                        val index = state.vars.indexOfFirst { it.name == state.selectedTargetVar }
-                                        if (index >= 0) {
-                                            state.vars[index] = state.vars[index].copy(expression = state.assignmentArithmExpr)
+                                        val targetVar = state.vars.find { it.name == state.selectedTargetVar }
+                                        if (targetVar != null) {
+                                            try {
+                                                val rpn = convertToReversePolishNotation(state.assignmentArithmExpr, ctx)
+                                                val calculatedValue = calculateArithmeticExpression(
+                                                    rpn,
+                                                    state.vars,
+                                                    context = ctx,
+                                                    arrays = state.arrays
+                                                )
+                                                if (targetVar.type == VariableType.INT &&
+                                                    calculatedValue != calculatedValue.toInt().toDouble()) {
+                                                    state.assignmentError = "Cannot convert float to int"
+                                                    return@Button
+                                                }
+
+                                                // здесь чекаем для изменения значения выбранной из менюшки переменной
+                                                val index =
+                                                    state.vars.indexOfFirst { it.name == state.selectedTargetVar }
+                                                if (index >= 0) {
+                                                    state.vars[index] =
+                                                        state.vars[index].copy(expression = state.assignmentArithmExpr)
+                                                }
+                                                state.showNewAssignmentDialog = false
+                                                state.selectedTargetVar = ""
+                                                state.assignmentError = ""
+                                                state.assignmentArithmExpr = ""
+                                            }
+                                            catch (e: Exception) {
+                                                state.assignmentError = "Error evaluating expression: ${e.message}"
+                                                return@Button
+                                            }
                                         }
-                                        state.showNewAssignmentDialog= false
-                                        state.selectedTargetVar = ""
-                                        state.assignmentError= ""
-                                        state.assignmentArithmExpr = ""
                                     }
                                 }
                             }
@@ -599,6 +649,24 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                         modifier = Modifier.padding(start = 16.dp)
                     )
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = "Variable Type")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    VariableType.entries.forEach { type ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = state.selectedVarType == type,
+                                onClick = { state.selectedVarType = type }
+                            )
+                            Text(text = type.toString())
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -607,7 +675,7 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                     Button(
                         onClick = {
                             if (state.newVarName.isNotBlank()) {
-                                val varsArray = state.newVarName.split(',').map { it.trim() }
+                                val varsArray = state.newVarName.split(',').map { it.trim() }.toSet()
                                 var containsError = false
                                 for (v in varsArray) {
                                     when {
@@ -652,8 +720,11 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                                         state.vars.add(
                                             Variable(
                                                 name = v,
-                                                expression = "",
-                                                pos = IntOffset(10 + state.vars.size, state.vars.size*220)
+                                                expression = if (state.selectedVarType == VariableType.FLOAT)
+                                                    "0.0"
+                                                else "0",
+                                                pos = IntOffset(10 + state.vars.size, state.vars.size*220),
+                                                type = state.selectedVarType
                                             )
                                         )
                                     }
@@ -661,6 +732,7 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                                     state.showNewVarDialog = false
                                     state.newVarName = ""
                                     state.newVarError = ""
+                                    state.selectedVarType = VariableType.INT
                                 }
                             }
                             else state.newVarError = "Variable name must not be empty"
@@ -674,6 +746,7 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                             state.showNewVarDialog = false
                             state.newVarName = ""
                             state.newVarError = ""
+                            state.selectedVarType = VariableType.INT
                         }
                     ) {
                         Text("Cancel")
@@ -877,7 +950,7 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                             if (state.newWhileCommand.isNotBlank()) {
                                 val parts = state.newWhileCommand.split("=")
                                 val name = parts.getOrNull(0)?.trim() ?: "var"
-                                val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                val expr = parts.getOrNull(1)?.trim() ?: "0.0"
                                 state.curWhileCommands.add(
                                     VarBlockCommand(
                                         Variable(
@@ -923,7 +996,7 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                             }
 
                             val declaredVarsNames = state.vars.map { it.name }.toSet() + state.arrays.map{it.name}.toSet()
-                            val regex = Regex("([a-zA-Z_]\\w*)(?:\\s*\\[.*?\\])?")
+                            val regex = Regex("(?!\\d)([a-zA-Z_]\\w*)(?:\\s*\\[.*?\\])?")
                             val leftPartVars = regex.findAll(state.leftWhileExpression).map {
                                 if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
                                 else it.value
@@ -955,7 +1028,7 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                                     val parts = state.newWhileCommand.split("=")
                                     val name = parts.getOrNull(0)?.trim() ?: "var"
 
-                                    val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                    val expr = parts.getOrNull(1)?.trim() ?: "0.0"
                                     state.curWhileCommands.add(
                                         VarBlockCommand(
                                             Variable(
@@ -973,7 +1046,7 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                                     val parts = state.newWhileCommand.split("=")
                                     val name = parts.getOrNull(0)?.trim() ?: "var"
 
-                                    val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                    val expr = parts.getOrNull(1)?.trim() ?: "0.0"
                                     state.curWhileCommands.add(
                                         VarBlockCommand(
                                             Variable(
