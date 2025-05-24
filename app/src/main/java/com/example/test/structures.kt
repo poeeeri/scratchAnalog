@@ -14,6 +14,7 @@ class CodeBlockState {
     val vars: SnapshotStateList<Variable> = mutableStateListOf()
     val ifBlock: SnapshotStateList<IfBlock> = mutableStateListOf()
     val errors: SnapshotStateList<VarError> = mutableStateListOf()
+    val arrays: SnapshotStateList<ArrayBlock> = mutableStateListOf()
     val whileBlocks: SnapshotStateList<WhileBlock> = mutableStateListOf()
 
     var showNewAssignmentDialog by mutableStateOf(false)
@@ -21,10 +22,16 @@ class CodeBlockState {
     var showNewVarDialog by mutableStateOf(false)
     var showDeleteAllDialog by mutableStateOf(false)
     var showNewWhileDialog by mutableStateOf(false)
+    var showNewArrayDialog by mutableStateOf(false)
+    var showArrayAccessDialog by mutableStateOf(false)
+    var showArraySetDialog by mutableStateOf(false)
+    var showEditArrayDialog by mutableStateOf(false)
+    var showTypeSelection by mutableStateOf(false)
 
     // меню с кнопками на выбор при создании команды в ифе или вайле
     var showChooseWhileDialog by mutableStateOf(false)
     var showChooseIfDialog by mutableStateOf(false)
+    var showChooseArrayDialog by mutableStateOf(false)
 
     var selectedTargetVar by mutableStateOf("")
     var assignmentArithmExpr by mutableStateOf("")
@@ -36,17 +43,28 @@ class CodeBlockState {
     var newIfCommand by mutableStateOf("")
     var newVarName by mutableStateOf("")
     var newVarError by mutableStateOf("")
+    var newArrayName by mutableStateOf("")
+    var arrayError by mutableStateOf("")
+    var newArraySize by mutableStateOf("")
     var selectedIfBlock by mutableStateOf("")
+    var selectedArrayId by mutableStateOf("")
+    var selectedArrayName by mutableStateOf("")
     var selectedComparisonOperator by mutableStateOf("==")
+    var selectedVarType by mutableStateOf(VariableType.INT)
 
     var leftWhileExpression by mutableStateOf("")
     var rightWhileExpression by mutableStateOf("")
+    var arrayIndexExpression by mutableStateOf("")
+    var arrayValueExpression by mutableStateOf("")
     var selectedWhileOperator by mutableStateOf("==")
     var whileBlockError by mutableStateOf("")
     var curWhileCommands: SnapshotStateList<CommandBlock> = mutableStateListOf()
     var curBlockCommands: SnapshotStateList<CommandBlock> = mutableStateListOf()
     var newWhileCommand by mutableStateOf("")
     var selectedWhileTargetId by mutableStateOf("")
+    var targetVarName by mutableStateOf("")
+    var arrayAccessError by mutableStateOf("")
+    var arraySetError by mutableStateOf("")
 
     var contextMenuState by mutableStateOf(ContextMenuState())
     var targetCommandsList: SnapshotStateList<CommandBlock>? = null
@@ -57,7 +75,8 @@ data class Variable(
     val id: String = UUID.randomUUID().toString(),
     val name: String,
     var expression: String,
-    var pos: IntOffset = IntOffset(0, 0)
+    var pos: IntOffset = IntOffset(0, 0),
+    val type: VariableType = VariableType.INT
 )
 
 data class VarBlockCommand(
@@ -116,6 +135,23 @@ data class IfBlockCommand(
         set(value) { ifBlock.pos = value }
 }
 
+data class ArrayBlock(
+    val id: String,
+    val name: String,
+    val size: Int,
+    val elems: MutableList<String> = MutableList(size) { "0" },
+    var pos: IntOffset = IntOffset(0, 0)
+)
+
+data class ArrayBlockCommand(
+    val arrayBlock: ArrayBlock
+) : CommandBlock() {
+    override val id: String
+        get() = arrayBlock.id
+    override var pos: IntOffset
+        get() = arrayBlock.pos
+        set(value) { arrayBlock.pos = value }
+}
 
 sealed class CommandBlock {
     abstract val id: String
@@ -127,5 +163,6 @@ data class ContextMenuState(
     val position: Offset = Offset.Zero,
     val variableName: String? = null,
     val ifBlockId: String? = null,
-    val whileBlockId: String? = null
+    val whileBlockId: String? = null,
+    val arrayBlockId: String? = null
 )

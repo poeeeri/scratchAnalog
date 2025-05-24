@@ -11,8 +11,10 @@ import androidx.compose.ui.res.stringResource
 import com.example.test.CodeBlockState
 import com.example.test.ContextMenuState
 import com.example.test.utils.handleDelete
+import com.example.test.utils.handleDeleteArrayBlock
 import com.example.test.utils.handleDeleteIfBlock
 import com.example.test.utils.handleEdit
+import com.example.test.utils.handleEditArrayBlock
 import com.example.test.utils.handleEditIfBlock
 
 @Composable
@@ -78,6 +80,23 @@ fun Menu(state: CodeBlockState) {
                     text = { Text(delete) },
                     onClick = {
                         handleDeleteIfBlock(state)
+                        state.contextMenuState = ContextMenuState()
+                    }
+                )
+            }
+
+            else if (state.contextMenuState.arrayBlockId != null) {
+                DropdownMenuItem(
+                    text = { Text(edit) },
+                    onClick = {
+                        handleEditArrayBlock(state)
+                        state.contextMenuState = ContextMenuState()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(delete) },
+                    onClick = {
+                        handleDeleteArrayBlock(state)
                         state.contextMenuState = ContextMenuState()
                     }
                 )
