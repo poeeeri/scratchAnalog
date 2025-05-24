@@ -22,16 +22,26 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.test.Variable
+import com.example.test.VariableType
+import com.example.test.utils.calculateArithmeticExpression
+import com.example.test.utils.convertToReversePolishNotation
 import com.example.test.utils.preprocessArrayExprForDisplay
+import java.util.Locale
 import kotlin.math.roundToInt
 
 @Composable
-fun VarCard(variable: Variable, vars: List<Variable>, hasError: Boolean,  onInteraction: (Offset, String) -> Unit) {
+fun VarCard(
+    variable: Variable,
+    vars: List<Variable>,
+    hasError: Boolean,
+    onInteraction: (Offset, String) -> Unit
+) {
     var x by remember { mutableFloatStateOf(variable.pos.x.toFloat()) }
     var y by remember { mutableFloatStateOf(variable.pos.y.toFloat()) }
     var blockPosition by remember { mutableStateOf(Offset.Zero) }
@@ -81,14 +91,18 @@ fun VarCard(variable: Variable, vars: List<Variable>, hasError: Boolean,  onInte
     ) {
         Column {
             if (variable.expression == "") variable.expression = "0"
-            val value = preprocessArrayExprForDisplay(variable.expression)
+            val value = remember(variable.expression, variable.type, vars) {
+                if (variable.expression.isEmpty())
+                    if (variable.type == VariableType.INT) "0" else "0.0"
+                else preprocessArrayExprForDisplay(variable.expression)
+            }
             Text(
-                text = "Int ${variable.name} = $value",
+                text = "${variable.type.toString().capitalize()} ${variable.name} = $value",
                 fontWeight = FontWeight.Bold,
                 color = if (hasError) Color.Red else MaterialTheme.colorScheme.onPrimaryContainer
             )
             Text(
-                text = "Integer",
+                text = variable.type.toString(),
                 fontSize = 12.sp,
                 color = if (hasError) Color.Red else MaterialTheme.colorScheme.onPrimaryContainer
             )

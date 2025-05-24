@@ -26,6 +26,7 @@ class CodeBlockState {
     var showArrayAccessDialog by mutableStateOf(false)
     var showArraySetDialog by mutableStateOf(false)
     var showEditArrayDialog by mutableStateOf(false)
+    var showTypeSelection by mutableStateOf(false)
 
     // меню с кнопками на выбор при создании команды в ифе или вайле
     var showChooseWhileDialog by mutableStateOf(false)
@@ -49,6 +50,7 @@ class CodeBlockState {
     var selectedArrayId by mutableStateOf("")
     var selectedArrayName by mutableStateOf("")
     var selectedComparisonOperator by mutableStateOf("==")
+    var selectedVarType by mutableStateOf(VariableType.INT)
 
     var leftWhileExpression by mutableStateOf("")
     var rightWhileExpression by mutableStateOf("")
@@ -73,7 +75,8 @@ data class Variable(
     val id: String = UUID.randomUUID().toString(),
     val name: String,
     var expression: String,
-    var pos: IntOffset = IntOffset(0, 0)
+    var pos: IntOffset = IntOffset(0, 0),
+    val type: VariableType = VariableType.INT
 )
 
 data class VarBlockCommand(
@@ -136,7 +139,7 @@ data class ArrayBlock(
     val id: String,
     val name: String,
     val size: Int,
-    val elems: MutableList<String> = MutableList(size) { "0" },
+    val elems: MutableList<String> = MutableList(size) { "0.0" },
     var pos: IntOffset = IntOffset(0, 0)
 )
 
