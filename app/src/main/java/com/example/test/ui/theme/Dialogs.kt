@@ -720,9 +720,7 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                                         state.vars.add(
                                             Variable(
                                                 name = v,
-                                                expression = if (state.selectedVarType == VariableType.FLOAT)
-                                                    "0.0"
-                                                else "0",
+                                                expression = "0",
                                                 pos = IntOffset(10 + state.vars.size, state.vars.size*220),
                                                 type = state.selectedVarType
                                             )

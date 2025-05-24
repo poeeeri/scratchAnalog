@@ -139,7 +139,7 @@ data class ArrayBlock(
     val id: String,
     val name: String,
     val size: Int,
-    val elems: MutableList<String> = MutableList(size) { "0.0" },
+    val elems: MutableList<String> = MutableList(size) { "0" },
     var pos: IntOffset = IntOffset(0, 0)
 )
 
