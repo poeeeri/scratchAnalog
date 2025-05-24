@@ -16,6 +16,7 @@ import com.example.test.VarBlockCommand
 import com.example.test.Variable
 import com.example.test.VariableType
 import com.example.test.WhileBlockCommand
+import com.example.test.ui.theme.ArrayAccessDialog
 import java.util.Stack
 import kotlin.math.exp
 
@@ -199,13 +200,14 @@ fun preprocessArrayExpression(expression: String) : String {
     return res
 }
 
-// Тоже самое, но это для UI (чтобы 1* не было :))))
+// это для UI, для красоты
 fun preprocessArrayExprForDisplay(expression: String) : String {
-    val cleanedExpr = if (expression.startsWith("1*"))
+    var cleanedExpr = if (expression.startsWith("1*"))
         expression.substring(2)
     else expression
     val arrPattern = Regex("([a-zA-Z_]\\w*)\\s*\\[(.*?)\\]")
 
+    cleanedExpr = cleanDisplayExpr(cleanedExpr)
     var res = cleanedExpr
     var offset = 0
     arrPattern.findAll(cleanedExpr).forEach { matchRes ->
@@ -219,6 +221,15 @@ fun preprocessArrayExprForDisplay(expression: String) : String {
         offset += arrayToken.length - (endPos - startPos)
     }
     return res
+}
+
+fun cleanDisplayExpr(expression: String) : String {
+    var cleaned = expression
+    cleaned = cleaned
+        .replace(Regex("^0-"), "-")
+        .replace(Regex("\\(0-"), "(-")
+        .replace(Regex("([+\\-*/]\\s*)0-"), "$1-")
+    return cleaned
 }
 
 //преобразуем выражение в обратную польскую запись
@@ -256,14 +267,11 @@ fun convertToReversePolishNotation(expression: String, context: Context) : Strin
 
                     var bracketLevel = 1
                     while (i < processedExpr.length && bracketLevel > 0) {
-                        if (processedExpr[i] == '[') bracketLevel++
-                        else if (processedExpr[i] == ']') bracketLevel--
-
-                        if (bracketLevel > 0) output.append(processedExpr[i++])
-                        else {
-                            output.append(']')
-                            i++
+                        when (processedExpr[i]) {
+                            '[' -> bracketLevel++
+                            ']' -> bracketLevel--
                         }
+                        output.append(processedExpr[i++])
                     }
                 }
                 output.append(' ')
@@ -287,10 +295,17 @@ fun convertToReversePolishNotation(expression: String, context: Context) : Strin
             }
 
             c in "+-*/%" ->{
-                while (stack.isNotEmpty() && stack.peek() != '(' && getPriority(stack.peek()) >= getPriority(c)){
-                    output.append(stack.pop()).append(' ')
+                if (c == '-' && (i == 0 || processedExpr[i - 1] in "([+*/%")) {
+                    output.append("0 ")
+                    stack.push(c)
                 }
-                stack.push(c)
+                else {
+                    while (stack.isNotEmpty() && stack.peek() != '(' &&
+                        getPriority(stack.peek()) >= getPriority(c)) {
+                        output.append(stack.pop()).append(' ')
+                    }
+                    stack.push(c)
+                }
                 i++
             }
 
@@ -797,11 +812,14 @@ fun isValidArithmExpression(state: CodeBlockState) : Boolean {
         if (expect) {
             when {
                 t.matches(Regex("\\d+")) ||
-                        t.matches(Regex("\\d+(?:\\.\\d+)?")) ||
+                        t.matches(Regex("-?\\d+(?:\\.\\d+)?")) ||
                         t.matches(Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")) ||
                         t.matches(Regex("(?!_|\\d+)([a-zA-Z_]\\w*)\\[.*\\]"))
                     -> expect = false
 
+                t == "-" && (tokens.indexOf(t) == 0 ||
+                        tokens.getOrNull(tokens.indexOf(t) - 1) in listOf("(", "["))
+                            -> expect = true
                 t == "(" -> expect = true
                 t == "[" -> expect = true
                 t == "+" || t == "-" -> expect = true
@@ -823,10 +841,12 @@ fun isValidArithmExpression(state: CodeBlockState) : Boolean {
 // перезаписываем такую запись как например 2(1+3) в 2*(1+3)
 fun rewriteExpression(expression: String) : String {
     var str = expression
+    str = str.replace(Regex("^-"), "0-")
     str = Regex("([A-Za-z_]\\w*|\\d+)\\s*\\(").replace(str) { m ->
         "${m.groupValues[1]}*("
     }
 
+    str = str.replace(Regex("\\(-"), "(0-")
     str = Regex("(\\d+(?:\\.\\d+)?)([A-Za-z_]\\w*)").replace(str) { m ->
         "${m.groupValues[1]}*${m.groupValues[2]}"
     }
