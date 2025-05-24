@@ -3,9 +3,11 @@ package com.example.test.ui.theme
 import com.example.test.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.DropdownMenu
@@ -20,7 +22,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -183,66 +184,65 @@ fun Canvas(state: CodeBlockState, modifier: Modifier) {
             )
         }
     }
-    Box(
+    LazyColumn(
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .background(Color.LightGray)
-            .padding(16.dp)
+            .padding(16.dp),
+        contentPadding = PaddingValues(bottom = 64.dp)
     ) {
-
-
         // рисуем блоки
-        state.vars.forEach { x ->
-            key(x.name) {
-                VarCard(
-                    variable = x,
-                    vars = state.vars,
-                    hasError = state.errors.any { it.blockId == x.name },
-                    onInteraction = onInteraction
-                )
-            }
+        items(state.vars, key = { it.name }) { x ->
+            VarCard(
+                variable = x,
+                vars = state.vars,
+                hasError = state.errors.any { it.blockId == x.name },
+                onInteraction = onInteraction
+            )
         }
 
-        state.ifBlock.forEach { block ->
-            key(block.id) {
-                IfBlockCard(
-                    state = state,
-                    ifBlock = block,
-                    vars = state.vars,
-                    onInteraction = onInteraction
-                )
-            }
+        items(state.ifBlock, key = { it.id }) { block ->
+            IfBlockCard(
+                state = state,
+                ifBlock = block,
+                vars = state.vars,
+                onInteraction = onInteraction
+            )
         }
 
-        state.whileBlocks.forEach { block ->
-            key(block.id) {
-                WhileBlockCard(
-                    whileBlock = block,
-                    state = state,
-                    onInteraction = onInteraction,
-                    vars = state.vars
-                )
-            }
+        items(state.whileBlocks, key = { it.id }) { block ->
+            WhileBlockCard(
+                whileBlock = block,
+                state = state,
+                onInteraction = onInteraction,
+                vars = state.vars
+            )
         }
 
-        state.arrays.forEach { block ->
-            key(block.id) {
-                ArrayCard(
-                    arrayBlock = block,
-                    state = state,
-                    onInteraction = onInteraction,
-                    vars = state.vars
-                )
-            }
+        items(state.arrays, key = { it.id }) { block ->
+            ArrayCard(
+                arrayBlock = block,
+                state = state,
+                onInteraction = onInteraction,
+                vars = state.vars
+            )
         }
 
         if (state.vars.isEmpty() && state.ifBlock.isEmpty() &&
             state.whileBlocks.isEmpty() && state.arrays.isEmpty()) {
-            Text(
-                text = stringResource(R.string.tap_plus_to_add),
-                color = Color.Gray,
-                modifier = Modifier.align(Alignment.Center),
-            )
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.tap_plus_to_add),
+                        color = Color.Gray,
+                    )
+                }
+            }
         }
     }
 }
