@@ -607,7 +607,7 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                     Button(
                         onClick = {
                             if (state.newVarName.isNotBlank()) {
-                                val varsArray = state.newVarName.split(',').map { it.trim() }
+                                val varsArray = state.newVarName.split(',').map { it.trim() }.toSet()
                                 var containsError = false
                                 for (v in varsArray) {
                                     when {
