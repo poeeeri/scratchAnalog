@@ -487,7 +487,7 @@ fun calculateArithmeticExpression(
                         }
 
                         if (i >= 0 && i < mas.size) {
-                            val value = mas.elems.getOrNull(i)?.toIntOrNull() ?: 0
+                            val value = mas.elems.getOrNull(i)?.toDoubleOrNull() ?: 0
                             stack.add(value.toDouble())
                         }
                         else {
