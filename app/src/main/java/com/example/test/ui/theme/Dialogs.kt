@@ -250,7 +250,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                         Variable(
                                             name = name,
                                             expression = expr,
-                                            pos = IntOffset(0, state.curBlockCommands.size * 220)
+                                            pos = IntOffset(0, state.curBlockCommands.size * 10)
                                         )
                                     )
                                 )
@@ -360,7 +360,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                     rightExpression = state.rightIfExpression,
                                     comparisonOperator = state.selectedComparisonOperator,
                                     commands = commandsCopy,
-                                    pos = IntOffset(10, 10 + state.ifBlock.size * 220)
+                                    pos = IntOffset(10, 10 + state.ifBlock.size * 10)
                                 )
 
                                 // проерка куда вставлять блок, будет ли он являться независимым
@@ -721,7 +721,7 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                                             Variable(
                                                 name = v,
                                                 expression = "0",
-                                                pos = IntOffset(10 + state.vars.size, state.vars.size*220),
+                                                pos = IntOffset(10 + state.vars.size, state.vars.size*10),
                                                 type = state.selectedVarType
                                             )
                                         )
