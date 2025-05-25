@@ -842,18 +842,19 @@ fun rewriteExpression(expression: String) : String {
         .replace(Regex("^\\s*-"), "0-")
         .replace(Regex("\\(\\s*-"), "(0-")
 
-    str = Regex("([+\\-*/]\\s*)-\\s*(\\d+(?:\\.\\d+)?)").replace(str) { m ->
-        "${m.groupValues[1]}(0-${m.groupValues[2]})"
-    }
-    str = Regex("([+\\-*/]\\s*)-\\s*([a-zA-Z_]\\w*)").replace(str) { m ->
-        "${m.groupValues[1]}(0-${m.groupValues[2]})"
-    }
-    str = Regex("([+\\-*/]\\s*)-\\s*\\(").replace(str) { m ->
-        "${m.groupValues[1]}(0-("
-    }
+    val minusReplacements = mutableListOf<Pair<IntRange, String>>()
+    Regex("([+\\-*/]\\s*)-\\s*(\\d+(?:\\.\\d+)?|[a-zA-Z_]\\w*|\\()").findAll(str).forEach { m ->
+        val operator = m.groupValues[1]
+        var operand = m.groupValues[2]
 
-    var kParenthesesOpen = Regex("\\(0-\\(").findAll(str).count()
-    str += ")".repeat(kParenthesesOpen)
+        val replacement = if (operand == "(")
+            "${operator}(0-("
+        else "${operator}(0-${operand})"
+        minusReplacements.add(m.range to replacement)
+    }
+    minusReplacements.reversed().forEach { (range, repl) ->
+        str = str.substring(0, range.first) + repl + str.substring(range.last + 1)
+    }
 
     str = Regex("([A-Za-z_]\\w*|\\d+)\\s*\\(").replace(str) { m ->
         "${m.groupValues[1]}*("
