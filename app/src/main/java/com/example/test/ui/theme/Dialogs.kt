@@ -286,7 +286,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                             }
 
                             val declaredVarsNames = state.vars.map { it.name }.toSet() + state.arrays.map{it.name}.toSet()
-                            val regex = Regex("([a-zA-Z_]\\w*)(?:\\s*\\[.*?\\])?")
+                            val regex = Regex("(?!\\d)([a-zA-Z_]\\w*)(?:\\s*\\[.*?\\])?")
                             val leftPartVars = regex.findAll(state.leftIfExpression).map {
                                 if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
                                 else it.value
@@ -533,7 +533,7 @@ fun NewAssignmentDialog(state: CodeBlockState, ctx: Context) {
                                 }
                                 // здесь чекаем есть ли переменная вообще такая
                                 val declaredVarsName = state.vars.map {it.name}.toSet() + state.arrays.map {it.name}.toSet()
-                                val regex = Regex("([a-zA-Z_]\\w*)(?:\\s*\\[.*?\\])?")
+                                val regex = Regex("(?!\\d)([a-zA-Z_]\\w*)(?:\\s*\\[.*?\\])?")
                                 val findVars = regex.findAll(state.assignmentArithmExpr).map {
                                     if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
                                     else it.value

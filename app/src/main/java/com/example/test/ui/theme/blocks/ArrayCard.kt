@@ -66,6 +66,7 @@ fun ArrayCard(
                     change.consume()
                     x += drag.x
                     y += drag.y
+                    arrayBlock.pos = IntOffset(x.roundToInt(), y.roundToInt())
                 }
             }
     ) {
