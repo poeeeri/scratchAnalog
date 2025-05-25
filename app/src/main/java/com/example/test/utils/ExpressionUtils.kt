@@ -243,6 +243,7 @@ fun convertToReversePolishNotation(expression: String, context: Context) : Strin
 
     if (processedExpr.isBlank()){
         Toast.makeText(context, R.string.err_exp_is_blank, Toast.LENGTH_LONG).show()
+        return ""
     }
 
     while (i < processedExpr.length) {
@@ -289,23 +290,18 @@ fun convertToReversePolishNotation(expression: String, context: Context) : Strin
                 }
                 if (stack.isEmpty() || stack.peek() != '('){
                     Toast.makeText(context, R.string.err_extra_closing_parenthesis, Toast.LENGTH_LONG).show()
+                    return ""
                 }
                 stack.pop()
                 i++
             }
 
             c in "+-*/%" ->{
-                if (c == '-' && (i == 0 || processedExpr[i - 1] in "([+*/%")) {
-                    output.append("0 ")
-                    stack.push(c)
+                while (stack.isNotEmpty() && stack.peek() != '(' &&
+                    getPriority(stack.peek()) >= getPriority(c)) {
+                    output.append(stack.pop()).append(' ')
                 }
-                else {
-                    while (stack.isNotEmpty() && stack.peek() != '(' &&
-                        getPriority(stack.peek()) >= getPriority(c)) {
-                        output.append(stack.pop()).append(' ')
-                    }
-                    stack.push(c)
-                }
+                stack.push(c)
                 i++
             }
 
@@ -802,7 +798,7 @@ fun isValidArithmExpression(state: CodeBlockState) : Boolean {
     }
     if (lvl != 0 || bracketLevel != 0) return false
 
-    val regex = Regex("[A-Za-z_]\\w*(?:\\[(?:[^\\[\\]]+)\\])?|\\d+(?:\\.\\d+)?|[()+\\-%*/\\[\\]]")
+    val regex = Regex("[A-Za-z_]\\w*(?:\\[(?:[^\\[\\]]+)\\])?|\\d+(?:\\.\\d+)?|[()+\\-*/%\\[\\]]")
     val tokens = regex.findAll(state.assignmentArithmExpr).map { it.value }.toList()
     if (tokens.isEmpty()) return false
 
@@ -839,14 +835,30 @@ fun isValidArithmExpression(state: CodeBlockState) : Boolean {
 }
 
 // перезаписываем такую запись как например 2(1+3) в 2*(1+3)
+// Или унарный минус
 fun rewriteExpression(expression: String) : String {
     var str = expression
-    str = str.replace(Regex("^-"), "0-")
+    str = str
+        .replace(Regex("^\\s*-"), "0-")
+        .replace(Regex("\\(\\s*-"), "(0-")
+
+    str = Regex("([+\\-*/]\\s*)-\\s*(\\d+(?:\\.\\d+)?)").replace(str) { m ->
+        "${m.groupValues[1]}(0-${m.groupValues[2]})"
+    }
+    str = Regex("([+\\-*/]\\s*)-\\s*([a-zA-Z_]\\w*)").replace(str) { m ->
+        "${m.groupValues[1]}(0-${m.groupValues[2]})"
+    }
+    str = Regex("([+\\-*/]\\s*)-\\s*\\(").replace(str) { m ->
+        "${m.groupValues[1]}(0-("
+    }
+
+    var kParenthesesOpen = Regex("\\(0-\\(").findAll(str).count()
+    str += ")".repeat(kParenthesesOpen)
+
     str = Regex("([A-Za-z_]\\w*|\\d+)\\s*\\(").replace(str) { m ->
         "${m.groupValues[1]}*("
     }
 
-    str = str.replace(Regex("\\(-"), "(0-")
     str = Regex("(\\d+(?:\\.\\d+)?)([A-Za-z_]\\w*)").replace(str) { m ->
         "${m.groupValues[1]}*${m.groupValues[2]}"
     }
