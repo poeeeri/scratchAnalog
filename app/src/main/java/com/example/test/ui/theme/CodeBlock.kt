@@ -212,10 +212,8 @@ fun Canvas(state: CodeBlockState, modifier: Modifier) {
                 .fillMaxSize()
                 .background(Color.LightGray)
                 .verticalScroll(rememberScrollState())
-                .horizontalScroll(rememberScrollState())
                 .padding(16.dp)
                 .padding(bottom = 80.dp)
-                .widthIn(min = LocalConfiguration.current.screenHeightDp.dp)
         ) {
             // рисуем блоки
             state.vars.forEach { x ->
