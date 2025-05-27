@@ -16,6 +16,7 @@ class CodeBlockState {
     val errors: SnapshotStateList<VarError> = mutableStateListOf()
     val arrays: SnapshotStateList<ArrayBlock> = mutableStateListOf()
     val whileBlocks: SnapshotStateList<WhileBlock> = mutableStateListOf()
+    val forBlocks: SnapshotStateList<ForBlock> = mutableStateListOf()
 
     var showNewAssignmentDialog by mutableStateOf(false)
     var showNewIfDialog by mutableStateOf(false)
@@ -26,12 +27,13 @@ class CodeBlockState {
     var showArrayAccessDialog by mutableStateOf(false)
     var showArraySetDialog by mutableStateOf(false)
     var showEditArrayDialog by mutableStateOf(false)
-    var showTypeSelection by mutableStateOf(false)
+    var showNewForDialog by mutableStateOf(false)
 
     // меню с кнопками на выбор при создании команды в ифе или вайле
     var showChooseWhileDialog by mutableStateOf(false)
     var showChooseIfDialog by mutableStateOf(false)
     var showChooseArrayDialog by mutableStateOf(false)
+    var showChooseForDialog by mutableStateOf(false)
 
     var selectedTargetVar by mutableStateOf("")
     var assignmentArithmExpr by mutableStateOf("")
@@ -66,10 +68,19 @@ class CodeBlockState {
     var arrayAccessError by mutableStateOf("")
     var arraySetError by mutableStateOf("")
 
+    // все для фор
+    var newForVar by mutableStateOf("")
+    var newForStartExpr by mutableStateOf("0")
+    var newForEndExpr by mutableStateOf("10")
+    var selectedForOperator by mutableStateOf("<")
+    var forBlockError by mutableStateOf("")
+    var newForStepIter by mutableStateOf("1")
+    var curForCommands:  SnapshotStateList<CommandBlock> = mutableStateListOf()
+    var selectedForTargetId by mutableStateOf("")
+
     var contextMenuState by mutableStateOf(ContextMenuState())
     var targetCommandsList: SnapshotStateList<CommandBlock>? = null
 }
-
 
 data class Variable(
     val id: String = UUID.randomUUID().toString(),
@@ -113,6 +124,29 @@ data class WhileBlockCommand(
         get() = whileBlock.pos
         set(value) { whileBlock.pos = value }
 }
+
+data class ForBlock (
+    val id: String = UUID.randomUUID().toString(),
+    val variable: String,
+    val startExpression: String,
+    val endExpression: String,
+    val comparisonOperator: String,
+    val stepIter: Int,
+    val commands: SnapshotStateList<CommandBlock> = mutableStateListOf(),
+    var pos : IntOffset = IntOffset(0,0),
+    val doCommands: SnapshotStateList<CommandBlock> = mutableStateListOf()
+)
+
+data class ForBlockCommand(
+    val forBlock: ForBlock
+) : CommandBlock() {
+    override val id: String
+        get() = forBlock.id
+    override var pos: IntOffset
+        get() = forBlock.pos
+        set(value) { forBlock.pos = value }
+}
+
 
 
 data class IfBlock(
@@ -164,5 +198,6 @@ data class ContextMenuState(
     val variableName: String? = null,
     val ifBlockId: String? = null,
     val whileBlockId: String? = null,
-    val arrayBlockId: String? = null
+    val arrayBlockId: String? = null,
+    val forBlockId: String? = null
 )

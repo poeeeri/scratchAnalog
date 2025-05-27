@@ -68,3 +68,50 @@ fun handleDeleteArrayBlock(state: CodeBlockState) {
     }
     state.contextMenuState = ContextMenuState()
 }
+
+fun handleWhileEdit(state: CodeBlockState) {
+    state.contextMenuState.whileBlockId?.let { blockId ->
+        val block = state.whileBlocks.firstOrNull { it.id == blockId }
+        block?.let{
+            state.selectedWhileOperator = it.comparisonOperator
+            state.leftWhileExpression = it.leftExpression
+            state.rightWhileExpression = it.rightExpression
+            state.curWhileCommands.clear()
+            state.selectedWhileTargetId = blockId
+            state.showNewWhileDialog = true
+            state.curWhileCommands.addAll(block.commands)
+            state.targetCommandsList = block.commands
+        }
+    }
+}
+
+fun handleWhileDelete(state: CodeBlockState) {
+    state.contextMenuState.whileBlockId?.let { blockId ->
+        state.whileBlocks.removeAll{it.id == blockId }
+    }
+}
+
+
+fun handleEditForBlock(state: CodeBlockState) {
+    state.contextMenuState.forBlockId?.let { blockId ->
+        val block = state.forBlocks.firstOrNull { it.id == blockId }
+        block?.let{
+            state.selectedForOperator = it.comparisonOperator
+            state.newForStartExpr = it.startExpression
+            state.newForEndExpr = it.endExpression
+            state.newForVar = it.variable
+            state.newForStepIter = it.stepIter.toString()
+            state.curForCommands.clear()
+            state.selectedForTargetId = blockId
+            state.showNewForDialog = true
+            state.curForCommands.addAll(block.commands)
+            state.targetCommandsList = block.commands
+        }
+    }
+}
+
+fun handleDeleteForBlock(state: CodeBlockState) {
+    state.contextMenuState.forBlockId?.let { blockId ->
+        state.forBlocks.removeAll{it.id == blockId }
+    }
+}
