@@ -55,7 +55,16 @@
     <string name="var_name">Variable name</string>
     <string name="set_arr_elem">Set Array element</string>
     <string name="store_in_var">Store in Variable</string>
-    <!--    <string name=""></string>-->
-<!--    <string name=""></string>-->
-<!--    <string name=""></string>-->
+    <string name="commands">"Commands: "</string>
+    <string name="create_for_block">Create For Block</string>
+    <string name="start_expression">Start Expression</string>
+    <string name="comparison_operator">Comparison Operator</string>
+    <string name="end_expression">End Expression</string>
+    <string name="step_iter">Step</string>
+    <string name="var_must_only_digit">Variable name must contain only digits, letters or underscores</string>
+    <string name="do_commands">Do-commands before main commands</string>
+    <string name="cannot_convert_float_to_int">Cannot convert float to int</string>
+    <string name="create_if_block">Create If Block</string>
+    <string name="create_var">Create Variable</string>
+    <string name="crate_assign_top_bar">Create Assignment</string>
 </resources>

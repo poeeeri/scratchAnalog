@@ -1,6 +1,5 @@
 package com.example.test.utils
 
-import android.Manifest
 import android.annotation.SuppressLint
 import com.example.test.R
 import android.content.Context
@@ -11,13 +10,14 @@ import com.example.test.ArrayBlock
 import com.example.test.ArrayBlockCommand
 import com.example.test.CodeBlockState
 import com.example.test.CommandBlock
+import com.example.test.ForBlock
+import com.example.test.ForBlockCommand
 import com.example.test.IfBlockCommand
 import com.example.test.VarBlockCommand
 import com.example.test.Variable
 import com.example.test.VariableType
 import com.example.test.WhileBlockCommand
 import java.util.Stack
-import kotlin.math.exp
 
 @SuppressLint("DefaultLocale")
 fun formatNumber(value: Double) : String {
@@ -80,7 +80,7 @@ fun evaluateIfCondition(
 }
 
 // проходится по командам по порядку их добавления и вложенности и присваивает переменной
-fun executeIfCommands(
+fun executeCommands(
     commands: List<CommandBlock>,
     vars: SnapshotStateList<Variable>,
     context: Context,
@@ -141,7 +141,7 @@ fun executeIfCommands(
                     arrays
                 )
                 if (cond) {
-                    executeIfCommands(command.ifBlock.commands, vars, context, arrays)
+                    executeCommands(command.ifBlock.commands, vars, context, arrays)
                 }
             }
 
@@ -154,7 +154,7 @@ fun executeIfCommands(
                         context,
                         arrays
                     )) {
-                    executeIfCommands(command.whileBlock.commands, vars, context, arrays)
+                    executeCommands(command.whileBlock.commands, vars, context, arrays)
                 }
             }
 
@@ -163,8 +163,67 @@ fun executeIfCommands(
                 if (arrayId >= 0)
                     Log.d("EXEC", "Processing array block: ${command.arrayBlock.name}")
             }
+
+            is ForBlockCommand -> {
+                val block = command.forBlock
+                val initStr = block.startExpression
+                val index = vars.indexOfFirst { it.name == block.variable }
+                val rpnEndExpression = convertToReversePolishNotation(block.endExpression, context)
+                val calculEndExpr = calculateArithmeticExpression(
+                    rpnEndExpression, vars, context, arrays
+                )
+
+                executeCommands(block.doCommands.toList(), vars, context, arrays)
+
+
+                if (index < 0) {
+                    vars.add(Variable(
+                            name = block.variable,
+                            expression = initStr,
+                            type = VariableType.INT
+                        )
+                    )
+                }
+                else {
+                    vars[index] = vars[index].copy(expression = initStr)
+                }
+
+                while (when(block.comparisonOperator) {
+                        "<" ->  currentValue(vars, block, context, arrays) < calculEndExpr
+                        "<=" ->  currentValue(vars, block, context, arrays) <= calculEndExpr
+                        ">" ->  currentValue(vars, block, context, arrays) > calculEndExpr
+                        ">=" ->  currentValue(vars, block, context, arrays) >= calculEndExpr
+                        else -> false
+                }) {
+                    executeCommands(block.commands.toList(), vars, context, arrays)
+                    writeCurrValue(currentValue(vars, block, context, arrays) + block.stepIter, vars, index)
+                }
+            }
         }
     }
+}
+
+// пересчет
+fun currentValue(vars: SnapshotStateList<Variable>,
+            block: ForBlock,
+            context: Context,
+            arrays: List<ArrayBlock>): Double {
+    val expr = vars.first {it.name == block.variable}.expression
+    val rpn = convertToReversePolishNotation(expr, context)
+    return calculateArithmeticExpression(
+        expression = rpn,
+        vars = vars,
+        context = context,
+        arrays = arrays
+    )
+}
+
+// это для записи пересчитанного значения переменной после каждой итерации
+fun writeCurrValue(v: Double,
+          vars: SnapshotStateList<Variable>,
+          index: Int) {
+    val s = if (vars[index].type == VariableType.INT) v.toInt().toString() else v.toString()
+    vars[index] = vars[index].copy(expression = s)
 }
 
 //приоритеты операций
@@ -431,8 +490,6 @@ fun setArrayElement(
 fun calculateArithmeticExpression(
     expression: String,
     vars: List<Variable>,
-    callStack: Set<String> = emptySet(),
-    computedCache: MutableMap<String, Double> = mutableMapOf(),
     context: Context,
     arrays: List<ArrayBlock> = emptyList()
 ): Double {
@@ -746,12 +803,21 @@ fun recCalAll(state: CodeBlockState, context: Context) {
                 state.arrays
             )
             if (conditionRes)
-                executeIfCommands(block.commands, state.vars, context, state.arrays)
+                executeCommands(block.commands, state.vars, context, state.arrays)
         }
         // и с циклом while
         state.whileBlocks.forEach {
-            block -> executeIfCommands(
+            block -> executeCommands(
                 listOf(WhileBlockCommand(block)),
+                state.vars,
+                context,
+                state.arrays
+            )
+        }
+
+        state.forBlocks.forEach { block ->
+            executeCommands(
+                listOf(ForBlockCommand(block)),
                 state.vars,
                 context,
                 state.arrays
@@ -828,5 +894,5 @@ fun rewriteExpression(expression: String) : String {
         "${m.groupValues[1]}*${m.groupValues[2]}"
     }
     str = preprocessArrayExpression(str)
-    return str;
+    return str
 }
