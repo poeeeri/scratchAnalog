@@ -68,3 +68,10 @@ fun handleDeleteArrayBlock(state: CodeBlockState) {
     }
     state.contextMenuState = ContextMenuState()
 }
+
+fun handleDeletePrintBlock(state: CodeBlockState) {
+    state.contextMenuState.printBlockId?.let { blockId ->
+        state.printBlocks.removeAll {it.id == blockId}
+    }
+    state.contextMenuState = ContextMenuState()
+}

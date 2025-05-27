@@ -54,12 +54,16 @@ import androidx.compose.ui.window.Dialog
 import com.example.test.*
 import com.example.test.utils.preprocessArrayExprForDisplay
 
+
 @Composable
 fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, onInteraction: (Offset, String) -> Unit) {
     var x by remember { mutableFloatStateOf(ifBlock.pos.x.toFloat()) }
     var y by remember { mutableFloatStateOf(ifBlock.pos.y.toFloat()) }
     var expanded by remember { mutableStateOf(true) }
     var blockPosition by remember { mutableStateOf(Offset.Zero) }
+
+    val thenVars = ifBlock.thenVars + vars
+    val elseVars = ifBlock.elseVars + vars
 
     Column(
         modifier = Modifier
@@ -140,7 +144,7 @@ fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, o
                     )
                     .padding(12.dp)
             ) {
-                Column (
+                Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
@@ -164,13 +168,12 @@ fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, o
                             color = Color.Gray,
                             fontSize = 12.sp
                         )
-                    }
-                    else {
-                        ifBlock.commands.forEach {cmd ->
-                            when(cmd) {
+                    } else {
+                        ifBlock.commands.forEach { cmd ->
+                            when (cmd) {
                                 is VarBlockCommand -> VarCard(
                                     variable = cmd.variable,
-                                    vars = vars,
+                                    vars = thenVars,
                                     hasError = false,
                                     onInteraction = onInteraction
                                 )
@@ -178,7 +181,7 @@ fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, o
                                 is IfBlockCommand -> IfBlockCard(
                                     state = state,
                                     ifBlock = cmd.ifBlock,
-                                    vars = vars,
+                                    vars = thenVars,
                                     onInteraction = onInteraction
                                 )
 
@@ -186,21 +189,71 @@ fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, o
                                     state = state,
                                     whileBlock = cmd.whileBlock,
                                     onInteraction = onInteraction,
-                                    vars = vars
+                                    vars = thenVars
                                 )
+
                                 else -> stringResource(R.string.unknown_block)
                             }
                         }
                     }
-                    if (state.showChooseIfDialog)
-                        ChooseIfBlockDialog(state)
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Else:",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    IconButton(onClick = {
+                        state.targetCommandsList = ifBlock.elseCommands
+                        state.showChooseIfDialog = true
+                    }) {
+                        Icon(Icons.Default.Add, contentDescription = "Add inner Block")
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    if (ifBlock.elseCommands.isEmpty()) {
+                        Text(
+                            text = "No commands",
+                            color = Color.Gray,
+                            fontSize = 12.sp
+                        )
+                    } else {
+                        ifBlock.elseCommands.forEach { cmd ->
+                            when (cmd) {
+                                is VarBlockCommand -> VarCard(
+                                    variable = cmd.variable,
+                                    vars = elseVars,
+                                    hasError = false,
+                                    onInteraction = onInteraction
+                                )
+
+                                is IfBlockCommand -> IfBlockCard(
+                                    state = state,
+                                    ifBlock = cmd.ifBlock,
+                                    vars = elseVars,
+                                    onInteraction = onInteraction
+                                )
+
+                                is WhileBlockCommand -> WhileBlockCard(
+                                    state = state,
+                                    whileBlock = cmd.whileBlock,
+                                    onInteraction = onInteraction,
+                                    vars = elseVars
+                                )
+
+                                else -> stringResource(R.string.unknown_block)
+                            }
+                        }
+                    }
                 }
             }
         }
     }
+    if (state.showChooseIfDialog)
+        ChooseIfBlockDialog(state)
 }
-
-
 @Composable
 fun ChooseIfBlockDialog(state: CodeBlockState) {
     Dialog(

@@ -173,7 +173,6 @@ fun WhileBlockCard(
                                     vars = vars,
                                     hasError = false,
                                     onInteraction = onInteraction
-
                                 )
                                 else -> Text(stringResource(R.string.unknown_block))
                             }

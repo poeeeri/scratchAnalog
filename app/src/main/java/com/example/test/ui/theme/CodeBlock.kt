@@ -31,13 +31,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.example.test.ContextMenuState
 import com.example.test.CodeBlockState
+import com.example.test.PrintBlock
+import com.example.test.Variable
 import com.example.test.ui.theme.blocks.ArrayCard
 import com.example.test.ui.theme.blocks.IfBlockCard
 import com.example.test.ui.theme.blocks.VarCard
 import com.example.test.ui.theme.blocks.WhileBlockCard
 import com.example.test.ui.theme.menu.Menu
+import com.example.test.ui.theme.blocks.PrintCard
+import java.util.UUID
+
 
 // запоминает состояния при перерисовке компосэбл
 @Composable
@@ -77,7 +83,9 @@ fun CodeBlock() {
         },
         floatingActionButton = { FloatingActivationButtons(states, context) }
     ) { innerPadding ->
-        Canvas(states, Modifier.padding(innerPadding).fillMaxSize())
+        Canvas(states, Modifier
+            .padding(innerPadding)
+            .fillMaxSize())
         Menu(states)
     }
 
@@ -177,6 +185,12 @@ fun Canvas(state: CodeBlockState, modifier: Modifier) {
                 arrayBlockId = id
             )
 
+            state.printBlocks.any { it.id == id} -> ContextMenuState(
+                shown = true,
+                position = position,
+                printBlockId = id
+            )
+
             else -> ContextMenuState(
                 shown = true,
                 position = position
@@ -232,6 +246,18 @@ fun Canvas(state: CodeBlockState, modifier: Modifier) {
                     state = state,
                     onInteraction = onInteraction,
                     vars = state.vars
+                )
+            }
+        }
+
+        state.printBlocks.forEach { block ->
+            key(block.id) {
+                PrintCard(
+                    state = state,
+                    blockId = block.id,
+                    vars = state.vars,
+                    arrays = state.arrays,
+                    onInteraction = onInteraction
                 )
             }
         }

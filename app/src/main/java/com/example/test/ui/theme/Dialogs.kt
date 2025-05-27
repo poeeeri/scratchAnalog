@@ -45,6 +45,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.graphics.computeCubicVerticalBounds
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -57,6 +59,7 @@ import com.example.test.CodeBlockState
 import com.example.test.CommandBlock
 import com.example.test.IfBlock
 import com.example.test.IfBlockCommand
+import com.example.test.PrintBlock
 import com.example.test.VarBlockCommand
 import com.example.test.Variable
 import com.example.test.WhileBlock
@@ -69,6 +72,10 @@ import com.example.test.utils.preprocessArrayExprForDisplay
 import com.example.test.utils.setArrayElement
 import java.util.UUID
 
+
+import com.example.test.BlockItem
+import kotlin.math.exp
+
 @SuppressLint("StringFormatInvalid")
 @Composable
 fun IfDialog(state: CodeBlockState, ctx: Context) {
@@ -79,6 +86,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
         state.selectedComparisonOperator = "=="
         state.ifBlockError = ""
         state.curBlockCommands.clear()
+        state.curElseCommands.clear()
         state.newIfCommand = ""
         state.selectedIfBlock = ""
     }) {
@@ -170,7 +178,11 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                     ) {
                         if (com is VarBlockCommand) {
                             Text(
-                                text = "${i + 1}. ${com.variable.name} = ${preprocessArrayExprForDisplay(com.variable.expression)}",
+                                text = "${i + 1}. ${com.variable.name} = ${
+                                    preprocessArrayExprForDisplay(
+                                        com.variable.expression
+                                    )
+                                }",
                                 modifier = Modifier.weight(1f)
                             )
                         } else {
@@ -195,7 +207,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                     OutlinedTextField(
                         value = state.newIfCommand,
                         onValueChange = { state.newIfCommand = it },
-                        label = { Text("New Command") },
+                        label = { Text("New Command (Then)") },
                         modifier = Modifier.weight(1f)
                     )
                     IconButton(
@@ -203,38 +215,126 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                             val newCommand = state.newIfCommand.trim()
                             if (newCommand.isNotBlank()) {
                                 val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
-                                val usedVars = regex.findAll(newCommand).map {it.value }.toSet()
+                                val usedVars = regex.findAll(newCommand).map { it.value }.toSet()
 
-                                val declaredVars = state.vars.map{it.name}.toSet() + state.arrays.map{it.name}.toSet()
-                                val notDeclared = usedVars-declaredVars
+                                val declaredVars = state.vars.map { it.name }
+                                    .toSet() + state.arrays.map { it.name }.toSet()
+                                val notDeclared = usedVars - declaredVars
 
-                                if (notDeclared.isNotEmpty()) {
-                                    state.ifBlockError = ctx.getString(R.string.err_undeclared_var, notDeclared.joinToString(", "))
-                                    return@IconButton
+                                notDeclared.forEach{ name ->
+                                    val newVar = Variable(name = name, expression = "0", value = 0, pos = IntOffset(0, state.curBlockCommands.size * 220))
+                                    state.vars.add(newVar)
+                                    state.blockItems.add(BlockItem.VarBlock(newVar))
                                 }
                             }
 
-                            if (state.newIfCommand.isNotBlank()) {
-                                val parts = state.newIfCommand.split("=")
-                                val name = parts.getOrNull(0)?.trim() ?: "var"
-
-                                val expr = parts.getOrNull(1)?.trim() ?: "0"
-                                state.curBlockCommands.add(
+                            val parts = state.newIfCommand.split("=")
+                            val name = parts.getOrNull(0)?.trim() ?: "var"
+                            val expr = parts.getOrNull(1)?.trim() ?: "0"
+                            state.curBlockCommands.add(
                                     VarBlockCommand(
                                         Variable(
                                             name = name,
                                             expression = expr,
+                                            value = expr.toIntOrNull() ?: 0,
                                             pos = IntOffset(0, state.curBlockCommands.size * 220)
                                         )
                                     )
                                 )
-                                state.newIfCommand = ""
-                            }
+                            state.newIfCommand = ""
+                            state.ifBlockError = ""
                         }
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Add Command")
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Commands (if condition is false):",
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                state.curElseCommands.forEachIndexed { i, com ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (com is VarBlockCommand) {
+                            Text(
+                                text = "${i + 1}. ${com.variable.name} = ${
+                                    preprocessArrayExprForDisplay(
+                                        com.variable.expression
+                                    )
+                                }",
+                                modifier = Modifier.weight(1f)
+                            )
+                        } else {
+                            Text(
+                                text = "${i + 1}. Command block",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        IconButton(
+                            onClick = { state.curElseCommands.removeAt(i) }
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "Remove Command")
+                        }
+                    }
+                    HorizontalDivider()
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = state.newElseCommand,
+                        onValueChange = { state.newElseCommand = it },
+                        label = { Text("New Command (Else)") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(
+                        onClick = {
+                            val newCommand = state.newElseCommand.trim()
+                            if (newCommand.isNotBlank()) {
+                                val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
+                                val usedVars = regex.findAll(newCommand).map { it.value }.toSet()
+
+                                val declaredVars = state.vars.map { it.name }
+                                    .toSet() + state.arrays.map { it.name }.toSet()
+                                val notDeclared = usedVars - declaredVars
+
+                                notDeclared.forEach{ name ->
+                                    val newVar = Variable(name = name, expression = "0", value = 0, pos = IntOffset(0, state.curBlockCommands.size * 220))
+                                    state.vars.add(newVar)
+                                    state.blockItems.add(BlockItem.VarBlock(newVar))
+                                }
+                            }
+
+                            val parts = state.newElseCommand.split("=")
+                            val name = parts.getOrNull(0)?.trim() ?: "var"
+                            val expr = parts.getOrNull(1)?.trim() ?: "0"
+                            state.curElseCommands.add(
+                                VarBlockCommand(
+                                    Variable(
+                                        name = name,
+                                        expression = expr,
+                                        value = expr.toIntOrNull() ?: 0,
+                                        pos = IntOffset(0, state.curElseCommands.size * 220)
+                                    )
+                                )
+                            )
+                            state.newElseCommand = ""
+                            state.ifBlockError = ""
+                        }
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Command")
+                    }
+                }
+
                 if (state.ifBlockError.isNotBlank()) {
                     Text(
                         text = state.ifBlockError,
@@ -282,6 +382,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                         rightExpression = state.rightIfExpression,
                                         comparisonOperator = state.selectedComparisonOperator,
                                         commands = state.curBlockCommands,
+                                        elseCommands = state.curElseCommands,
                                         pos = IntOffset(
                                             state.ifBlock[i].pos.x,
                                             state.ifBlock[i].pos.y
@@ -306,26 +407,12 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                 }
                             }
                             else {
-                                if (state.newIfCommand.isNotBlank()) {
-                                    val parts = state.newIfCommand.split("=")
-                                    val name = parts.getOrNull(0)?.trim() ?: "var"
-
-                                    val expr = parts.getOrNull(1)?.trim() ?: "0"
-                                    state.curBlockCommands.add(
-                                        VarBlockCommand(
-                                            Variable(
-                                                name = name,
-                                                expression = expr,
-                                                pos = IntOffset(0, state.curBlockCommands.size * 60)
-                                            )
-                                        )
-                                    )
-                                    state.newIfCommand = ""
-                                }
-
                                 // делаю копию команд чтобы при нажатии на креэйт не сохранялся пустой список
                                 val commandsCopy: SnapshotStateList<CommandBlock> = mutableStateListOf<CommandBlock>().apply {
                                     addAll(state.curBlockCommands)
+                                }
+                                val elseCommandsCopy: SnapshotStateList<CommandBlock> = mutableStateListOf<CommandBlock>().apply {
+                                    addAll(state.curElseCommands)
                                 }
 
                                 // тут уже создаю саму карту с командой для иф-блока
@@ -334,6 +421,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                     rightExpression = state.rightIfExpression,
                                     comparisonOperator = state.selectedComparisonOperator,
                                     commands = commandsCopy,
+                                    elseCommands = elseCommandsCopy,
                                     pos = IntOffset(10, 10 + state.ifBlock.size * 220)
                                 )
 
@@ -353,11 +441,16 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                     val newCommands = mutableStateListOf<CommandBlock>().apply {
                                         addAll(state.curBlockCommands)
                                     }
+
+                                    val newElseCommands = mutableStateListOf<CommandBlock>().apply {
+                                        addAll(state.curElseCommands)
+                                    }
                                     state.ifBlock[i] = state.ifBlock[i].copy(
                                         leftExpression = state.leftIfExpression,
                                         rightExpression = state.rightIfExpression,
                                         comparisonOperator = state.selectedComparisonOperator,
                                         commands = newCommands,
+                                        elseCommands = newElseCommands,
                                         pos = state.ifBlock[i].pos
                                     )
                                 }
@@ -367,7 +460,9 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                             state.rightIfExpression = ""
                             state.selectedComparisonOperator = "=="
                             state.curBlockCommands.clear()
+                            state.curElseCommands.clear()
                             state.newIfCommand = ""
+                            state.newElseCommand = ""
                             state.selectedIfBlock = ""
                             state.targetCommandsList = null
                         }
@@ -384,11 +479,15 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                     val newCommands = mutableStateListOf<CommandBlock>().apply {
                                         addAll(state.curBlockCommands)
                                     }
+                                    val newElseCommands = mutableStateListOf<CommandBlock>().apply {
+                                        addAll(state.curElseCommands)
+                                    }
                                     state.ifBlock[i] = state.ifBlock[i].copy(
                                         leftExpression = state.leftIfExpression,
                                         rightExpression = state.rightIfExpression,
                                         comparisonOperator = state.selectedComparisonOperator,
                                         commands = newCommands,
+                                        elseCommands = newElseCommands,
                                         pos = state.ifBlock[i].pos
                                     )
                                 }
@@ -399,7 +498,9 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                             state.selectedComparisonOperator = "=="
                             state.ifBlockError = ""
                             state.curBlockCommands.clear()
+                            state.curElseCommands.clear()
                             state.newIfCommand = ""
+                            state.newElseCommand = ""
                             state.selectedIfBlock = ""
                             state.targetCommandsList = null
                         }
@@ -494,7 +595,7 @@ fun NewAssignmentDialog(state: CodeBlockState, ctx: Context) {
                                         idExpr,
                                         valueExpr,
                                         state.arrays.toMutableList(),
-                                        state.vars,
+                                        state,
                                         ctx
                                     )
                                     if (success) {
@@ -646,18 +747,26 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                                         }
                                     }
                                 }
-
                                 if (!containsError) {
-                                    varsArray.forEach { v ->
-                                        state.vars.add(
-                                            Variable(
-                                                name = v,
-                                                expression = "",
-                                                pos = IntOffset(10 + state.vars.size, state.vars.size*220)
+                                    if (state.printBlocks.isEmpty()) {
+                                        state.printBlocks.add(
+                                            PrintBlock(
+                                                id = UUID.randomUUID().toString(),
+                                                pos = IntOffset(10, 10)
                                             )
                                         )
                                     }
 
+                                    varsArray.forEach { v ->
+                                        state.vars.add(
+                                            Variable(
+                                                name = v,
+                                                expression = "0",
+                                                value = 0,
+                                                pos = IntOffset(10, 720 + state.vars.size * 220)
+                                            )
+                                        )
+                                    }
                                     state.showNewVarDialog = false
                                     state.newVarName = ""
                                     state.newVarError = ""
@@ -708,6 +817,8 @@ fun DeleteAllDialog(state: CodeBlockState) {
                     state.newArrayName = ""
                     state.newArraySize = ""
                     state.arrayError = ""
+
+                    state.printBlocks.clear()
                 }
             ) {
                 Text(stringResource(R.string.delete_all))
@@ -878,11 +989,18 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                                 val parts = state.newWhileCommand.split("=")
                                 val name = parts.getOrNull(0)?.trim() ?: "var"
                                 val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                val value = try {
+                                    val rpn = convertToReversePolishNotation(expr, ctx)
+                                    calculateArithmeticExpression(rpn, state, context = ctx, arrays = state.arrays)
+                                } catch (e: Exception){
+                                    0
+                                }
                                 state.curWhileCommands.add(
                                     VarBlockCommand(
                                         Variable(
                                             name = name,
                                             expression = expr,
+                                            value = value,
                                             pos = IntOffset(0, state.curWhileCommands.size * 220)
                                         )
                                     )
@@ -956,11 +1074,18 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                                     val name = parts.getOrNull(0)?.trim() ?: "var"
 
                                     val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                    val value = try {
+                                        val rpn = convertToReversePolishNotation(expr, ctx)
+                                        calculateArithmeticExpression(rpn, state, context = ctx, arrays = state.arrays)
+                                    } catch (e: Exception){
+                                        0
+                                    }
                                     state.curWhileCommands.add(
                                         VarBlockCommand(
                                             Variable(
                                                 name = name,
                                                 expression = expr,
+                                                value = value,
                                                 pos = IntOffset(0, state.curWhileCommands.size * 60)
                                             )
                                         )
@@ -974,11 +1099,18 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                                     val name = parts.getOrNull(0)?.trim() ?: "var"
 
                                     val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                    val value = try {
+                                        val rpn = convertToReversePolishNotation(expr, ctx)
+                                        calculateArithmeticExpression(rpn, state, context = ctx, arrays = state.arrays)
+                                    } catch (e: Exception){
+                                        0
+                                    }
                                     state.curWhileCommands.add(
                                         VarBlockCommand(
                                             Variable(
                                                 name = name,
                                                 expression = expr,
+                                                value = value,
                                                 pos = IntOffset(0, state.curWhileCommands.size * 60)
                                             )
                                         )
@@ -1182,6 +1314,15 @@ fun NewArrayDialog(state: CodeBlockState, ctx: Context) {
                             pos = IntOffset(10, 10 + state.arrays.size * 220)
                         )
                         state.arrays.add(newArray)
+
+                        if (state.printBlocks.isEmpty()){
+                            state.printBlocks.add(
+                                PrintBlock(
+                                    id = UUID.randomUUID().toString(),
+                                    pos = IntOffset(10,10)
+                                )
+                            )
+                        }
 
                         state.showNewArrayDialog = false
                         state.newArrayName = ""
@@ -1674,7 +1815,7 @@ fun ArraySetDialog(state: CodeBlockState, ctx: Context) {
                                     state.arrayIndexExpression,
                                     state.arrayValueExpression,
                                     tempArrays,
-                                    state.vars,
+                                    state,
                                     ctx
                                 )
                                 if (success) {
