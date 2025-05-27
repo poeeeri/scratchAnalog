@@ -3,6 +3,7 @@ package com.example.test.ui.theme
 import android.content.Context
 import com.example.test.R
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -243,74 +245,70 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
             )
         }
     }
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color(ContextCompat.getColor(context, R.color.canvas)))
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-            .padding(bottom = 80.dp)
-    ) {
-        // рисуем блоки
-        state.vars.forEach { x ->
-            VarCard(
-                variable = x,
-                vars = state.vars,
-                hasError = state.errors.any { it.blockId == x.name },
-                onInteraction = onInteraction,
-                context = context
-            )
-        }
-        state.ifBlock.forEach { x ->
-            IfBlockCard(
-                state = state,
-                ifBlock = x,
-                vars = state.vars,
-                onInteraction = onInteraction,
-                context = context
-            )
-        }
-        state.whileBlocks.forEach { x ->
-            WhileBlockCard(
-                state = state,
-                whileBlock = x,
-                onInteraction = onInteraction,
-                vars = state.vars,
-                context = context
-            )
-        }
-        state.arrays.forEach { x ->
-            ArrayCard(
-                state = state,
-                arrayBlock = x,
-                vars = state.vars,
-                onInteraction = onInteraction
-            )
-        }
-        state.forBlocks.forEach { x ->
-            ForBlockCard(
-                state = state,
-                forBlock = x,
-                vars = state.vars,
-                onInteraction = onInteraction,
-                context = context
-            )
-        }
 
-        if (state.vars.isEmpty() && state.ifBlock.isEmpty() &&
-            state.whileBlocks.isEmpty() && state.arrays.isEmpty() &&
-            state.forBlocks.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = stringResource(R.string.tap_plus_to_add),
-                    color = Color.Gray,
+    val hasContent = state.vars.isNotEmpty() ||
+            state.ifBlock.isNotEmpty() ||
+            state.whileBlocks.isNotEmpty() ||
+            state.arrays.isNotEmpty()
+
+    if (hasContent) {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .background(Color(ContextCompat.getColor(context, R.color.canvas)))
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+                .padding(bottom = 80.dp)
+        ) {
+            // рисуем блоки
+            state.vars.forEach { x ->
+                VarCard(
+                    variable = x,
+                    vars = state.vars,
+                    hasError = state.errors.any { it.blockId == x.name },
+                    onInteraction = onInteraction,
+                    context = context
                 )
             }
+            state.ifBlock.forEach { x ->
+                IfBlockCard(
+                    state = state,
+                    ifBlock = x,
+                    vars = state.vars,
+                    onInteraction = onInteraction,
+                    context = context
+                )
+            }
+            state.whileBlocks.forEach { x ->
+                WhileBlockCard(
+                    state = state,
+                    whileBlock = x,
+                    onInteraction = onInteraction,
+                    vars = state.vars,
+                    context = context
+                )
+            }
+            state.arrays.forEach { x ->
+                ArrayCard(
+                    state = state,
+                    arrayBlock = x,
+                    vars = state.vars,
+                    onInteraction = onInteraction
+                )
+            }
+        }
+    }
+    else {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.LightGray),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(R.string.tap_plus_to_add),
+                color = Color.Gray,
+            )
         }
     }
 }
