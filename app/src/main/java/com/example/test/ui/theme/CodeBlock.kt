@@ -41,6 +41,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.test.ContextMenuState
 import com.example.test.CodeBlockState
 import com.example.test.ui.theme.blocks.ArrayCard
+import com.example.test.ui.theme.blocks.ForBlockCard
 import com.example.test.ui.theme.blocks.IfBlockCard
 import com.example.test.ui.theme.blocks.VarCard
 import com.example.test.ui.theme.blocks.WhileBlockCard
@@ -244,6 +245,7 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
             )
         }
     }
+
     val hasContent = state.vars.isNotEmpty() ||
             state.ifBlock.isNotEmpty() ||
             state.whileBlocks.isNotEmpty() ||

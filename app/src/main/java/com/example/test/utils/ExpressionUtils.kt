@@ -17,7 +17,6 @@ import com.example.test.VarBlockCommand
 import com.example.test.Variable
 import com.example.test.VariableType
 import com.example.test.WhileBlockCommand
-import com.example.test.ui.theme.ArrayAccessDialog
 import java.util.Stack
 
 @SuppressLint("DefaultLocale")
