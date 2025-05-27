@@ -249,7 +249,8 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
     val hasContent = state.vars.isNotEmpty() ||
             state.ifBlock.isNotEmpty() ||
             state.whileBlocks.isNotEmpty() ||
-            state.arrays.isNotEmpty()
+            state.arrays.isNotEmpty() ||
+            state.forBlocks.isNotEmpty()
 
     if (hasContent) {
         Column(
