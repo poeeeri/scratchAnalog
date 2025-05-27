@@ -112,6 +112,6 @@ fun handleEditForBlock(state: CodeBlockState) {
 
 fun handleDeleteForBlock(state: CodeBlockState) {
     state.contextMenuState.forBlockId?.let { blockId ->
-        state.forBlocks.removeAll{it.id == blockId }
+        state.forBlocks.removeAll{ it.id == blockId }
     }
 }

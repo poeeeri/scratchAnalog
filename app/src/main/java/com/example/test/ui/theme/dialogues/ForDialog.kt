@@ -317,6 +317,21 @@ fun ForDialog(state: CodeBlockState,
                                 state.forBlocks.add(newFor)
                             }
 
+                            if (state.selectedForTargetId.isNotEmpty()) {
+                                val i = state.forBlocks.indexOfFirst { it.id == state.selectedForTargetId }
+                                if (i >= 0) {
+                                    val newCommands = mutableStateListOf<CommandBlock>().apply {
+                                        addAll(state.curForCommands)
+                                    }
+                                    state.forBlocks[i] = state.forBlocks[i].copy(
+                                        startExpression = state.newForStartExpr,
+                                        endExpression = state.newForEndExpr,
+                                        comparisonOperator = state.selectedForOperator,
+                                        commands = newCommands,
+                                        pos = state.forBlocks[i].pos
+                                    )
+                                }
+                            }
                             state.showNewForDialog = false
                             state.newForStartExpr = "0"
                             state.newForEndExpr = "10"
@@ -339,7 +354,31 @@ fun ForDialog(state: CodeBlockState,
                     Spacer(modifier = Modifier.width(8.dp))
 
                     TextButton(
-                        onClick = {state.showNewForDialog = false },
+                        onClick = {
+                            if (state.selectedForTargetId.isNotEmpty()) {
+                                val i = state.forBlocks.indexOfFirst { it.id == state.selectedForTargetId }
+                                if (i >= 0) {
+                                    val newCommands = mutableStateListOf<CommandBlock>().apply {
+                                        addAll(state.curForCommands)
+                                    }
+                                    state.forBlocks[i] = state.forBlocks[i].copy(
+                                        startExpression = state.newForStartExpr,
+                                        endExpression = state.newForEndExpr,
+                                        comparisonOperator = state.selectedForOperator,
+                                        commands = newCommands,
+                                        pos = state.forBlocks[i].pos
+                                    )
+                                }
+                            }
+                            state.showNewForDialog = false
+                            state.newForStartExpr = "0"
+                            state.newForEndExpr = "10"
+                            state.selectedForOperator = "<"
+                            state.forBlockError = ""
+                            state.curForCommands.clear()
+                            state.newForVar = ""
+                            state.newForStepIter = "1"
+                            state.showChooseForDialog = false },
                         colors = ButtonDefaults.buttonColors(
                             contentColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text)),
                             containerColor = Color(ContextCompat.getColor(context, R.color.dark_header))
