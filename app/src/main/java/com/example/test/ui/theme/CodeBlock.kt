@@ -296,6 +296,15 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
                     onInteraction = onInteraction
                 )
             }
+            state.forBlocks.forEach { x ->
+                ForBlockCard(
+                    state = state,
+                    forBlock = x,
+                    vars = state.vars,
+                    onInteraction = onInteraction,
+                    context = context
+                )
+            }
         }
     }
     else {
