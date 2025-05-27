@@ -244,57 +244,10 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
             )
         }
     }
-//<<<<<<< HEAD
     val hasContent = state.vars.isNotEmpty() ||
             state.ifBlock.isNotEmpty() ||
             state.whileBlocks.isNotEmpty() ||
             state.arrays.isNotEmpty()
-//=======
-//    Column(
-//        modifier = modifier
-//            .fillMaxSize()
-//            .background(Color(ContextCompat.getColor(context, R.color.canvas)))
-//            .verticalScroll(rememberScrollState())
-//            .padding(16.dp)
-//            .padding(bottom = 80.dp)
-//    ) {
-//        // рисуем блоки
-//        state.vars.forEach { x ->
-//            VarCard(
-//                variable = x,
-//                vars = state.vars,
-//                hasError = state.errors.any { it.blockId == x.name },
-//                onInteraction = onInteraction,
-//                context = context
-//            )
-//        }
-//        state.ifBlock.forEach { x ->
-//            IfBlockCard(
-//                state = state,
-//                ifBlock = x,
-//                vars = state.vars,
-//                onInteraction = onInteraction,
-//                context = context
-//            )
-//        }
-//        state.whileBlocks.forEach { x ->
-//            WhileBlockCard(
-//                state = state,
-//                whileBlock = x,
-//                onInteraction = onInteraction,
-//                vars = state.vars,
-//                context = context
-//            )
-//        }
-//        state.arrays.forEach { x ->
-//            ArrayCard(
-//                state = state,
-//                arrayBlock = x,
-//                vars = state.vars,
-//                onInteraction = onInteraction
-//            )
-//        }
-//>>>>>>> origin/develop
 
     if (hasContent) {
         Column(
