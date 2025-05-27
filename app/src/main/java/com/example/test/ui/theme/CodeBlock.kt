@@ -298,7 +298,8 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
         }
 
         if (state.vars.isEmpty() && state.ifBlock.isEmpty() &&
-            state.whileBlocks.isEmpty() && state.arrays.isEmpty()) {
+            state.whileBlocks.isEmpty() && state.arrays.isEmpty() &&
+            state.forBlocks.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
