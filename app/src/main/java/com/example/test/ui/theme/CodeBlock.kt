@@ -249,7 +249,8 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
     val hasContent = state.vars.isNotEmpty() ||
             state.ifBlock.isNotEmpty() ||
             state.whileBlocks.isNotEmpty() ||
-            state.arrays.isNotEmpty()
+            state.arrays.isNotEmpty() ||
+            state.forBlocks.isNotEmpty()
 
     if (hasContent) {
         Column(
@@ -294,6 +295,15 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
                     arrayBlock = x,
                     vars = state.vars,
                     onInteraction = onInteraction
+                )
+            }
+            state.forBlocks.forEach { x ->
+                ForBlockCard(
+                    state = state,
+                    forBlock = x,
+                    vars = state.vars,
+                    onInteraction = onInteraction,
+                    context = context
                 )
             }
         }
