@@ -39,6 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.test.ContextMenuState
 import com.example.test.CodeBlockState
 import com.example.test.ui.theme.blocks.ArrayCard
+import com.example.test.ui.theme.blocks.ForBlockCard
 import com.example.test.ui.theme.blocks.IfBlockCard
 import com.example.test.ui.theme.blocks.VarCard
 import com.example.test.ui.theme.blocks.WhileBlockCard
@@ -284,6 +285,15 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
                 arrayBlock = x,
                 vars = state.vars,
                 onInteraction = onInteraction
+            )
+        }
+        state.forBlocks.forEach { x ->
+            ForBlockCard(
+                state = state,
+                forBlock = x,
+                vars = state.vars,
+                onInteraction = onInteraction,
+                context = context
             )
         }
 
