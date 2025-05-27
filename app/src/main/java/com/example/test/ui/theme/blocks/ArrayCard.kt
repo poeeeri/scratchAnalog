@@ -1,6 +1,5 @@
 package com.example.test.ui.theme.blocks
 
-import android.widget.Space
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -66,6 +65,7 @@ fun ArrayCard(
                     change.consume()
                     x += drag.x
                     y += drag.y
+                    arrayBlock.pos = IntOffset(x.roundToInt(), y.roundToInt())
                 }
             }
     ) {

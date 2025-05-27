@@ -84,8 +84,12 @@ class CodeBlockState {
     val errors: SnapshotStateList<VarError> = mutableStateListOf()
     val arrays: SnapshotStateList<ArrayBlock> = mutableStateListOf()
     val whileBlocks: SnapshotStateList<WhileBlock> = mutableStateListOf()
+//<<<<<<< HEAD
     val printBlocks: SnapshotStateList<PrintBlock> = mutableStateListOf()
 
+//=======
+    val forBlocks: SnapshotStateList<ForBlock> = mutableStateListOf()
+//>>>>>>> origin/develop
 
     var showNewAssignmentDialog by mutableStateOf(false)
     var showNewIfDialog by mutableStateOf(false)
@@ -96,11 +100,13 @@ class CodeBlockState {
     var showArrayAccessDialog by mutableStateOf(false)
     var showArraySetDialog by mutableStateOf(false)
     var showEditArrayDialog by mutableStateOf(false)
+    var showNewForDialog by mutableStateOf(false)
 
     // меню с кнопками на выбор при создании команды в ифе или вайле
     var showChooseWhileDialog by mutableStateOf(false)
     var showChooseIfDialog by mutableStateOf(false)
     var showChooseArrayDialog by mutableStateOf(false)
+    var showChooseForDialog by mutableStateOf(false)
 
     var selectedTargetVar by mutableStateOf("")
     var assignmentArithmExpr by mutableStateOf("")
@@ -119,6 +125,7 @@ class CodeBlockState {
     var selectedArrayId by mutableStateOf("")
     var selectedArrayName by mutableStateOf("")
     var selectedComparisonOperator by mutableStateOf("==")
+    var selectedVarType by mutableStateOf(VariableType.INT)
 
     var leftWhileExpression by mutableStateOf("")
     var rightWhileExpression by mutableStateOf("")
@@ -134,6 +141,16 @@ class CodeBlockState {
     var arrayAccessError by mutableStateOf("")
     var arraySetError by mutableStateOf("")
 
+    // все для фор
+    var newForVar by mutableStateOf("")
+    var newForStartExpr by mutableStateOf("0")
+    var newForEndExpr by mutableStateOf("10")
+    var selectedForOperator by mutableStateOf("<")
+    var forBlockError by mutableStateOf("")
+    var newForStepIter by mutableStateOf("1")
+    var curForCommands:  SnapshotStateList<CommandBlock> = mutableStateListOf()
+    var selectedForTargetId by mutableStateOf("")
+
     var contextMenuState by mutableStateOf(ContextMenuState())
     var targetCommandsList by mutableStateOf<SnapshotStateList<CommandBlock>?>(null)
 
@@ -143,13 +160,13 @@ class CodeBlockState {
     val blockItems = mutableStateListOf<BlockItem>()
 }
 
-
 data class Variable(
     val id: String = UUID.randomUUID().toString(),
     val name: String,
     var expression: String,
     var value: Any? = null,
-    var pos: IntOffset = IntOffset(0, 0)
+    var pos: IntOffset = IntOffset(0, 0),
+    val type: VariableType = VariableType.INT
 )
 
 data class PrintBlock(
@@ -191,6 +208,29 @@ data class WhileBlockCommand(
         get() = whileBlock.pos
         set(value) { whileBlock.pos = value }
 }
+
+data class ForBlock (
+    val id: String = UUID.randomUUID().toString(),
+    val variable: String,
+    val startExpression: String,
+    val endExpression: String,
+    val comparisonOperator: String,
+    val stepIter: Int,
+    val commands: SnapshotStateList<CommandBlock> = mutableStateListOf(),
+    var pos : IntOffset = IntOffset(0,0),
+    val doCommands: SnapshotStateList<CommandBlock> = mutableStateListOf()
+)
+
+data class ForBlockCommand(
+    val forBlock: ForBlock
+) : CommandBlock() {
+    override val id: String
+        get() = forBlock.id
+    override var pos: IntOffset
+        get() = forBlock.pos
+        set(value) { forBlock.pos = value }
+}
+
 
 
 data class IfBlock(
@@ -248,6 +288,7 @@ data class ContextMenuState(
     val ifBlockId: String? = null,
     val whileBlockId: String? = null,
     val arrayBlockId: String? = null,
+    val forBlockId: String? = null,
     val printBlockId: String? = null
 )
 
@@ -255,6 +296,7 @@ sealed class BlockItem {
     data class VarBlock(val variable: Variable): BlockItem()
     data class IfBlockItem(val block: IfBlock): BlockItem()
     data class WhileBlockItem(val block: WhileBlock): BlockItem()
+    data class ForBlockItem(val block: ForBlock): BlockItem()
     data class ArrayBlockItem(val block: ArrayBlock): BlockItem()
     data class PrintBlockItem(val block: PrintBlock): BlockItem()
 
@@ -263,6 +305,7 @@ sealed class BlockItem {
             is VarBlock -> variable.id
             is IfBlockItem -> block.id
             is WhileBlockItem -> block.id
+            is ForBlockItem -> block.id
             is ArrayBlockItem -> block.id
             is PrintBlockItem -> block.id
 

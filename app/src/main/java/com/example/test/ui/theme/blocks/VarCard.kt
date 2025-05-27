@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,12 +25,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.example.test.Variable
 import com.example.test.utils.preprocessArrayExprForDisplay
 import kotlin.math.roundToInt
+import android.content.Context
+import com.example.test.R
 
 @Composable
-fun VarCard(variable: Variable, vars: List<Variable>, hasError: Boolean,  onInteraction: (Offset, String) -> Unit) {
+fun VarCard(
+    variable: Variable,
+    vars: List<Variable>,
+    hasError: Boolean,
+    onInteraction: (Offset, String) -> Unit,
+    context: Context
+) {
     var x by remember { mutableFloatStateOf(variable.pos.x.toFloat()) }
     var y by remember { mutableFloatStateOf(variable.pos.y.toFloat()) }
     var blockPosition by remember { mutableStateOf(Offset.Zero) }
@@ -45,12 +53,12 @@ fun VarCard(variable: Variable, vars: List<Variable>, hasError: Boolean,  onInte
                 )
             }
             .background(
-                color = if (hasError) Color(0xFFFFEBEE) else MaterialTheme.colorScheme.primaryContainer,
+                color = if (hasError) Color(0xFFFFEBEE) else Color(ContextCompat.getColor(context, R.color.var_color)),
                 shape = RoundedCornerShape(8.dp)
             )
             .border(
                 width = if (hasError) 2.dp else 0.2.dp,
-                color = if (hasError) Color.Red else Color.White,
+                color = if (hasError) Color.Red else Color(ContextCompat.getColor(context, R.color.light_green_for_text)),
                 shape = RoundedCornerShape(8.dp)
             )
             .padding(12.dp)
@@ -81,16 +89,18 @@ fun VarCard(variable: Variable, vars: List<Variable>, hasError: Boolean,  onInte
     ) {
         Column {
             if (variable.expression == "") variable.expression = "0"
-            val value = preprocessArrayExprForDisplay(variable.expression)
+            val value = if (variable.expression != "0")
+                preprocessArrayExprForDisplay(variable.expression)
+            else "0"
             Text(
-                text = "Int ${variable.name} = $value",
+                text = "${variable.type.toString().capitalize()} ${variable.name} = $value",
                 fontWeight = FontWeight.Bold,
-                color = if (hasError) Color.Red else MaterialTheme.colorScheme.onPrimaryContainer
+                color = if (hasError) Color.Red else Color(ContextCompat.getColor(context, R.color.light_green_for_text))
             )
             Text(
-                text = "Integer",
+                text = variable.type.toString(),
                 fontSize = 12.sp,
-                color = if (hasError) Color.Red else MaterialTheme.colorScheme.onPrimaryContainer
+                color = if (hasError) Color.Red else Color(ContextCompat.getColor(context, R.color.light_green_for_text))
             )
         }
     }

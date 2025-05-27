@@ -41,7 +41,8 @@ android {
 
 val composeVersion = "1.4.3"
 dependencies {
-    implementation("androidx.compose.ui:ui:1.5.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.0")
+    implementation("androidx.compose.ui:ui:1.6.1")
     implementation("androidx.compose.foundation:foundation:1.5.0")
     implementation("androidx.compose.material3:material3:1.2.0")
     implementation("androidx.compose.material:material-icons-extended:$composeVersion")
