@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
+import com.example.test.BlockItem
 import com.example.test.CodeBlockState
 import com.example.test.CommandBlock
 import com.example.test.IfBlock
@@ -83,6 +84,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
         state.selectedComparisonOperator = "=="
         state.ifBlockError = ""
         state.curBlockCommands.clear()
+        state.curElseCommands.clear()
         state.newIfCommand = ""
         state.selectedIfBlock = ""
     }) {
@@ -93,7 +95,6 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                 .shadow(10.dp, shape = RoundedCornerShape(8.dp),
                     spotColor = Color(ContextCompat.getColor(ctx, R.color.shadow)))
         ) {
-            val textColor = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text))
             Column(
                 modifier = Modifier
                     .padding(20.dp)
@@ -193,7 +194,8 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                     ) {
                         if (com is VarBlockCommand) {
                             Text(
-                                text = "${i + 1}. ${com.variable.name} = ${preprocessArrayExprForDisplay(com.variable.expression)}",
+                                text = "${i + 1}. ${com.variable.name} = ${
+                                    preprocessArrayExprForDisplay(com.variable.expression)}",
                                 modifier = Modifier.weight(1f),
                                 color = textColor
                             )
@@ -233,61 +235,196 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                 val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
                                 val usedVars = regex.findAll(newCommand).map {it.value }.toSet()
 
-                                val declaredVars = state.vars.map{it.name}.toSet() + state.arrays.map{it.name}.toSet()
+                                val declaredVars = state.vars.map{it.name}
+                                    .toSet() + state.arrays.map{it.name}.toSet()
                                 val notDeclared = usedVars-declaredVars
 
-                                if (notDeclared.isNotEmpty()) {
-                                    state.ifBlockError = ctx.getString(R.string.err_undeclared_var, notDeclared.joinToString(", "))
+//                                if (notDeclared.isNotEmpty()) {
+//                                    state.ifBlockError = ctx.getString(R.string.err_undeclared_var, notDeclared.joinToString(", "))
+//                                    return@IconButton
+//                                }
+                                notDeclared.forEach { name ->
+                                    val newVar = Variable(name = name, expression = "0", pos = IntOffset(0, state.curBlockCommands.size * 220))
+                                    state.vars.add(newVar)
+                                    state.blockItems.add(BlockItem.VarBlock(newVar))
+                                }
+                            }
+
+//                            if (state.newIfCommand.isNotBlank()) {
+                            val parts = state.newIfCommand.split("=")
+                            val name = parts.getOrNull(0)?.trim() ?: "var"
+
+                            val expr = parts.getOrNull(1)?.trim() ?: "0"
+                            val existingVar = state.vars.find { it.name == name }
+                            if (existingVar != null) {
+                                try {
+                                    val rpn = convertToReversePolishNotation(
+                                        expr,
+                                        ctx
+                                    )
+                                    val calculatedValue = calculateArithmeticExpression(
+                                        rpn,
+                                        state,
+                                        context = ctx,
+                                        arrays = state.arrays
+                                    )
+                                    if (existingVar.type == VariableType.INT &&
+                                        calculatedValue != calculatedValue.toInt().toDouble()) {
+                                        state.ifBlockError = "Cannot convert float to int"
+                                        return@IconButton
+                                    }
+                                }
+                                catch (e: Exception) {
                                     return@IconButton
                                 }
                             }
 
-                            if (state.newIfCommand.isNotBlank()) {
-                                val parts = state.newIfCommand.split("=")
-                                val name = parts.getOrNull(0)?.trim() ?: "var"
-
-                                val expr = parts.getOrNull(1)?.trim() ?: "0"
-                                val existingVar = state.vars.find { it.name == name }
-                                if (existingVar != null) {
-                                    try {
-                                        val rpn = convertToReversePolishNotation(
-                                            expr,
-                                            ctx
-                                        )
-                                        val calculatedValue = calculateArithmeticExpression(
-                                            rpn,
-                                            state.vars,
-                                            context = ctx,
-                                            arrays = state.arrays
-                                        )
-                                        if (existingVar.type == VariableType.INT &&
-                                            calculatedValue != calculatedValue.toInt().toDouble()) {
-                                            state.ifBlockError = "Cannot convert float to int"
-                                            return@IconButton
-                                        }
-                                    }
-                                    catch (e: Exception) {
-                                        return@IconButton
-                                    }
-                                }
-
-                                state.curBlockCommands.add(
-                                    VarBlockCommand(
-                                        Variable(
-                                            name = name,
-                                            expression = expr,
-                                            pos = IntOffset(0, state.curBlockCommands.size * 10)
-                                        )
+                            state.curBlockCommands.add(
+                                VarBlockCommand(
+                                    Variable(
+                                        name = name,
+                                        expression = expr,
+                                        value = expr.toDoubleOrNull() ?: 0.0,
+                                        pos = IntOffset(0, state.curBlockCommands.size * 10)
                                     )
                                 )
-                                state.newIfCommand = ""
-                            }
+                            )
+                            state.newIfCommand = ""
+                            state.ifBlockError = ""
                         }
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Add Command",
                             tint = textColor)
                     }
                 }
+
+
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Commands (if condition is false):",
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                state.curElseCommands.forEachIndexed { i, com ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (com is VarBlockCommand) {
+                            Text(
+                                text = "${i + 1}. ${com.variable.name} = ${
+                                    preprocessArrayExprForDisplay(
+                                        com.variable.expression
+                                    )
+                                }",
+                                modifier = Modifier.weight(1f)
+                            )
+                        } else {
+                            Text(
+                                text = "${i + 1}. Command block",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        IconButton(
+                            onClick = { state.curElseCommands.removeAt(i) }
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "Remove Command",
+                                tint = textColor)
+                        }
+                    }
+                    HorizontalDivider()
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = state.newElseCommand,
+                        onValueChange = { state.newElseCommand = it },
+                        label = { Text("New Command (Else)") },
+                        modifier = Modifier.weight(1f),
+                        colors =  textAreaColor
+                    )
+                    IconButton(
+                        onClick = {
+                            val newCommand = state.newElseCommand.trim()
+                            if (newCommand.isNotBlank()) {
+                                val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
+                                val usedVars = regex.findAll(newCommand).map { it.value }.toSet()
+
+                                val declaredVars = state.vars.map { it.name }
+                                    .toSet() + state.arrays.map { it.name }.toSet()
+                                val notDeclared = usedVars - declaredVars
+
+                                notDeclared.forEach{ name ->
+                                    val newVar = Variable(name = name, expression = "0", value = 0, pos = IntOffset(0, state.curBlockCommands.size * 220))
+                                    state.vars.add(newVar)
+                                    state.blockItems.add(BlockItem.VarBlock(newVar))
+                                }
+                            }
+
+                            val parts = state.newElseCommand.split("=")
+                            val name = parts.getOrNull(0)?.trim() ?: "var"
+                            val expr = parts.getOrNull(1)?.trim() ?: "0"
+
+
+
+//                            val parts = state.newIfCommand.split("=")
+//                            val name = parts.getOrNull(0)?.trim() ?: "var"
+//
+//                            val expr = parts.getOrNull(1)?.trim() ?: "0"
+                            val existingVar = state.vars.find { it.name == name }
+                            if (existingVar != null) {
+                                try {
+                                    val rpn = convertToReversePolishNotation(
+                                        expr,
+                                        ctx
+                                    )
+                                    val calculatedValue = calculateArithmeticExpression(
+                                        rpn,
+                                        state,
+                                        context = ctx,
+                                        arrays = state.arrays
+                                    )
+                                    if (existingVar.type == VariableType.INT &&
+                                        calculatedValue != calculatedValue.toInt().toDouble()) {
+                                        state.ifBlockError = "Cannot convert float to int"
+                                        return@IconButton
+                                    }
+                                }
+                                catch (e: Exception) {
+                                    return@IconButton
+                                }
+                            }
+
+
+
+                            state.curElseCommands.add(
+                                VarBlockCommand(
+                                    Variable(
+                                        name = name,
+                                        expression = expr,
+                                        value = expr.toIntOrNull() ?: 0,
+                                        pos = IntOffset(0, state.curElseCommands.size * 220)
+                                    )
+                                )
+                            )
+                            state.newElseCommand = ""
+                            state.ifBlockError = ""
+                        }
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Command",
+                            tint = textColor)
+                    }
+                }
+
+
+
+
                 if (state.ifBlockError.isNotBlank()) {
                     Text(
                         text = state.ifBlockError,
@@ -335,6 +472,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                         rightExpression = state.rightIfExpression,
                                         comparisonOperator = state.selectedComparisonOperator,
                                         commands = state.curBlockCommands,
+                                        elseCommands = state.curElseCommands,
                                         pos = IntOffset(
                                             state.ifBlock[i].pos.x,
                                             state.ifBlock[i].pos.y
@@ -359,6 +497,23 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                 }
                             }
                             else {
+                                if (state.newElseCommand.isNotBlank()) {
+                                    val parts = state.newElseCommand.split("=")
+                                    val name = parts.getOrNull(0)?.trim() ?: "var"
+
+                                    val expr = parts.getOrNull(1)?.trim() ?: "0.0"
+                                    state.curElseCommands.add(
+                                        VarBlockCommand(
+                                            Variable(
+                                                name = name,
+                                                expression = expr,
+                                                pos = IntOffset(0, state.curElseCommands.size * 60)
+                                            )
+                                        )
+                                    )
+                                    state.newElseCommand = ""
+                                }
+
                                 if (state.newIfCommand.isNotBlank()) {
                                     val parts = state.newIfCommand.split("=")
                                     val name = parts.getOrNull(0)?.trim() ?: "var"
@@ -381,12 +536,17 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                     addAll(state.curBlockCommands)
                                 }
 
+                                val elseCommandCopy: SnapshotStateList<CommandBlock> = mutableStateListOf<CommandBlock>().apply {
+                                    addAll(state.curElseCommands)
+                                }
+
                                 // тут уже создаю саму карту с командой для иф-блока
                                 val newIf = IfBlock(
                                     leftExpression = state.leftIfExpression,
                                     rightExpression = state.rightIfExpression,
                                     comparisonOperator = state.selectedComparisonOperator,
                                     commands = commandsCopy,
+                                    elseCommands = elseCommandCopy,
                                     pos = IntOffset(10, 10 + state.ifBlock.size * 10)
                                 )
 
@@ -406,11 +566,15 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                     val newCommands = mutableStateListOf<CommandBlock>().apply {
                                         addAll(state.curBlockCommands)
                                     }
+                                    val newElseCommands = mutableStateListOf<CommandBlock>().apply {
+                                        addAll(state.curElseCommands)
+                                    }
                                     state.ifBlock[i] = state.ifBlock[i].copy(
                                         leftExpression = state.leftIfExpression,
                                         rightExpression = state.rightIfExpression,
                                         comparisonOperator = state.selectedComparisonOperator,
                                         commands = newCommands,
+                                        elseCommands = newElseCommands,
                                         pos = state.ifBlock[i].pos
                                     )
                                 }
@@ -420,6 +584,8 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                             state.rightIfExpression = ""
                             state.selectedComparisonOperator = "=="
                             state.curBlockCommands.clear()
+                            state.curElseCommands.clear()
+                            state.newElseCommand = ""
                             state.newIfCommand = ""
                             state.selectedIfBlock = ""
                             state.targetCommandsList = null
@@ -442,11 +608,15 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                     val newCommands = mutableStateListOf<CommandBlock>().apply {
                                         addAll(state.curBlockCommands)
                                     }
+                                    val newElseCommands = mutableStateListOf<CommandBlock>().apply {
+                                        addAll(state.curElseCommands)
+                                    }
                                     state.ifBlock[i] = state.ifBlock[i].copy(
                                         leftExpression = state.leftIfExpression,
                                         rightExpression = state.rightIfExpression,
                                         comparisonOperator = state.selectedComparisonOperator,
                                         commands = newCommands,
+                                        elseCommands = newElseCommands,
                                         pos = state.ifBlock[i].pos
                                     )
                                 }
@@ -457,7 +627,9 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                             state.selectedComparisonOperator = "=="
                             state.ifBlockError = ""
                             state.curBlockCommands.clear()
+                            state.curElseCommands.clear()
                             state.newIfCommand = ""
+                            state.newElseCommand = ""
                             state.selectedIfBlock = ""
                             state.targetCommandsList = null
                         },

@@ -49,6 +49,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import com.example.test.ArrayBlock
 import com.example.test.CodeBlockState
+import com.example.test.PrintBlock
 import com.example.test.R
 import com.example.test.utils.preprocessArrayExprForDisplay
 import com.example.test.utils.setArrayElement
@@ -169,6 +170,15 @@ fun NewArrayDialog(state: CodeBlockState, ctx: Context) {
                             pos = IntOffset(10, 10 + state.arrays.size * 220)
                         )
                         state.arrays.add(newArray)
+
+                        if (state.printBlocks.isEmpty()) {
+                            state.printBlocks.add(
+                                PrintBlock(
+                                    id = UUID.randomUUID().toString(),
+                                    pos = IntOffset(10, 10)
+                                )
+                            )
+                        }
 
                         state.showNewArrayDialog = false
                         state.newArrayName = ""
@@ -773,7 +783,7 @@ fun ArraySetDialog(state: CodeBlockState, ctx: Context) {
                                     state.arrayIndexExpression,
                                     state.arrayValueExpression,
                                     tempArrays,
-                                    state.vars,
+                                    state,
                                     ctx
                                 )
                                 if (success) {

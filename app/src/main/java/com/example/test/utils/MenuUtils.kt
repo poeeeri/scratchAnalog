@@ -35,6 +35,8 @@ fun handleEditIfBlock(state: CodeBlockState) {
             state.selectedComparisonOperator = it.comparisonOperator
             state.curBlockCommands.clear()
             state.curBlockCommands.addAll(block.commands)
+            state.curElseCommands.clear()
+            state.curElseCommands.addAll(block.elseCommands)
             state.targetCommandsList = block.commands
 
             state.showNewIfDialog = true
@@ -69,6 +71,15 @@ fun handleDeleteArrayBlock(state: CodeBlockState) {
     state.contextMenuState = ContextMenuState()
 }
 
+//<<<<<<< HEAD
+fun handleDeletePrintBlock(state: CodeBlockState) {
+    state.contextMenuState.printBlockId?.let { blockId ->
+        state.printBlocks.removeAll {it.id == blockId}
+    }
+    state.contextMenuState = ContextMenuState()
+
+}
+//=======
 fun handleWhileEdit(state: CodeBlockState) {
     state.contextMenuState.whileBlockId?.let { blockId ->
         val block = state.whileBlocks.firstOrNull { it.id == blockId }
@@ -112,6 +123,7 @@ fun handleEditForBlock(state: CodeBlockState) {
 
 fun handleDeleteForBlock(state: CodeBlockState) {
     state.contextMenuState.forBlockId?.let { blockId ->
-        state.forBlocks.removeAll{it.id == blockId }
+        state.forBlocks.removeAll { it.id == blockId }
     }
 }
+//    >>>>>>> origin/develop
