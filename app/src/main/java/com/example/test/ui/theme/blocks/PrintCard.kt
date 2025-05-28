@@ -1,5 +1,7 @@
 package com.example.test.ui.theme.blocks
 
+
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -24,7 +26,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
+import androidx.core.content.ContextCompat
 import com.example.test.*
+import com.example.test.R
 import kotlin.math.roundToInt
 
 
@@ -35,9 +39,12 @@ fun PrintCard(
     vars: List<Variable>,
     arrays: List<ArrayBlock>,
     onInteraction: (Offset, String) -> Unit,
-    hasError: Boolean = false
+    hasError: Boolean = false,
+    context: Context
 ) {
     val block = state.printBlocks.firstOrNull { it.id == blockId } ?: return
+    val color = Color(ContextCompat.getColor(context, R.color.print_color))
+    val textColor = Color(ContextCompat.getColor(context, R.color.print_text_color))
 
     var x by remember { mutableFloatStateOf(block.pos.x.toFloat()) }
     var y by remember { mutableFloatStateOf(block.pos.y.toFloat()) }
@@ -76,15 +83,15 @@ fun PrintCard(
         Box(
             modifier = Modifier
                 .background(
-                    color = if (hasError) Color.Red else MaterialTheme.colorScheme.primaryContainer,
+                    color = if (hasError) Color.Red else color,
                     shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
                 )
                 .border(
                     width = 1.dp,
-                    color = if (hasError) Color.Red else MaterialTheme.colorScheme.outline,
+                    color = if (hasError) Color.Red else Color(ContextCompat.getColor(context, R.color.light_green_for_text)),
                     shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
                 )
-                .padding(12.dp)
+                .padding(12.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -94,7 +101,7 @@ fun PrintCard(
                 Text(
                     text = "Print",
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = textColor
                 )
                 IconButton(
                     onClick = { expanded = !expanded }
@@ -103,7 +110,8 @@ fun PrintCard(
                         imageVector = if (expanded)
                             Icons.Default.ExpandLess
                         else Icons.Default.ExpandMore,
-                        contentDescription = if (expanded) "Collapse" else "Expand"
+                        contentDescription = if (expanded) "Collapse" else "Expand",
+                        tint = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
                     )
                 }
             }
@@ -112,7 +120,7 @@ fun PrintCard(
             Box(
                 modifier = Modifier
                     .background(
-                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        color = color,
                         shape = RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
                     )
                     .border(
@@ -132,7 +140,7 @@ fun PrintCard(
                     Text(
                         text = "Variables:",
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = textColor
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -144,7 +152,8 @@ fun PrintCard(
                         }
                         Text(
                             text = "${variable.name} = $displayValue",
-                            modifier = Modifier.padding(vertical = 4.dp)
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            color = textColor
                         )
                     }
                     if (arrays.isNotEmpty()) {
@@ -152,7 +161,7 @@ fun PrintCard(
                         Text(
                             text = "Arrays:",
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = textColor
                         )
                         Spacer(modifier = Modifier.height(8.dp))
 
@@ -164,7 +173,8 @@ fun PrintCard(
                                         postfix = "]"
                                     )
                                 }",
-                                modifier = Modifier.padding(vertical = 4.dp)
+                                modifier = Modifier.padding(vertical = 4.dp),
+                                color = textColor
                             )
                         }
                     }

@@ -324,7 +324,8 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
                     blockId = block.id,
                     vars = state.vars,
                     arrays = state.arrays,
-                    onInteraction = onInteraction
+                    onInteraction = onInteraction,
+                    context = context
                 )
             }
         }
