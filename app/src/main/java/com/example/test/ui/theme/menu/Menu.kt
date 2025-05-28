@@ -24,6 +24,7 @@ import com.example.test.utils.handleEdit
 import com.example.test.utils.handleEditArrayBlock
 import com.example.test.utils.handleEditForBlock
 import com.example.test.utils.handleEditIfBlock
+import com.example.test.utils.handleDeletePrintBlock
 import com.example.test.utils.handleWhileDelete
 import com.example.test.utils.handleWhileEdit
 
@@ -86,9 +87,7 @@ fun Menu(state: CodeBlockState,
                     },
                     colors = textColor
                 )
-            }
-
-            else if (state.contextMenuState.ifBlockId != null) {
+            } else if (state.contextMenuState.ifBlockId != null) {
                 DropdownMenuItem(
                     text = { Text(edit) },
                     onClick = {
@@ -105,9 +104,7 @@ fun Menu(state: CodeBlockState,
                     },
                     colors = textColor
                 )
-            }
-
-            else if (state.contextMenuState.arrayBlockId != null) {
+            } else if (state.contextMenuState.arrayBlockId != null) {
                 DropdownMenuItem(
                     text = { Text(edit) },
                     onClick = {
@@ -142,6 +139,14 @@ fun Menu(state: CodeBlockState,
                         state.contextMenuState = ContextMenuState()
                     },
                     colors = textColor
+                )
+            } else if (state.contextMenuState.printBlockId != null) {
+                DropdownMenuItem(
+                    text = { Text(delete) },
+                    onClick = {
+                        handleDeletePrintBlock(state)
+                        state.contextMenuState = ContextMenuState()
+                    }
                 )
             }
         }

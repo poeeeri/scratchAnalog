@@ -17,13 +17,17 @@
 
     <color name="header">#344640</color>
     <color name="dark_header">#1C2621</color>
-    <color name="canvas">#151B19</color>
+    <color name="canvas">#141B19</color>
+    <color name="light_canvas">#0E1210</color>
 
     <color name="cycle_main_color">#153126</color>
     <color name="cycle_body_color">#739883</color>
 
     <color name="if_main_color">#2A453D</color>
     <color name="if_body_color">#AAC5AD</color>
+
+    <color name="print_color">#0B0F0B</color>
+    <color name="print_text_color">#08E608</color>
 
     <color name="dialog">#0D1212</color>
 

@@ -38,8 +38,11 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+//>>>>>>> origin/develop
 import com.example.test.ContextMenuState
 import com.example.test.CodeBlockState
+import com.example.test.PrintBlock
+import com.example.test.Variable
 import com.example.test.ui.theme.blocks.ArrayCard
 import com.example.test.ui.theme.blocks.ForBlockCard
 import com.example.test.ui.theme.blocks.IfBlockCard
@@ -56,6 +59,9 @@ import com.example.test.ui.theme.dialogues.NewAssignmentDialog
 import com.example.test.ui.theme.dialogues.VarDialog
 import com.example.test.ui.theme.dialogues.WhileDialog
 import com.example.test.ui.theme.menu.Menu
+import com.example.test.ui.theme.blocks.PrintCard
+import java.util.UUID
+
 
 class CodeBlockViewModel : ViewModel() {
     val codeBlockState = CodeBlockState()
@@ -104,7 +110,6 @@ fun CodeBlock() {
         },
         floatingActionButton = { FloatingActivationButtons(states, context) }
     ) { innerPadding ->
-
         Canvas(states, Modifier
             .padding(innerPadding)
             .fillMaxSize(),
@@ -233,6 +238,12 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
                 arrayBlockId = id
             )
 
+            state.printBlocks.any { it.id == id} -> ContextMenuState(
+                shown = true,
+                position = position,
+                printBlockId = id
+            )
+
             state.forBlocks.any { it.id == id} -> ContextMenuState(
                 shown = true,
                 position = position,
@@ -250,7 +261,8 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
             state.ifBlock.isNotEmpty() ||
             state.whileBlocks.isNotEmpty() ||
             state.arrays.isNotEmpty() ||
-            state.forBlocks.isNotEmpty()
+            state.forBlocks.isNotEmpty() ||
+            state.printBlocks.isNotEmpty()
 
     if (hasContent) {
         Column(
@@ -306,13 +318,23 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
                     context = context
                 )
             }
+            state.printBlocks.forEach { block ->
+                PrintCard(
+                    state = state,
+                    blockId = block.id,
+                    vars = state.vars,
+                    arrays = state.arrays,
+                    onInteraction = onInteraction,
+                    context = context
+                )
+            }
         }
     }
     else {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp),
+                .background(Color(ContextCompat.getColor(context, R.color.canvas))),
             contentAlignment = Alignment.Center
         ) {
             Text(

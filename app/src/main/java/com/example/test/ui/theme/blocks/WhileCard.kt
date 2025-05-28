@@ -188,9 +188,13 @@ fun WhileBlockCard(
                                     variable = cmd.variable,
                                     vars = vars,
                                     hasError = false,
+//<<<<<<< HEAD
+//                                    onInteraction = onInteraction
+//=======
                                     onInteraction = onInteraction,
                                     context = context
 
+//>>>>>>> origin/develop
                                 )
                                 is ForBlockCommand -> ForBlockCard(
                                     state = state,

@@ -135,7 +135,7 @@ fun NewAssignmentDialog(state: CodeBlockState, ctx: Context) {
                                         idExpr,
                                         valueExpr,
                                         state.arrays.toMutableList(),
-                                        state.vars,
+                                        state,
                                         ctx
                                     )
                                     if (success) {
@@ -172,7 +172,7 @@ fun NewAssignmentDialog(state: CodeBlockState, ctx: Context) {
                                                 val rpn = convertToReversePolishNotation(state.assignmentArithmExpr, ctx)
                                                 val calculatedValue = calculateArithmeticExpression(
                                                     rpn,
-                                                    state.vars,
+                                                    state,
                                                     context = ctx,
                                                     arrays = state.arrays
                                                 )

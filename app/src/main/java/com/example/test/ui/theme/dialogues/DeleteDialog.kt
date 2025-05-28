@@ -42,6 +42,7 @@ fun DeleteAllDialog(state: CodeBlockState,
                     state.arrays.clear()
                     state.ifBlock.clear()
                     state.forBlocks.clear()
+                    state.printBlocks.clear()
                     state.targetCommandsList = null
                     state.selectedIfBlock = ""
                     state.errors.removeAll { true }
