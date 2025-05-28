@@ -328,34 +328,6 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
                 )
             }
         }
-//<<<<<<< HEAD
-//
-//        state.arrays.forEach { block ->
-//            key(block.id) {
-//                ArrayCard(
-//                    arrayBlock = block,
-//                    state = state,
-//                    onInteraction = onInteraction,
-//                    vars = state.vars
-//                )
-//            }
-//        }
-//
-//        state.printBlocks.forEach { block ->
-//            key(block.id) {
-//                PrintCard(
-//                    state = state,
-//                    blockId = block.id,
-//                    vars = state.vars,
-//                    arrays = state.arrays,
-//                    onInteraction = onInteraction
-//                )
-//            }
-//        }
-
-//        if (state.vars.isEmpty() && state.ifBlock.isEmpty() &&
-//            state.whileBlocks.isEmpty() && state.arrays.isEmpty()) {
-//        }
     }
     else {
         Box(
