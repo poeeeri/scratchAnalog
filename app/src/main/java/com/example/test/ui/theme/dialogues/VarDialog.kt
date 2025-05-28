@@ -34,9 +34,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import com.example.test.CodeBlockState
+import com.example.test.PrintBlock
 import com.example.test.R
 import com.example.test.Variable
 import com.example.test.VariableType
+import java.util.UUID
 
 @SuppressLint("StringFormatInvalid")
 @Composable
@@ -167,11 +169,21 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                                 }
 
                                 if (!containsError) {
+                                    if (state.printBlocks.isEmpty()) {
+                                        state.printBlocks.add(
+                                            PrintBlock(
+                                                id = UUID.randomUUID().toString(),
+                                                pos = IntOffset(10, 10)
+                                            )
+                                        )
+                                    }
+
                                     varsArray.forEach { v ->
                                         state.vars.add(
                                             Variable(
                                                 name = v,
                                                 expression = "0",
+                                                value = 0,
                                                 pos = IntOffset(10 + state.vars.size, state.vars.size*10),
                                                 type = state.selectedVarType
                                             )
