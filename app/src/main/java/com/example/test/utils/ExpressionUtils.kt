@@ -8,6 +8,7 @@ import com.example.test.R
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.example.test.ArrayBlock
 import com.example.test.ArrayBlockCommand
@@ -592,28 +593,60 @@ fun calculateArithmeticExpression(
         Toast.makeText(context, R.string.err_var_with_enpty_name_found, Toast.LENGTH_LONG).show()
     }
 
+//    val startsWithArray = expression.trim().matches(Regex("^[a-zA-Z]\\w*\\s*\\[.*"))
+//    val processedExpr = if (startsWithArray) "1 ${expression}" else expression
+//
+//    val arrayAccessPattern = Regex("([a-zA-Z_]\\w*)\\[(.*)\\]")
+//
+////<<<<<<< HEAD
+////    val stack = mutableListOf<Int>()
+//    val isAlreadyRpn = processedExpr.trim().split(" ").all {
+//        it.toIntOrNull() != null || it in listOf("+", "-", "*", "/", "%") || state.vars.any { v -> v.name == it } || Regex("[a-zA-Z_]\\w*\\[.*\\]").matches(it)
+//    }
+//
+//    val rpnExpr = if (!isAlreadyRpn) {
+//        convertToReversePolishNotation(expression, context)
+//    } else {
+//        expression
+//    }
+//
+//    val tokens = rpnExpr.split(" ").filter { it.isNotBlank() }
+////=======
+//    val stack = mutableListOf<Double>()
+////    val tokens = processedExpr.split(" ").filter { it.isNotBlank() }
+////>>>>>>> origin/develop
+//=======
+
     val startsWithArray = expression.trim().matches(Regex("^[a-zA-Z]\\w*\\s*\\[.*"))
     val processedExpr = if (startsWithArray) "1 ${expression}" else expression
-
     val arrayAccessPattern = Regex("([a-zA-Z_]\\w*)\\[(.*)\\]")
 
-//<<<<<<< HEAD
-//    val stack = mutableListOf<Int>()
-    val isAlreadyRpn = processedExpr.trim().split(" ").all {
-        it.toIntOrNull() != null || it in listOf("+", "-", "*", "/", "%") || state.vars.any { v -> v.name == it } || Regex("[a-zA-Z_]\\w*\\[.*\\]").matches(it)
+    fun isRPN(tokens: List<String>): Boolean{
+        var counter = 0
+        for (token in tokens) {
+            when {
+                token.toDoubleOrNull() != null || state.vars.any { it.name == token} || arrayAccessPattern.matches(token) -> counter++
+                token in listOf("+", "-", "*", "/", "%") -> {
+                    if (counter < 2) return false
+                    counter--
+                }
+                else -> return false
+                }
+            }
+        return counter == 1
     }
+    val tokensRaw = processedExpr.trim().split(" ").filter { it.isNotBlank() }
+    val isAlreadyRpn = isRPN(tokensRaw)
 
     val rpnExpr = if (!isAlreadyRpn) {
-        convertToReversePolishNotation(expression, context)
+        convertToReversePolishNotation(processedExpr, context)
     } else {
-        expression
+        processedExpr
     }
 
     val tokens = rpnExpr.split(" ").filter { it.isNotBlank() }
-//=======
     val stack = mutableListOf<Double>()
-//    val tokens = processedExpr.split(" ").filter { it.isNotBlank() }
-//>>>>>>> origin/develop
+
     Log.d("CalcExpr", "Tokens: $tokens")
 
     if (tokens.isEmpty()){
@@ -755,6 +788,7 @@ fun calculateArithmeticExpression(
                     }
                     val a = stack.removeAt(stack.lastIndex)
                     stack.add(a / b)
+                    //stack.add((a.toInt() / b.toInt()).toDouble())
                 }
 
                 token == "%" -> {
@@ -769,6 +803,7 @@ fun calculateArithmeticExpression(
                     }
                     val a = stack.removeAt(stack.lastIndex)
                     stack.add(a % b)
+                //stack.add((a.toInt() % b.toInt()).toDouble())
                 }
             }
         }

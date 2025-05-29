@@ -372,11 +372,6 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                             val expr = parts.getOrNull(1)?.trim() ?: "0"
 
 
-
-//                            val parts = state.newIfCommand.split("=")
-//                            val name = parts.getOrNull(0)?.trim() ?: "var"
-//
-//                            val expr = parts.getOrNull(1)?.trim() ?: "0"
                             val existingVar = state.vars.find { it.name == name }
                             if (existingVar != null) {
                                 try {
