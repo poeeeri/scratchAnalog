@@ -173,17 +173,9 @@ fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, o
                             color = Color(ContextCompat.getColor(context, R.color.canvas)),
                             fontSize = 12.sp
                         )
-//<<<<<<< HEAD
                     } else {
                         ifBlock.commands.forEach { cmd ->
                             when (cmd) {
-//=======
-//                    }
-//                    else {
-//                        // для отрисовки карточек внутри блока
-//                        ifBlock.commands.forEach {cmd ->
-//                            when(cmd) {
-//>>>>>>> origin/develop
                                 is VarBlockCommand -> VarCard(
                                     variable = cmd.variable,
                                     vars = thenVars,
@@ -195,22 +187,15 @@ fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, o
                                 is IfBlockCommand -> IfBlockCard(
                                     state = state,
                                     ifBlock = cmd.ifBlock,
-//<<<<<<< HEAD
                                     vars = thenVars,
                                     onInteraction = onInteraction,
                                     context = context
-//=======
-//                                    vars = vars,
-//                                    onInteraction = onInteraction,
-//                                    context = context
-//>>>>>>> origin/develop
                                 )
 
                                 is WhileBlockCommand -> WhileBlockCard(
                                     state = state,
                                     whileBlock = cmd.whileBlock,
                                     onInteraction = onInteraction,
-//<<<<<<< HEAD
                                     vars = thenVars,
                                     context = context
                                 )
@@ -273,24 +258,6 @@ fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, o
                             }
                         }
                     }
-//=======
-//                                    vars = vars,
-//                                    context = context
-//                                )
-//                                is ForBlockCommand -> ForBlockCard(
-//                                    state = state,
-//                                    forBlock = cmd.forBlock,
-//                                    onInteraction = onInteraction,
-//                                    vars = vars,
-//                                    context = context
-//                                )
-//                                else -> stringResource(R.string.unknown_block, Color(ContextCompat.getColor(context, R.color.canvas)))
-//                            }
-//                        }
-//                    }
-//                    if (state.showChooseIfDialog)
-//                        ChooseIfBlockDialog(state, context)
-//>>>>>>> origin/develop
                 }
             }
         }
