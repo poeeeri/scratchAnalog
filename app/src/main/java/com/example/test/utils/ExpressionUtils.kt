@@ -528,7 +528,7 @@ fun calculateArithmeticExpression(
     val arrayAccessPattern = Regex("([a-zA-Z_]\\w*)\\[(.*)\\]")
 
     val isAlreadyRpn = processedExpr.trim().split(" ").all {
-        it.toIntOrNull() != null || it in listOf("+", "-", "*", "/", "%") || state.vars.any { v -> v.name == it } || Regex("[a-zA-Z_]\\w*\\[.*\\]").matches(it)
+        it.toDoubleOrNull() != null || it in listOf("+", "-", "*", "/", "%") || state.vars.any { v -> v.name == it } || Regex("[a-zA-Z_]\\w*\\[.*\\]").matches(it)
     }
 
     val rpnExpr = if (!isAlreadyRpn) {
@@ -617,7 +617,7 @@ fun calculateArithmeticExpression(
                         } else {
                             val rpn = convertToReversePolishNotation(variable.expression, context)
                             Log.d("CalcExpr", "Variable expression RPN: $rpn")
-                            calculateArithmeticExpression(rpn, state, context = context)
+                            calculateArithmeticExpression(rpn, state, context = context, arrays = arrays)
                         }
                         Log.d("CalcExpr", "Variable value: $value")
                         stack.add(value)
