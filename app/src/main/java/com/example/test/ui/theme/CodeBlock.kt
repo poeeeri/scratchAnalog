@@ -312,7 +312,7 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp),
+                .background(Color(ContextCompat.getColor(context, R.color.canvas))),
             contentAlignment = Alignment.Center
         ) {
             Text(
