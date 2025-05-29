@@ -228,7 +228,7 @@ fun ForDialog(state: CodeBlockState,
                         val rpn = convertToReversePolishNotation(v, context)
                         return calculateArithmeticExpression(
                             rpn,
-                            state.vars,
+                            state,
                             context = context,
                             arrays = state.arrays
                         )
