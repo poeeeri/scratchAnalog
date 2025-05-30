@@ -148,7 +148,8 @@ class CodeBlockState {
     var selectedForOperator by mutableStateOf("<")
     var forBlockError by mutableStateOf("")
     var newForStepIter by mutableStateOf("1")
-    var curForCommands:  SnapshotStateList<CommandBlock> = mutableStateListOf()
+    var newForCommand by mutableStateOf("")
+    var curForCommands = mutableStateListOf<CommandBlock>()
     var selectedForTargetId by mutableStateOf("")
 
     var contextMenuState by mutableStateOf(ContextMenuState())

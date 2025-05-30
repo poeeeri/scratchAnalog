@@ -147,7 +147,7 @@ fun PrintCard(
                     vars.forEach { variable ->
                         val displayValue = when (val value = variable.value) {
                             is List<*> -> value.joinToString(prefix = "[", postfix = "]")
-                            is String -> "\"$value\""
+                            is String -> value
                             else -> value.toString()
                         }
                         Text(

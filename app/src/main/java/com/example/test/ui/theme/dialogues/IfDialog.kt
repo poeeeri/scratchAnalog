@@ -193,11 +193,19 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         if (com is VarBlockCommand) {
+                            val displayText =
+                                if (com.variable.expression.contains(Regex("\\w+\\[(.*?)\\]\\s*=")))
+                                    "${i + 1}. ${preprocessArrayExprForDisplay(com.variable.expression)}"
+                                else "${i + 1}. ${com.variable.name} = ${
+                                    preprocessArrayExprForDisplay(
+                                        com.variable.expression
+                                    )
+                                }"
                             Text(
-                                text = "${i + 1}. ${com.variable.name} = ${
-                                    preprocessArrayExprForDisplay(com.variable.expression)}",
+                                text = displayText,
                                 modifier = Modifier.weight(1f),
-                                color = textColor
+                                color = textColor,
+                                fontSize = 18.sp
                             )
                         } else {
                             Text(
@@ -232,65 +240,89 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                         onClick = {
                             val newCommand = state.newIfCommand.trim()
                             if (newCommand.isNotBlank()) {
-                                val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
-                                val usedVars = regex.findAll(newCommand).map {it.value }.toSet()
-
-                                val declaredVars = state.vars.map{it.name}
-                                    .toSet() + state.arrays.map{it.name}.toSet()
-                                val notDeclared = usedVars-declaredVars
-
-//                                if (notDeclared.isNotEmpty()) {
-//                                    state.ifBlockError = ctx.getString(R.string.err_undeclared_var, notDeclared.joinToString(", "))
-//                                    return@IconButton
-//                                }
-                                notDeclared.forEach { name ->
-                                    val newVar = Variable(name = name, expression = "0", pos = IntOffset(0, state.curBlockCommands.size * 220))
-                                    state.vars.add(newVar)
-                                    state.blockItems.add(BlockItem.VarBlock(newVar))
-                                }
-                            }
-
-//                            if (state.newIfCommand.isNotBlank()) {
-                            val parts = state.newIfCommand.split("=")
-                            val name = parts.getOrNull(0)?.trim() ?: "var"
-
-                            val expr = parts.getOrNull(1)?.trim() ?: "0"
-                            val existingVar = state.vars.find { it.name == name }
-                            if (existingVar != null) {
-                                try {
-                                    val rpn = convertToReversePolishNotation(
-                                        expr,
-                                        ctx
-                                    )
-                                    val calculatedValue = calculateArithmeticExpression(
-                                        rpn,
-                                        state,
-                                        context = ctx,
-                                        arrays = state.arrays
-                                    )
-                                    if (existingVar.type == VariableType.INT &&
-                                        calculatedValue != calculatedValue.toInt().toDouble()) {
-                                        state.ifBlockError = "Cannot convert float to int"
+                                val arraySetPattern = Regex("([a-zA-Z_]\\w*)\\[(.*?)\\]\\s*=\\s*(.*)")
+                                val arrMatch = arraySetPattern.matchEntire(newCommand)
+                                if (arrMatch != null) {
+                                    val arrName = arrMatch.groupValues[1]
+                                    val mas = state.arrays.firstOrNull { it.name == arrName }
+                                    if (mas == null) {
+                                        state.ifBlockError = ctx.getString(
+                                            R.string.err_array_not_found,
+                                            arrName
+                                        )
                                         return@IconButton
                                     }
-                                }
-                                catch (e: Exception) {
-                                    return@IconButton
-                                }
-                            }
 
-                            state.curBlockCommands.add(
-                                VarBlockCommand(
-                                    Variable(
-                                        name = name,
-                                        expression = expr,
-                                        value = expr.toDoubleOrNull() ?: 0.0,
-                                        pos = IntOffset(0, state.curBlockCommands.size * 10)
+                                    state.curBlockCommands.add(
+                                        VarBlockCommand(
+                                            Variable(
+                                                name = "${arrName}_set_${System.currentTimeMillis()}",
+                                                expression = newCommand,
+                                                pos = IntOffset(0, state.curBlockCommands.size * 10)
+                                            )
+                                        )
                                     )
-                                )
-                            )
-                            state.newIfCommand = ""
-                            state.ifBlockError = ""
+                                }
+                                else {
+                                    val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
+                                    val usedVars =
+                                        regex.findAll(newCommand).map { it.value }.toSet()
+
+                                    val declaredVars = state.vars.map { it.name }
+                                        .toSet() + state.arrays.map { it.name }.toSet()
+                                    val notDeclared = usedVars - declaredVars
+
+                                    notDeclared.forEach { name ->
+                                        val newVar = Variable(
+                                            name = name,
+                                            expression = "0",
+                                            pos = IntOffset(0, state.curBlockCommands.size * 220)
+                                        )
+                                        state.vars.add(newVar)
+                                        state.blockItems.add(BlockItem.VarBlock(newVar))
+                                    }
+
+                                    val parts = newCommand.split("=")
+                                    val name = parts.getOrNull(0)?.trim() ?: "var"
+
+                                    val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                    val existingVar = state.vars.find { it.name == name }
+                                    if (existingVar != null) {
+                                        try {
+                                            val rpn = convertToReversePolishNotation(
+                                                expr,
+                                                ctx
+                                            )
+                                            val calculatedValue = calculateArithmeticExpression(
+                                                rpn,
+                                                state,
+                                                context = ctx,
+                                                arrays = state.arrays
+                                            )
+                                            if (existingVar.type == VariableType.INT &&
+                                                calculatedValue != calculatedValue.toInt().toDouble()) {
+                                                state.ifBlockError = "Cannot convert float to int"
+                                                return@IconButton
+                                            }
+                                        }
+                                        catch (e: Exception) {
+                                            return@IconButton
+                                        }
+                                    }
+                                    state.curBlockCommands.add(
+                                        VarBlockCommand(
+                                            Variable(
+                                                name = name,
+                                                expression = expr,
+                                                value = expr.toDoubleOrNull() ?: 0.0,
+                                                pos = IntOffset(0, state.curBlockCommands.size * 10)
+                                            )
+                                        )
+                                    )
+                                }
+                                state.newIfCommand = ""
+                                state.ifBlockError = ""
+                            }
                         }
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Add Command",
@@ -304,7 +336,8 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
 
                 Text(
                     text = "Commands (if condition is false):",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = textColor
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -314,18 +347,25 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         if (com is VarBlockCommand) {
-                            Text(
-                                text = "${i + 1}. ${com.variable.name} = ${
+                            val displayText =
+                                if (com.variable.expression.contains(Regex("\\w+\\[(.*?)\\]\\s*=")))
+                                    "${i + 1}. ${preprocessArrayExprForDisplay(com.variable.expression)}"
+                                else "${i + 1}. ${com.variable.name} = ${
                                     preprocessArrayExprForDisplay(
                                         com.variable.expression
                                     )
-                                }",
-                                modifier = Modifier.weight(1f)
+                                }"
+                            Text(
+                                text = displayText,
+                                modifier = Modifier.weight(1f),
+                                color = textColor,
+                                fontSize = 18.sp
                             )
                         } else {
                             Text(
                                 text = "${i + 1}. Command block",
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                color = textColor
                             )
                         }
                         IconButton(
@@ -353,68 +393,89 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                         onClick = {
                             val newCommand = state.newElseCommand.trim()
                             if (newCommand.isNotBlank()) {
-                                val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
-                                val usedVars = regex.findAll(newCommand).map { it.value }.toSet()
-
-                                val declaredVars = state.vars.map { it.name }
-                                    .toSet() + state.arrays.map { it.name }.toSet()
-                                val notDeclared = usedVars - declaredVars
-
-                                notDeclared.forEach{ name ->
-                                    val newVar = Variable(name = name, expression = "0", value = 0, pos = IntOffset(0, state.curBlockCommands.size * 220))
-                                    state.vars.add(newVar)
-                                    state.blockItems.add(BlockItem.VarBlock(newVar))
-                                }
-                            }
-
-                            val parts = state.newElseCommand.split("=")
-                            val name = parts.getOrNull(0)?.trim() ?: "var"
-                            val expr = parts.getOrNull(1)?.trim() ?: "0"
-
-
-
-//                            val parts = state.newIfCommand.split("=")
-//                            val name = parts.getOrNull(0)?.trim() ?: "var"
-//
-//                            val expr = parts.getOrNull(1)?.trim() ?: "0"
-                            val existingVar = state.vars.find { it.name == name }
-                            if (existingVar != null) {
-                                try {
-                                    val rpn = convertToReversePolishNotation(
-                                        expr,
-                                        ctx
-                                    )
-                                    val calculatedValue = calculateArithmeticExpression(
-                                        rpn,
-                                        state,
-                                        context = ctx,
-                                        arrays = state.arrays
-                                    )
-                                    if (existingVar.type == VariableType.INT &&
-                                        calculatedValue != calculatedValue.toInt().toDouble()) {
-                                        state.ifBlockError = "Cannot convert float to int"
+                                val arraySetPattern = Regex("([a-zA-Z_]\\w*)\\[(.*?)\\]\\s*=\\s*(.*)")
+                                val arrMatch = arraySetPattern.matchEntire(newCommand)
+                                if (arrMatch != null) {
+                                    val arrName = arrMatch.groupValues[1]
+                                    val mas = state.arrays.firstOrNull { it.name == arrName }
+                                    if (mas == null) {
+                                        state.ifBlockError = ctx.getString(
+                                            R.string.err_array_not_found,
+                                            arrName
+                                        )
                                         return@IconButton
                                     }
-                                }
-                                catch (e: Exception) {
-                                    return@IconButton
-                                }
-                            }
 
-
-
-                            state.curElseCommands.add(
-                                VarBlockCommand(
-                                    Variable(
-                                        name = name,
-                                        expression = expr,
-                                        value = expr.toIntOrNull() ?: 0,
-                                        pos = IntOffset(0, state.curElseCommands.size * 220)
+                                    state.curElseCommands.add(
+                                        VarBlockCommand(
+                                            Variable(
+                                                name = "${arrName}_set_${System.currentTimeMillis()}",
+                                                expression = newCommand,
+                                                pos = IntOffset(0, state.curElseCommands.size * 220)
+                                            )
+                                        )
                                     )
-                                )
-                            )
-                            state.newElseCommand = ""
-                            state.ifBlockError = ""
+                                }
+                                else {
+                                    val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
+                                    val usedVars =
+                                        regex.findAll(newCommand).map { it.value }.toSet()
+
+                                    val declaredVars = state.vars.map { it.name }
+                                        .toSet() + state.arrays.map { it.name }.toSet()
+                                    val notDeclared = usedVars - declaredVars
+
+                                    notDeclared.forEach { name ->
+                                        val newVar = Variable(
+                                            name = name,
+                                            expression = "0",
+                                            value = 0,
+                                            pos = IntOffset(0, state.curBlockCommands.size * 220)
+                                        )
+                                        state.vars.add(newVar)
+                                        state.blockItems.add(BlockItem.VarBlock(newVar))
+                                    }
+                                    val parts = newCommand.split("=")
+                                    val name = parts.getOrNull(0)?.trim() ?: "var"
+                                    val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                    val existingVar = state.vars.find { it.name == name }
+                                    if (existingVar != null) {
+                                        try {
+                                            val rpn = convertToReversePolishNotation(
+                                                expr,
+                                                ctx
+                                            )
+                                            val calculatedValue = calculateArithmeticExpression(
+                                                rpn,
+                                                state,
+                                                context = ctx,
+                                                arrays = state.arrays
+                                            )
+                                            if (existingVar.type == VariableType.INT &&
+                                                calculatedValue != calculatedValue.toInt().toDouble()) {
+                                                state.ifBlockError = "Cannot convert float to int"
+                                                return@IconButton
+                                            }
+                                        }
+                                        catch (e: Exception) {
+                                            return@IconButton
+                                        }
+                                    }
+
+                                    state.curElseCommands.add(
+                                        VarBlockCommand(
+                                            Variable(
+                                                name = name,
+                                                expression = expr,
+                                                value = expr.toIntOrNull() ?: 0,
+                                                pos = IntOffset(0, state.curElseCommands.size * 220)
+                                            )
+                                        )
+                                    )
+                                }
+                                state.newElseCommand = ""
+                                state.ifBlockError = ""
+                            }
                         }
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Add Command",

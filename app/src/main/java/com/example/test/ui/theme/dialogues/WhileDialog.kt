@@ -59,6 +59,7 @@ import com.example.test.CommandBlock
 import com.example.test.R
 import com.example.test.VarBlockCommand
 import com.example.test.Variable
+import com.example.test.VariableType
 import com.example.test.WhileBlock
 import com.example.test.WhileBlockCommand
 import com.example.test.utils.preprocessArrayExprForDisplay
@@ -232,6 +233,46 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                         onClick = {
                             val newCommand = state.newWhileCommand.trim()
                             if (newCommand.isNotBlank()) {
+                                val arrayAssignPattern = Regex("([a-zA-Z_]\\w*)\\[(.*?)\\]\\s*=\\s*(.*)")
+                                val arrMatch = arrayAssignPattern.matchEntire(newCommand)
+                                if (arrMatch != null) {
+                                    val arrName = arrMatch.groupValues[1]
+                                    val indexExpr = arrMatch.groupValues[2]
+                                    val valueExpr = arrMatch.groupValues[3]
+
+                                    val isExist = state.arrays.any { it.name == arrName }
+                                    if (!isExist) {
+                                        state.whileBlockError = ctx.getString(
+                                            R.string.err_array_not_found,
+                                            arrName
+                                        )
+                                        return@IconButton
+                                    }
+                                    val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
+                                    val indexVars = regex.findAll(indexExpr).map { it.value }.toSet()
+                                    val valueVars = regex.findAll(valueExpr).map { it.value }.toSet()
+
+                                    val usedVars = indexVars + valueVars
+                                    val declaredVars = state.vars.map { it.name }.toSet() + state.arrays.map { it.name }.toSet()
+                                    val notDeclared = declaredVars - usedVars
+                                    if (notDeclared.isNotEmpty()) {
+                                        state.whileBlockError = ctx.getString(
+                                            R.string.err_undeclared_var,
+                                            notDeclared.joinToString(", ")
+                                        )
+                                        return@IconButton
+                                    }
+                                    val tmpVar = Variable(
+                                        name = "",
+                                        expression = newCommand,
+                                        type = VariableType.INT,
+                                        pos = IntOffset(0, state.curWhileCommands.size * 220)
+                                    )
+                                    state.curWhileCommands.add(VarBlockCommand(tmpVar))
+                                    state.newWhileCommand = ""
+                                    state.whileBlockError = ""
+                                    return@IconButton
+                                }
                                 val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
                                 val usedVars = regex.findAll(newCommand).map {it.value }.toSet()
 

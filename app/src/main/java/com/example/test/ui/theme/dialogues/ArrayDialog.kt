@@ -782,7 +782,7 @@ fun ArraySetDialog(state: CodeBlockState, ctx: Context) {
                                     state.selectedArrayName,
                                     state.arrayIndexExpression,
                                     state.arrayValueExpression,
-                                    tempArrays,
+                                    state.arrays,
                                     state,
                                     ctx
                                 )

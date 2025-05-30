@@ -56,6 +56,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import com.example.test.*
+import com.example.test.utils.preprocessArrayExprForDisplay
 
 @Composable
 fun ForBlockCard(state: CodeBlockState,
@@ -246,13 +247,39 @@ fun ForBlockCard(state: CodeBlockState,
                     else {
                         forBlock.commands.forEach {cmd ->
                             when(cmd) {
-                                is VarBlockCommand -> VarCard(
-                                    variable = cmd.variable,
-                                    vars = vars,
-                                    hasError = false,
-                                    onInteraction = onInteraction,
-                                    context = context
-                                )
+                                is VarBlockCommand -> {
+                                    if (cmd.variable.expression.contains(Regex("\\w+\\[(.*?)\\]\\s*="))) {
+                                        Card(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 2.dp),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = Color(ContextCompat.getColor(
+                                                    context,
+                                                    R.color.print_color
+                                                ))
+                                            )
+                                        ) {
+                                            Text(
+                                                text = preprocessArrayExprForDisplay(cmd.variable.expression),
+                                                color = Color(ContextCompat.getColor(
+                                                    context,
+                                                    R.color.light_green_for_text
+                                                )),
+                                                modifier = Modifier.padding(8.dp),
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
+                                    } else {
+                                        VarCard(
+                                            variable = cmd.variable,
+                                            vars = vars,
+                                            hasError = false,
+                                            onInteraction = onInteraction,
+                                            context = context
+                                        )
+                                    }
+                                }
 
                                 is IfBlockCommand -> IfBlockCard(
                                     state = state,
@@ -365,7 +392,8 @@ fun ChooseForBlockDialog(state: CodeBlockState, context: Context) {
                         onClick = { state.showNewForDialog = true
                             state.showChooseForDialog = false}
                     ) {
-                        Icon(Icons.Default.Replay5, contentDescription = "Add For Block",
+                        Icon(Icons.Default.Replay5, contentDescription = "Add For " +
+                                "Block",
                             tint = textColor)
                     }
                     // надо будет потом добавить списки когда сделаю

@@ -176,13 +176,29 @@ fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, o
                     } else {
                         ifBlock.commands.forEach { cmd ->
                             when (cmd) {
-                                is VarBlockCommand -> VarCard(
-                                    variable = cmd.variable,
-                                    vars = thenVars,
-                                    hasError = false,
-                                    onInteraction = onInteraction,
-                                    context = context
-                                )
+                                is VarBlockCommand -> {
+                                    if (cmd.variable.expression.contains(Regex("\\w+\\[(.*?)\\]\\s*="))) {
+                                        Text(
+                                            text = preprocessArrayExprForDisplay(cmd.variable.expression),
+                                            color = Color(
+                                                ContextCompat.getColor(
+                                                    context,
+                                                    R.color.canvas
+                                                )
+                                            ),
+                                            modifier = Modifier.padding(vertical = 4.dp)
+                                        )
+                                    }
+                                    else {
+                                        VarCard(
+                                            variable = cmd.variable,
+                                            vars = thenVars,
+                                            hasError = false,
+                                            onInteraction = onInteraction,
+                                            context = context
+                                        )
+                                    }
+                                }
 
                                 is IfBlockCommand -> IfBlockCard(
                                     state = state,
@@ -230,13 +246,24 @@ fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, o
                     } else {
                         ifBlock.elseCommands.forEach { cmd ->
                             when (cmd) {
-                                is VarBlockCommand -> VarCard(
-                                    variable = cmd.variable,
-                                    vars = elseVars,
-                                    hasError = false,
-                                    onInteraction = onInteraction,
-                                    context = context
-                                )
+                                is VarBlockCommand -> {
+                                    if (cmd.variable.expression.contains(Regex("\\w+\\[(.*?)\\]\\s*="))) {
+                                        Text(
+                                            text = preprocessArrayExprForDisplay(cmd.variable.expression),
+                                            color = Color(ContextCompat.getColor(context, R.color.canvas)),
+                                            modifier = Modifier.padding(vertical = 4.dp)
+                                        )
+                                    }
+                                    else {
+                                        VarCard(
+                                            variable = cmd.variable,
+                                            vars = elseVars,
+                                            hasError = false,
+                                            onInteraction = onInteraction,
+                                            context = context
+                                        )
+                                    }
+                                }
 
                                 is IfBlockCommand -> IfBlockCard(
                                     state = state,
