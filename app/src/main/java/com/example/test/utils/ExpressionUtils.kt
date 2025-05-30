@@ -56,9 +56,11 @@ fun evaluateIfCondition(
         Log.d("EXEC", "Right RPN: $rightRpn")
 
 
-        val leftValue : Double = calculateArithmeticExpression(leftRpn, state, context = context, arrays = arrays)
+        val leftValue: Double =
+            calculateArithmeticExpression(leftRpn, state, context = context, arrays = arrays, targetVarType = VariableType.FLOAT)
 
-        val rightValue : Double = calculateArithmeticExpression(rightRpn,  state, context = context, arrays = arrays)
+        val rightValue: Double =
+            calculateArithmeticExpression(rightRpn, state, context = context, arrays = arrays, targetVarType = VariableType.FLOAT)
 
         Log.d("EXEC", "Left value: $leftValue, Right value: $rightValue")
 
@@ -141,14 +143,25 @@ fun executeCommands(
                 else {
                     val varName = variable.name
                     val rpn = convertToReversePolishNotation(variable.expression, context)
-                    val result = calculateArithmeticExpression(rpn, state, context = context,  arrays = arrays)
+
+                    val existingVar = state.vars.find { it.name == varName }
+                    val targetType = existingVar?.type ?: VariableType.FLOAT
+                    val result = calculateArithmeticExpression(
+                        rpn,
+                        state,
+                        context = context,
+                        arrays = arrays,
+                        targetVarType = targetType
+                    )
 
                     val index = state.vars.indexOfFirst { it.name == varName }
                     if (index >= 0) {
-                        state.vars[index] = state.vars[index].copy(expression = formatNumber(result), value = result)
+                        state.vars[index] = state.vars[index].copy(
+                            expression = formatNumber(result),
+                            value = result
+                        )
                         Log.d("EXEC", "Updated existing variable $varName = $result")
-                    }
-                    else {
+                    } else {
                         val newVar = Variable(
                             name = varName,
                             expression = formatNumber(result),
@@ -306,6 +319,7 @@ fun currentValue(vars: SnapshotStateList<Variable>,
         state = state,
         context = context,
         arrays = arrays,
+        targetVarType = VariableType.INT
     )
 }
 
@@ -500,7 +514,13 @@ fun getArrayElementValue(
         }
 
         val idRpn = convertToReversePolishNotation(indexExpression, context)
-        val iVal = calculateArithmeticExpression(idRpn, state, context = context, arrays = arrays)
+        val iVal = calculateArithmeticExpression(
+            idRpn,
+            state,
+            context = context,
+            arrays = arrays,
+            targetVarType = VariableType.INT
+        )
         if (iVal != iVal.toInt().toDouble()) {
             Toast.makeText(
                 context,
@@ -519,8 +539,7 @@ fun getArrayElementValue(
             return 0.0
         }
         return mas.elems.getOrNull(i)?.toDoubleOrNull() ?: 0.0
-    }
-    catch (e: Exception) {
+    } catch (e: Exception) {
         Toast.makeText(
             context,
             context.getString(R.string.err_accessing_array_element, e.message),
@@ -551,7 +570,13 @@ fun setArrayElement(
             return false
         }
         val idRpn = convertToReversePolishNotation(indexExpression, context)
-        val iVal = calculateArithmeticExpression(idRpn, state, context = context, arrays = arrays)
+        val iVal = calculateArithmeticExpression(
+            idRpn,
+            state,
+            context = context,
+            arrays = arrays,
+            targetVarType = VariableType.INT
+        )
         if (iVal != iVal.toInt().toDouble()) {
             Log.e("SetArray", "Index $iVal is not integer")
             Toast.makeText(
@@ -567,13 +592,25 @@ fun setArrayElement(
             Log.e("SetArray", "Index $i out of bounds for array size ${mas.size}")
             Toast.makeText(
                 context,
-                context.getString(R.string.err_array_index_out_of_range, i.toString(), mas.name, mas.size),
+                context.getString(
+                    R.string.err_array_index_out_of_range,
+                    i.toString(),
+                    mas.name,
+                    mas.size
+                ),
                 Toast.LENGTH_LONG
             ).show()
             return false
         }
         val valueRpn = convertToReversePolishNotation(valueExpression, context)
-        val value = calculateArithmeticExpression(valueRpn, state, context = context, arrays = arrays)
+        val value =
+            calculateArithmeticExpression(
+                valueRpn,
+                state,
+                context = context,
+                arrays = arrays,
+                targetVarType = VariableType.FLOAT
+            )
 
         val id = arrays.indexOf(mas)
         if (id >= 0) {
@@ -582,11 +619,13 @@ fun setArrayElement(
             newElems[i] = formatNumber(value)
             arrays[id] = mas.copy(elems = newElems)
 
-            Log.d("SetArray", "Successfully set $arrName[$i] from $oldValue to ${formatNumber(value)}")
+            Log.d(
+                "SetArray",
+                "Successfully set $arrName[$i] from $oldValue to ${formatNumber(value)}"
+            )
             Log.d("SetArray", "Array now: ${newElems}")
             return true
-        }
-        else {
+        } else {
             Log.e("SetArray", "Failed to find array in list")
             return false
         }
@@ -607,7 +646,8 @@ fun calculateArithmeticExpression(
     expression: String,
     state: CodeBlockState,
     context: Context,
-    arrays: List<ArrayBlock> = emptyList()
+    arrays: List<ArrayBlock> = emptyList(),
+    targetVarType: VariableType? = null
 ): Double {
     Log.d("CalcExpr", "Evaluating expression: $expression")
     if (state.vars.any {it.name.isEmpty()}){
@@ -714,7 +754,8 @@ fun calculateArithmeticExpression(
                                 rpn,
                                 state,
                                 context = context,
-                                arrays = arrays
+                                arrays = arrays,
+                                targetVarType = variable.type
                             )
                         }
                         Log.d("CalcExpr", "Variable $token,  value: $value")
@@ -779,7 +820,10 @@ fun calculateArithmeticExpression(
                         Toast.makeText(context, R.string.err_div_by_zero, Toast.LENGTH_LONG).show()
                     }
                     val a = stack.removeAt(stack.lastIndex)
-                    stack.add(a / b)
+                    val res = if (targetVarType == VariableType.INT)
+                        (a.toInt() / b.toInt()).toDouble()
+                    else a / b
+                    stack.add(res)
                 }
 
                 token == "%" -> {
@@ -797,7 +841,10 @@ fun calculateArithmeticExpression(
                         Toast.makeText(context, R.string.err_div_by_zero, Toast.LENGTH_LONG).show()
                     }
                     val a = stack.removeAt(stack.lastIndex)
-                    stack.add(a % b)
+                    val res = if (targetVarType == VariableType.INT)
+                        (a.toInt() % b.toInt()).toDouble()
+                    else a % b
+                    stack.add(res)
                 }
             }
         }
@@ -882,7 +929,7 @@ fun recalculateAllVariables(
                         idExpr,
                         arrays,
                         state,
-                        context
+                        context,
                     )
                     if (checkTypeCompatibility(variable, value, context)) {
                         computedValues[varName] = value
@@ -908,7 +955,8 @@ fun recalculateAllVariables(
                         rpn,
                         state,
                         context = context,
-                        arrays = arrays
+                        arrays = arrays,
+                        targetVarType = variable.type
                     )
                     computedValues[varName] = value
                     updatedVars.replaceAll {

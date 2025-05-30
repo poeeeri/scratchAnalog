@@ -388,7 +388,8 @@ fun ForDialog(state: CodeBlockState,
                             rpn,
                             state,
                             context = context,
-                            arrays = state.arrays
+                            arrays = state.arrays,
+                            targetVarType = VariableType.INT
                         )
                     }
 
