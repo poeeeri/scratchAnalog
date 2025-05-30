@@ -30,7 +30,7 @@ fun checkTypeCompatibility(variable: Variable, value: Double, context: Context) 
     if (variable.type == VariableType.INT && value != value.toInt().toDouble()) {
         Toast.makeText(
             context,
-            "Cannot convert float to int",
+            context.getString(R.string.cannot_convert_float_to_int),
             Toast.LENGTH_LONG
         ).show()
         return false
@@ -103,12 +103,12 @@ fun executeCommands(
                     command.ifBlock.comparisonOperator,
                     state,
                     context,
-                    arrays
+                    state.arrays
                 )
                 if (cond) {
-                    executeCommands(command.ifBlock.commands, state, context, arrays)
+                    executeCommands(command.ifBlock.commands, state, context, state.arrays)
                 } else {
-                    executeCommands(command.ifBlock.elseCommands, state, context, arrays)
+                    executeCommands(command.ifBlock.elseCommands, state, context, state.arrays)
                 }
             }
 
@@ -128,13 +128,18 @@ fun executeCommands(
                         arrName,
                         idExpr,
                         valueExpr,
-                        state.arrays.toMutableList(),
+                        state.arrays,
                         state,
                         context
                     )
                 }
                 else {
-                    val index = state.vars.indexOfFirst { it.name == command.variable.name }
+//                    val index = state.vars.indexOfFirst { it.name == command.variable.name }
+                    val varName = variable.name
+                    val rpn = convertToReversePolishNotation(variable.expression, context)
+//                    val result = calculateArithmeticExpression(rpn, state, context = context,  arrays = arrays)
+
+                    val index = state.vars.indexOfFirst { it.name == varName }
                     if (index >= 0) {
                         val index = state.vars.indexOfFirst { it.name == variable.name }
                         if (index >= 0) {
@@ -176,11 +181,14 @@ fun executeCommands(
                     rpnEndExpression, state, context, arrays
                 )
 
-                executeCommands(block.doCommands.toList(), state, context, arrays)
+                if (block.doCommands.isNotEmpty()) {
+                    executeCommands(block.doCommands.toList(), state, context, state.arrays)
+                }
 
 
                 if (index < 0) {
-                    state.vars.add(Variable(
+                    state.vars.add(
+                        Variable(
                             name = block.variable,
                             expression = initStr,
                             type = VariableType.INT
@@ -191,6 +199,7 @@ fun executeCommands(
                     state.vars[index] = state.vars[index].copy(expression = initStr, value = initStr.toDouble())
                 }
 
+//                var curLoopValue = initStr.toDoubleOrNull() ?: 0.0
                 while (when(block.comparisonOperator) {
                         "<" ->  currentValue(state.vars, state, block, context, arrays) < calculEndExpr
                         "<=" ->  currentValue(state.vars, state, block, context, arrays) <= calculEndExpr
@@ -406,7 +415,7 @@ fun getArrayElementValue(
         if (mas == null) {
             Toast.makeText(
                 context,
-                "Array not found: $arrName",
+                context.getString(R.string.err_array_not_found, arrName),
                 Toast.LENGTH_LONG
             ).show()
             return 0.0
@@ -417,7 +426,7 @@ fun getArrayElementValue(
         if (iVal != iVal.toInt().toDouble()) {
             Toast.makeText(
                 context,
-                "Array index must be an integer: $iVal",
+                context.getString(R.string.err_array_index_must_be_integer, iVal.toString()),
                 Toast.LENGTH_LONG
             ).show()
             return 0.0
@@ -426,7 +435,7 @@ fun getArrayElementValue(
         if (i < 0 || i >= mas.size) {
             Toast.makeText(
                 context,
-                "Array index out of bounds: $i",
+                context.getString(R.string.err_array_index_out_of_bounds, i.toString()),
                 Toast.LENGTH_LONG
             ).show()
             return 0.0
@@ -436,7 +445,7 @@ fun getArrayElementValue(
     catch (e: Exception) {
         Toast.makeText(
             context,
-            "Error accessing array element: ${e.message}",
+            context.getString(R.string.err_accessing_array_element, e.message),
             Toast.LENGTH_LONG
         ).show()
         return 0.0
@@ -447,7 +456,7 @@ fun setArrayElement(
     arrName: String,
     indexExpression: String,
     valueExpression: String,
-    arrays: MutableList<ArrayBlock>,
+    arrays: SnapshotStateList<ArrayBlock>,
     state: CodeBlockState,
     context: Context
 ): Boolean {
@@ -456,7 +465,7 @@ fun setArrayElement(
         if (mas == null) {
             Toast.makeText(
                 context,
-                "Array $arrName not found",
+                context.getString(R.string.err_array_not_found, arrName),
                 Toast.LENGTH_LONG
             ).show()
             return false
@@ -466,7 +475,7 @@ fun setArrayElement(
         if (iVal != iVal.toInt().toDouble()) {
             Toast.makeText(
                 context,
-                "Array index must be an integer: $iVal",
+                context.getString(R.string.err_array_index_must_be_integer, iVal.toString()),
                 Toast.LENGTH_LONG
             ).show()
             return false
@@ -476,7 +485,7 @@ fun setArrayElement(
         if (i < 0 || i >= mas.size) {
             Toast.makeText(
                 context,
-                "Array index out of range: $i for array ${mas.name} of size ${mas.size}",
+                context.getString(R.string.err_array_index_out_of_range, i.toString(), mas.name, mas.size),
                 Toast.LENGTH_LONG
             ).show()
             return false
@@ -485,15 +494,24 @@ fun setArrayElement(
         val value = calculateArithmeticExpression(valueRpn, state, context = context, arrays = arrays)
 
         val id = arrays.indexOf(mas)
-        val newElems = mas.elems.toMutableList()
-        newElems[i] = formatNumber(value)
-        arrays[id] = mas.copy(elems = newElems)
-        return true
+//        val newElems = mas.elems.toMutableList()
+//        newElems[i] = formatNumber(value)
+//        arrays[id] = mas.copy(elems = newElems)
+        if (id >= 0) {
+            val newElems = mas.elems.toMutableList()
+            newElems[i] = formatNumber(value)
+            arrays[id] = mas.copy(elems = newElems)
+            return true
+        }
+        else {
+            return false
+        }
+//        return true
     }
     catch (e: Exception) {
         Toast.makeText(
             context,
-            "Error setting array element: ${e.message}",
+            context.getString(R.string.err_setting_array_element, e.message),
             Toast.LENGTH_LONG
         ).show()
         return false
@@ -559,7 +577,7 @@ fun calculateArithmeticExpression(
                         if (iVal != i0.toDouble()) {
                             Toast.makeText(
                                 context,
-                                "Array index must be an integer: $iVal",
+                                context.getString(R.string.err_array_index_must_be_integer, iVal.toString()),
                                 Toast.LENGTH_LONG
                             ).show()
                             stack.add(0.0)
@@ -573,17 +591,16 @@ fun calculateArithmeticExpression(
                         else {
                             Toast.makeText(
                                 context,
-                                "Array index out of bounds: $i",
+                                context.getString(R.string.err_array_index_out_of_bounds, i.toString()),
                                 Toast.LENGTH_LONG
                             ).show()
                             stack.add(0.0)
                         }
                     }
                     else {
-                        Log.e("CalcExpr", "Array not found: $arrName")
                         Toast.makeText(
                             context,
-                            "Array not found: $arrName",
+                            context.getString(R.string.err_array_not_found, arrName),
                             Toast.LENGTH_LONG
                         ).show()
                         stack.add(0.0)
@@ -604,12 +621,22 @@ fun calculateArithmeticExpression(
                     }
                     else {
 
-                        val value = if (variable.expression.isBlank()) {
-                            0.0
-                        } else {
-                            val rpn = convertToReversePolishNotation(variable.expression, context)
+                        val value = if (variable.expression.matches(Regex("-?\\d+(\\.\\d+)?")))
+                        variable.expression.toDouble()
+                        else if (variable.expression.contains(Regex("\\b${variable.name}\\b")))
+                            variable.value.toString().toDouble()
+                        else {
+                            val rpn = convertToReversePolishNotation(
+                                variable.expression,
+                                context
+                            )
                             Log.d("CalcExpr", "Variable expression RPN: $rpn")
-                            calculateArithmeticExpression(rpn, state, context = context)
+                            calculateArithmeticExpression(
+                                rpn,
+                                state,
+                                context = context,
+                                arrays = arrays
+                            )
                         }
                         Log.d("CalcExpr", "Variable value: $value")
                         stack.add(value)
@@ -618,7 +645,11 @@ fun calculateArithmeticExpression(
 
                 token == "+" -> {
                     if (stack.size < 2) {
-                        Toast.makeText(context, "Error: Not enough operands for +", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.err_not_enough_operands, "+"),
+                            Toast.LENGTH_LONG
+                        ).show()
                         return 0.0
                     }
                     val b = stack.removeAt(stack.lastIndex)
@@ -628,7 +659,10 @@ fun calculateArithmeticExpression(
 
                 token == "-" -> {
                     if (stack.size < 2) {
-                        Toast.makeText(context, "Error: Not enough operands for -", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context,
+                            context.getString(R.string.err_not_enough_operands, "-"),
+                            Toast.LENGTH_LONG
+                        ).show()
                         return 0.0
                     }
                     val b = stack.removeAt(stack.lastIndex)
@@ -648,7 +682,11 @@ fun calculateArithmeticExpression(
 
                 token == "/" -> {
                     if (stack.size < 2) {
-                        Toast.makeText(context, "Error: Not enough operands for /", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.err_not_enough_operands, "/"),
+                            Toast.LENGTH_LONG
+                        ).show()
                         return 0.0
                     }
                     val b = stack.removeAt(stack.lastIndex)
@@ -662,7 +700,10 @@ fun calculateArithmeticExpression(
 
                 token == "%" -> {
                     if (stack.size < 2) {
-                        Toast.makeText(context, "Error: Not enough operands for %", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context,
+                            context.getString(R.string.err_not_enough_operands, "%"),
+                            Toast.LENGTH_LONG
+                        ).show()
                         return 0.0
                     }
                     val b = stack.removeAt(stack.lastIndex)
@@ -676,10 +717,17 @@ fun calculateArithmeticExpression(
             }
         }
         catch (e: NoSuchElementException){
-            Toast.makeText(context, context.getString(R.string.err_var_token_not_found, token), Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                context,
+                context.getString(R.string.err_var_token_not_found,
+                    token), Toast.LENGTH_LONG
+            ).show()
         }
         catch (e: Exception) {
-            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(context,
+                context.getString(R.string.error_detailed, e.message),
+                Toast.LENGTH_LONG
+            ).show()
             return 0.0
         }
     }
@@ -737,7 +785,7 @@ fun recalculateAllVariables(
                 Log.e("RecalculateVars", "Variable $varName not found in collection")
                 Toast.makeText(
                     context,
-                    "Variable $varName not found",
+                    context.getString(R.string.err_var_token_not_found, varName),
                     Toast.LENGTH_LONG
                 ).show()
                 continue
@@ -886,7 +934,11 @@ fun recCalAll(state: CodeBlockState, context: Context) {
     }.
     onFailure { e ->
         Log.e("RecCalAll", "Error recalculating variables: ${e.message}", e)
-        Toast.makeText(context, e.message ?: "Error", Toast.LENGTH_LONG).show()
+        Toast.makeText(
+            context,
+            e.message ?: context.getString(R.string.error),
+            Toast.LENGTH_LONG
+        ).show()
     }
 }
 

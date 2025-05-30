@@ -71,4 +71,17 @@
     <string name="start_value_must_not_be_empty">Start value must not be empty</string>
     <string name="end_value_must_not_be_empty">End value must not be empty</string>
     <string name="step_value_must_not_be_empty">Step value must not be empty</string>
+    <string name="error">Error</string>
+    <string name="error_detailed">Error: %1$s</string>
+    <string name="err_failed_set_array_element">Failed to set array element</string>
+    <string name="err_array_index_must_be_integer">Array index must be an integer: %1$s</string>
+    <string name="err_array_index_out_of_bounds">Array index out of bounds: %1$s</string>
+    <string name="err_array_index_out_of_range">Array index out of range: %1$s for array %2$s of size %3$d</string>
+    <string name="err_accessing_array_element">Error accessing array element: %1$s</string>
+    <string name="err_setting_array_element">Error setting array element: %1$s</string>
+    <string name="err_not_enough_operands">Error: Not enough operands for %1$s</string>
+    <string name="err_array_not_found">Array %1$s not found</string>
+    <string name="new_command">New Command</string>
+    <string name="add_command">Add Command</string>
+    <string name="err_step_cannot_be_zero">Error: Step in for cannot be zero</string>
 </resources>

@@ -190,7 +190,8 @@ fun ForDialog(state: CodeBlockState,
                                     state.vars.add(
                                         Variable(
                                             name = state.newForVar,
-                                            expression = state.newForStartExpr,
+                                            expression = "0",
+                                            value = 0,
                                             type = state.selectedVarType
                                         )
                                     )
@@ -306,18 +307,24 @@ fun ForDialog(state: CodeBlockState,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         if (com is VarBlockCommand) {
-                            var istr = i + 1
-                            var varName = com.variable.name
-                            var varExpr = preprocessArrayExprForDisplay(com.variable.expression)
+                            val displayText =
+                            if (com.variable.expression.contains(Regex("\\w+\\[.*?\\]\\s*="))) {
+                                "${i + 1}. ${preprocessArrayExprForDisplay(com.variable.expression)}"
+                            } else {
+                                "${i + 1}. ${com.variable.name} = ${
+                                    preprocessArrayExprForDisplay(
+                                        com.variable.expression
+                                    )
+                                }"
+                            }
                             Text(
-                                text = context.getString(R.string.expression, istr.toString(), varName, varExpr),
+                                    text = displayText,
                                 modifier = Modifier.weight(1f),
                                 color = textColor
                             )
-                        } else {
-                            var istr = i + 1
+                        }else {
                             Text(
-                                text = context.getString(R.string.remove_command, istr.toString()),
+                                text = "${i + 1}. Command block",
                                 modifier = Modifier.weight(1f),
                                 color = textColor
                             )
@@ -325,8 +332,11 @@ fun ForDialog(state: CodeBlockState,
                         IconButton(
                             onClick = { state.curForCommands.removeAt(i) }
                         ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Remove Command",
-                                tint = Color(ContextCompat.getColor(context, R.color.light_green_for_text)))
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Remove Command",
+                                tint = textColor
+                            )
                         }
                     }
                     HorizontalDivider()
@@ -353,44 +363,82 @@ fun ForDialog(state: CodeBlockState,
                                 color = textColor
                             )
                         },
+                        placeholder = {
+                            Text(
+                                text = "x = 5, or m[0] = 7",
+                                color = textColor.copy(alpha = 0.6f)
+                            )
+                        },
                         modifier = Modifier.weight(1f),
                         colors = textAreaColor
                     )
                     IconButton(
-                        onClick = {
+                            onClick = {
+                        if (state.newForCommand.isNotBlank()) {
                             val newCommand = state.newForCommand.trim()
-                            if (newCommand.isNotBlank()) {
-                                val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
-                                val usedVars = regex.findAll(newCommand).map {it.value }.toSet()
 
-                                val declaredVars = state.vars.map{it.name}.toSet() + state.arrays.map{it.name}.toSet()
-                                val notDeclared = usedVars-declaredVars
-
-                                if (notDeclared.isNotEmpty()) {
-                                    state.forBlockError = context.getString(R.string.err_undeclared_var, notDeclared.joinToString(", "))
+                            val arraySetPattern =
+                                Regex("([a-zA-Z_]\\w*)\\[(.*?)\\]\\s*=\\s*(.*)")
+                            val arrMatch = arraySetPattern.matchEntire(newCommand)
+                            if (arrMatch != null) {
+                                val arrName = arrMatch.groupValues[1]
+                                val mas = state.arrays.firstOrNull { it.name == arrName }
+                                if (mas == null) {
+                                    state.forBlockError = context.getString(
+                                        R.string.err_array_not_found,
+                                        arrName
+                                    )
                                     return@IconButton
                                 }
-                            }
+                                state.curForCommands.add(
+                                    VarBlockCommand(
+                                        Variable(
+                                            name = "${arrName}_set_${System.currentTimeMillis()}",
+                                            expression = newCommand,
+                                            pos = IntOffset(0, state.curForCommands.size * 10)
+                                        )
+                                    )
+                                )
+                            } else {
+                                val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
+                                val usedVars =
+                                    regex.findAll(newCommand).map { it.value }.toSet()
+                                val declaredVars = state.vars.map { it.name }.toSet() +
+                                        state.arrays.map { it.name }.toSet()
+                                val notDeclared = declaredVars - usedVars
 
-                            if (state.newForCommand.isNotBlank()) {
-                                val parts = state.newForCommand.split("=")
+                                notDeclared.forEach { name ->
+                                    val newVar = Variable(
+                                        name = name,
+                                        expression = "0",
+                                        pos = IntOffset(0, state.curForCommands.size * 220)
+                                    )
+                                    state.vars.add(newVar)
+                                }
+
+                                val parts = newCommand.split("=")
                                 val name = parts.getOrNull(0)?.trim() ?: "var"
-                                val expr = parts.getOrNull(1)?.trim() ?: "0.0"
+                                val expr = parts.getOrNull(1)?.trim() ?: "0"
                                 state.curForCommands.add(
                                     VarBlockCommand(
                                         Variable(
                                             name = name,
                                             expression = expr,
-                                            pos = IntOffset(0, state.curForCommands.size * 220)
+                                            pos = IntOffset(0, state.curForCommands.size * 10)
                                         )
                                     )
                                 )
-                                state.newForCommand = ""
                             }
+                            state.newForCommand = ""
+                            state.forBlockError = ""
                         }
+                    }
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Command",
-                            tint = Color(ContextCompat.getColor(context, R.color.light_green_for_text)))
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = stringResource(R.string.add_command),
+                            tint = textColor
+                        )
                     }
 
                 }
@@ -410,24 +458,12 @@ fun ForDialog(state: CodeBlockState,
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    val errvar_not_be_empty = stringResource(R.string.errvar_not_be_empty)
-                    val var_must_start = stringResource(R.string.var_must_start)
-                    val var_must_only_digit = stringResource(R.string.var_must_only_digit)
-                    val cannotConvert = stringResource(R.string.cannot_convert_float_to_int)
-
                     val start_value_must_not_be_empty = stringResource(R.string.start_value_must_not_be_empty)
                     val end_value_must_not_be_empty = stringResource(R.string.end_value_must_not_be_empty)
                     val step_value_must_not_be_empty = stringResource(R.string.step_value_must_not_be_empty)
 
-
-
-
-
                     Button(
                         onClick = {
-
-
-
 
 
                             if (state.newForStartExpr.isBlank()) {
@@ -442,6 +478,13 @@ fun ForDialog(state: CodeBlockState,
                                 state.forBlockError = step_value_must_not_be_empty
                                 return@Button
                             }
+                            val calculatedValueStep = calculatedValue(state.newForStepIter)
+                            if (calculatedValueStep == 0.0) {
+                                state.forBlockError = context.getString(
+                                    R.string.err_step_cannot_be_zero
+                                )
+                                return@Button
+                            }
 
                             val declaredVarsNames = state.vars.map { it.name }.toSet() + state.arrays.map{it.name}.toSet()
                             val regex = Regex("([a-zA-Z_]\\w*)(?:\\s*\\[.*?\\])?")
@@ -453,7 +496,7 @@ fun ForDialog(state: CodeBlockState,
                                 if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
                                 else it.value
                             }.toSet()
-                            val varsName = regex.findAll(state.newVarName).map {
+                            val varsName = regex.findAll(state.newForVar).map {
                                 if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
                                 else it.value
                             }.toSet()
@@ -473,6 +516,7 @@ fun ForDialog(state: CodeBlockState,
                                         addAll(state.curForCommands)
                                     }
                                     state.forBlocks[i] = state.forBlocks[i].copy(
+                                        variable = state.newForVar,
                                         startExpression = state.newForStartExpr,
                                         endExpression = state.newForEndExpr,
                                         comparisonOperator = state.selectedForOperator,
@@ -515,6 +559,67 @@ fun ForDialog(state: CodeBlockState,
                                     )
                                     state.newForCommand = ""
                                 }
+
+                                if (state.newForCommand.isNotBlank()) {
+                                    val newCommand = state.newForCommand.trim()
+
+                                    val arraySetPattern = Regex("([a-zA-Z_]\\w*)\\[(.*?)\\]\\s*=\\s*(.*)")
+                                    val arrMatch = arraySetPattern.matchEntire(newCommand)
+                                    if (arrMatch != null) {
+                                        val arrName = arrMatch.groupValues[1]
+                                        val mas = state.arrays.firstOrNull { it.name == arrName }
+                                        if (mas == null) {
+                                            state.forBlockError = context.getString(
+                                                R.string.err_array_not_found,
+                                                arrName
+                                            )
+                                            return@Button
+                                        }
+
+                                        state.curForCommands.add(
+                                            VarBlockCommand(
+                                                Variable(
+                                                    name = "${arrName}_set_${System.currentTimeMillis()}",
+                                                    expression = newCommand,
+                                                    pos = IntOffset(0, state.curForCommands.size * 10)
+                                                )
+                                            )
+                                        )
+                                    }
+                                    else {
+                                        val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
+                                        val usedVars =
+                                            regex.findAll(newCommand).map { it.value }.toSet()
+                                        val declaredVars = state.vars.map { it.name }
+                                            .toSet() + state.arrays.map { it.name }.toSet()
+                                        val notDeclared = declaredVars - usedVars
+
+                                        notDeclared.forEach { name ->
+                                            val newVar = Variable(
+                                                name = name,
+                                                expression = "0",
+                                                pos = IntOffset(0, state.curForCommands.size * 220)
+                                            )
+                                            state.vars.add(newVar)
+                                        }
+
+                                        val parts = newCommand.split("=")
+                                        val name = parts.getOrNull(0)?.trim() ?: "var"
+                                        val expr = parts.getOrNull(1)?.trim() ?: "0"
+                                        state.curForCommands.add(
+                                            VarBlockCommand(
+                                                Variable(
+                                                    name = name,
+                                                    expression = expr,
+                                                    pos = IntOffset(0, state.curForCommands.size * 10)
+                                                )
+                                            )
+                                        )
+                                    }
+                                    state.newForCommand = ""
+                                    state.forBlockError = ""
+                                }
+
                                 val commandsCopy: SnapshotStateList<CommandBlock> = mutableStateListOf<CommandBlock>().apply {
                                     addAll(state.curForCommands)
                                 }

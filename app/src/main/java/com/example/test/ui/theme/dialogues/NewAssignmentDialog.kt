@@ -134,7 +134,7 @@ fun NewAssignmentDialog(state: CodeBlockState, ctx: Context) {
                                         arrName,
                                         idExpr,
                                         valueExpr,
-                                        state.arrays.toMutableList(),
+                                        state.arrays,
                                         state,
                                         ctx
                                     )
