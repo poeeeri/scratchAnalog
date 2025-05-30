@@ -20,11 +20,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
-import com.example.test.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import androidx.core.content.ContextCompat
 import com.example.test.*
+import com.example.test.R
 import com.example.test.utils.preprocessArrayExprForDisplay
 import kotlin.math.roundToInt
 
@@ -41,20 +41,9 @@ fun ArrayCard(
     var y by remember { mutableFloatStateOf(arrayBlock.pos.y.toFloat()) }
     var expanded by remember { mutableStateOf(true) }
     var blockPos by remember { mutableStateOf(Offset.Zero) }
-    val bodyTextColor = Color(ContextCompat.getColor(context, R.color.canvas))
-    val bodyColor = Color(ContextCompat.getColor(context, R.color.if_body_color))
-    val mainColor = Color(ContextCompat.getColor(context, R.color.if_main_color))
-    val mainTextColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
-    val textAreaColor = OutlinedTextFieldDefaults.colors(
-        focusedBorderColor = Color(ContextCompat.getColor(context, R.color.shadow)),
-        unfocusedBorderColor = Color(ContextCompat.getColor(context, R.color.cycle_main_color)),
-        errorBorderColor = Color(ContextCompat.getColor(context, R.color.error_color)),
-        cursorColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
-    )
-    val buttonColors = ButtonDefaults.buttonColors(
-        contentColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text)),
-        containerColor = Color(ContextCompat.getColor(context, R.color.if_main_color))
-    )
+
+    val lightTextColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
+    val bodyColor = Color(ContextCompat.getColor(context, R.color.cycle_main_color))
 
     Column(
         modifier = Modifier
@@ -89,12 +78,12 @@ fun ArrayCard(
         Box(
             modifier = Modifier
                 .background(
-                    color = if (hasError) Color.Red else mainColor,
+                    color = if (hasError) Color.Red else bodyColor,
                     shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
                 )
                 .border(
                     width = 1.dp,
-                    color = if (hasError) Color.Red else mainTextColor,
+                    color = if (hasError) Color.Red else lightTextColor,
                     shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
                 )
                 .padding(12.dp)
@@ -107,7 +96,7 @@ fun ArrayCard(
                 Text(
                     text = "Array ${arrayBlock.name}[${arrayBlock.size}]",
                     fontWeight = FontWeight.Bold,
-                    color = mainTextColor
+                    color = lightTextColor
                 )
                 IconButton(
                     onClick = { expanded = !expanded }
@@ -116,7 +105,8 @@ fun ArrayCard(
                         imageVector = if (expanded)
                             Icons.Default.ExpandLess
                         else Icons.Default.ExpandMore,
-                        contentDescription = if (expanded) "Collapse" else "Expand"
+                        contentDescription = if (expanded) "Collapse" else "Expand",
+                        tint = lightTextColor
                     )
                 }
             }
@@ -130,7 +120,7 @@ fun ArrayCard(
                     )
                     .border(
                         width = 1.dp,
-                        color = if (hasError) Color.Red else mainTextColor,
+                        color = if (hasError) Color.Red else lightTextColor,
                         shape = RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
                     )
                     .padding(12.dp)
@@ -141,7 +131,7 @@ fun ArrayCard(
                     Text(
                         text = "Elements:",
                         fontWeight = FontWeight.Bold,
-                        color = bodyTextColor
+                        color = lightTextColor
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     LazyColumn(
@@ -160,7 +150,7 @@ fun ArrayCard(
                                     text = "$i:",
                                     fontWeight = FontWeight.Medium,
                                     modifier = Modifier.width(32.dp),
-                                    color = bodyTextColor
+                                    color = lightTextColor
                                 )
                                 var elemValue by remember { mutableStateOf(arrayBlock.elems[i]) }
                                 val displayValue = preprocessArrayExprForDisplay(elemValue)
@@ -171,42 +161,9 @@ fun ArrayCard(
                                         arrayBlock.elems[i] = it
                                     },
                                     modifier = Modifier.fillMaxWidth(),
-                                    singleLine = true,
-                                    colors = textAreaColor
+                                    singleLine = true
                                 )
                             }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Operations:",
-                        fontWeight = FontWeight.Bold,
-                        color = bodyTextColor
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        Button(
-                            onClick = {
-                                state.selectedArrayName = arrayBlock.name
-                                state.showArrayAccessDialog = true
-                            },
-                            colors = buttonColors
-                        ) {
-                            Text("Get element",
-                                color = mainTextColor)
-                        }
-                        Button(
-                            onClick = {
-                                state.selectedArrayName = arrayBlock.name
-                                state.showArraySetDialog = true
-                            },
-                            colors = buttonColors
-                        ) {
-                            Text("Set element",
-                                color = mainTextColor)
                         }
                     }
                 }

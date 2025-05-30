@@ -59,6 +59,7 @@ import com.example.test.CommandBlock
 import com.example.test.R
 import com.example.test.VarBlockCommand
 import com.example.test.Variable
+import com.example.test.VariableType
 import com.example.test.WhileBlock
 import com.example.test.WhileBlockCommand
 import com.example.test.utils.preprocessArrayExprForDisplay
@@ -83,12 +84,14 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
         state.selectedWhileOperator = "=="
         state.whileBlockError = ""
     }) {
-        Surface (
+        Surface(
             color = Color(ContextCompat.getColor(ctx, R.color.dialog)),
             shape = MaterialTheme.shapes.medium,
             modifier = Modifier
-                .shadow(10.dp, shape = RoundedCornerShape(8.dp),
-                    spotColor = Color(ContextCompat.getColor(ctx, R.color.shadow)))
+                .shadow(
+                    10.dp, shape = RoundedCornerShape(8.dp),
+                    spotColor = Color(ContextCompat.getColor(ctx, R.color.shadow))
+                )
         ) {
             val leftExpr = stringResource(R.string.left_expression)
             Column(
@@ -108,10 +111,14 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                 OutlinedTextField(
                     value = state.leftWhileExpression,
                     onValueChange = { state.leftWhileExpression = it },
-                    label = { Text(leftExpr,
-                        color = textColor,) },
+                    label = {
+                        Text(
+                            leftExpr,
+                            color = textColor,
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth(),
-                    colors =  textAreaColor
+                    colors = textAreaColor
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -126,8 +133,12 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                         value = state.selectedWhileOperator,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Comparison Operator",
-                            color = textColor) },
+                        label = {
+                            Text(
+                                "Comparison Operator",
+                                color = textColor
+                            )
+                        },
                         trailingIcon = {
                             Icon(
                                 imageVector = if (expanded)
@@ -137,18 +148,30 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                                 modifier = Modifier.clickable {
                                     expanded = !expanded
                                 },
-                                tint = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text))
+                                tint = Color(
+                                    ContextCompat.getColor(
+                                        ctx,
+                                        R.color.light_green_for_text
+                                    )
+                                )
                             )
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { expanded = true },
-                        colors =  textAreaColor
+                        colors = textAreaColor
                     )
                     DropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
-                        modifier = Modifier.background(Color(ContextCompat.getColor(ctx, R.color.dark_header)))
+                        modifier = Modifier.background(
+                            Color(
+                                ContextCompat.getColor(
+                                    ctx,
+                                    R.color.dark_header
+                                )
+                            )
+                        )
                     ) {
                         comparisonOpers.forEach { oper ->
                             DropdownMenuItem(
@@ -157,8 +180,13 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                                     state.selectedWhileOperator = oper
                                     expanded = false
                                 },
-                                colors =  MenuDefaults.itemColors(
-                                    textColor = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text))
+                                colors = MenuDefaults.itemColors(
+                                    textColor = Color(
+                                        ContextCompat.getColor(
+                                            ctx,
+                                            R.color.light_green_for_text
+                                        )
+                                    )
                                 ),
                             )
                         }
@@ -170,15 +198,20 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                 OutlinedTextField(
                     value = state.rightWhileExpression,
                     onValueChange = { state.rightWhileExpression = it },
-                    label = { Text("Right Expression",
-                        color = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text))) },
+                    label = {
+                        Text(
+                            "Right Expression",
+                            color = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text))
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth(),
-                    colors =  textAreaColor
+                    colors = textAreaColor
                 )
-                Text(text = stringResource(R.string.commands_while),
+                Text(
+                    text = stringResource(R.string.commands_while),
                     fontWeight = FontWeight.Bold,
                     color = textColor,
-                    )
+                )
                 Spacer(modifier = Modifier.height(8.dp))
 
                 state.curWhileCommands.forEachIndexed { i, com ->
@@ -191,7 +224,12 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                             var varName = com.variable.name
                             var varExpr = preprocessArrayExprForDisplay(com.variable.expression)
                             Text(
-                                text = ctx.getString(R.string.expression, istr.toString(), varName, varExpr),
+                                text = ctx.getString(
+                                    R.string.expression,
+                                    istr.toString(),
+                                    varName,
+                                    varExpr
+                                ),
                                 modifier = Modifier.weight(1f),
                                 color = textColor
                             )
@@ -206,8 +244,15 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                         IconButton(
                             onClick = { state.curWhileCommands.removeAt(i) }
                         ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Remove Command",
-                                tint = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text)))
+                            Icon(
+                                Icons.Default.Delete, contentDescription = "Remove Command",
+                                tint = Color(
+                                    ContextCompat.getColor(
+                                        ctx,
+                                        R.color.light_green_for_text
+                                    )
+                                )
+                            )
                         }
                     }
                     HorizontalDivider()
@@ -221,25 +266,79 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                 ) {
                     OutlinedTextField(
                         value = state.newWhileCommand,
-                        onValueChange = { state.newWhileCommand = it
-                            state.whileBlockError = "" },
-                        label = { Text("New Var Expression",
-                            color = textColor,) },
+                        onValueChange = {
+                            state.newWhileCommand = it
+                            state.whileBlockError = ""
+                        },
+                        label = {
+                            Text(
+                                "New Var Expression",
+                                color = textColor,
+                            )
+                        },
                         modifier = Modifier.weight(1f),
-                        colors =  textAreaColor
+                        colors = textAreaColor
                     )
                     IconButton(
                         onClick = {
                             val newCommand = state.newWhileCommand.trim()
                             if (newCommand.isNotBlank()) {
-                                val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
-                                val usedVars = regex.findAll(newCommand).map {it.value }.toSet()
+                                val arrayAssignPattern =
+                                    Regex("([a-zA-Z_]\\w*)\\[(.*?)\\]\\s*=\\s*(.*)")
+                                val arrMatch = arrayAssignPattern.matchEntire(newCommand)
+                                if (arrMatch != null) {
+                                    val arrName = arrMatch.groupValues[1]
+                                    val indexExpr = arrMatch.groupValues[2]
+                                    val valueExpr = arrMatch.groupValues[3]
 
-                                val declaredVars = state.vars.map{it.name}.toSet() + state.arrays.map{it.name}.toSet()
-                                val notDeclared = usedVars-declaredVars
+                                    val isExist = state.arrays.any { it.name == arrName }
+                                    if (!isExist) {
+                                        state.whileBlockError = ctx.getString(
+                                            R.string.err_array_not_found,
+                                            arrName
+                                        )
+                                        return@IconButton
+                                    }
+                                    val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
+                                    val indexVars =
+                                        regex.findAll(indexExpr).map { it.value }.toSet()
+                                    val valueVars =
+                                        regex.findAll(valueExpr).map { it.value }.toSet()
+
+                                    val usedVars = indexVars + valueVars
+                                    val declaredVars = state.vars.map { it.name }
+                                        .toSet() + state.arrays.map { it.name }.toSet()
+                                    val notDeclared = declaredVars - usedVars
+                                    if (notDeclared.isNotEmpty()) {
+                                        state.whileBlockError = ctx.getString(
+                                            R.string.err_undeclared_var,
+                                            notDeclared.joinToString(", ")
+                                        )
+                                        return@IconButton
+                                    }
+                                    val tmpVar = Variable(
+                                        name = "",
+                                        expression = newCommand,
+                                        type = VariableType.INT,
+                                        pos = IntOffset(0, state.curWhileCommands.size * 220)
+                                    )
+                                    state.curWhileCommands.add(VarBlockCommand(tmpVar))
+                                    state.newWhileCommand = ""
+                                    state.whileBlockError = ""
+                                    return@IconButton
+                                }
+                                val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
+                                val usedVars = regex.findAll(newCommand).map { it.value }.toSet()
+
+                                val declaredVars = state.vars.map { it.name }
+                                    .toSet() + state.arrays.map { it.name }.toSet()
+                                val notDeclared = usedVars - declaredVars
 
                                 if (notDeclared.isNotEmpty()) {
-                                    state.whileBlockError = ctx.getString(R.string.err_undeclared_var, notDeclared.joinToString(", "))
+                                    state.whileBlockError = ctx.getString(
+                                        R.string.err_undeclared_var,
+                                        notDeclared.joinToString(", ")
+                                    )
                                     return@IconButton
                                 }
                             }
@@ -261,12 +360,14 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                             }
                         }
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Command",
-                            tint = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text)))
+                        Icon(
+                            Icons.Default.Add, contentDescription = "Add Command",
+                            tint = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text))
+                        )
                     }
                 }
                 if (state.whileBlockError.isNotBlank()) {
-                    Text (
+                    Text(
                         text = state.whileBlockError,
                         color = textColor,
                         style = MaterialTheme.typography.bodySmall,
@@ -291,23 +392,33 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                                 return@Button
                             }
 
-                            val declaredVarsNames = state.vars.map { it.name }.toSet() + state.arrays.map{it.name}.toSet()
+                            val declaredVarsNames =
+                                state.vars.map { it.name }.toSet() + state.arrays.map { it.name }
+                                    .toSet()
                             val regex = Regex("(?!\\d)([a-zA-Z_]\\w*)(?:\\s*\\[.*?\\])?")
                             val leftPartVars = regex.findAll(state.leftWhileExpression).map {
-                                if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
+                                if (it.value.contains("[")) it.value.substring(
+                                    0,
+                                    it.value.indexOf("[")
+                                ).trim()
                                 else it.value
                             }.toSet()
                             val rightPartVars = regex.findAll(state.rightWhileExpression).map {
-                                if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
+                                if (it.value.contains("[")) it.value.substring(
+                                    0,
+                                    it.value.indexOf("[")
+                                ).trim()
                                 else it.value
                             }.toSet()
                             val notDeclared = (leftPartVars + rightPartVars) - declaredVarsNames
                             if (notDeclared.isNotEmpty()) {
-                                state.whileBlockError = "Undeclared variable(-s): ${notDeclared.joinToString(", ")}"
+                                state.whileBlockError =
+                                    "Undeclared variable(-s): ${notDeclared.joinToString(", ")}"
                                 return@Button
                             }
                             if (state.selectedWhileTargetId.isNotEmpty()) {
-                                val i = state.whileBlocks.indexOfFirst { it.id == state.selectedWhileTargetId }
+                                val i =
+                                    state.whileBlocks.indexOfFirst { it.id == state.selectedWhileTargetId }
                                 if (i >= 0) {
                                     state.whileBlocks[i] = state.whileBlocks[i].copy(
                                         leftExpression = state.leftWhileExpression,
@@ -336,8 +447,7 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                                     )
                                     state.newWhileCommand = ""
                                 }
-                            }
-                            else {
+                            } else {
                                 if (state.newWhileCommand.isNotBlank()) {
                                     val parts = state.newWhileCommand.split("=")
                                     val name = parts.getOrNull(0)?.trim() ?: "var"
@@ -354,9 +464,10 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                                     )
                                     state.newWhileCommand = ""
                                 }
-                                val commandsCopy: SnapshotStateList<CommandBlock> = mutableStateListOf<CommandBlock>().apply {
-                                    addAll(state.curWhileCommands)
-                                }
+                                val commandsCopy: SnapshotStateList<CommandBlock> =
+                                    mutableStateListOf<CommandBlock>().apply {
+                                        addAll(state.curWhileCommands)
+                                    }
 
                                 // тут уже создаю саму карту
                                 val newIf = WhileBlock(
@@ -371,15 +482,15 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                                 // илли вложенным
                                 if (state.targetCommandsList != null) {
                                     state.targetCommandsList?.add(WhileBlockCommand(newIf))
-                                }
-                                else {
+                                } else {
                                     state.whileBlocks.add(newIf)
                                 }
                             }
                             // здесь мы просто копируем блок с командами чтобы сохранялись
                             // корректные списки а не обнулялись
                             if (state.selectedWhileTargetId.isNotEmpty()) {
-                                val i = state.whileBlocks.indexOfFirst { it.id == state.selectedWhileTargetId }
+                                val i =
+                                    state.whileBlocks.indexOfFirst { it.id == state.selectedWhileTargetId }
                                 if (i >= 0) {
                                     val newCommands = mutableStateListOf<CommandBlock>().apply {
                                         addAll(state.curWhileCommands)
@@ -403,19 +514,27 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                             state.targetCommandsList = null
                         },
                         colors = ButtonDefaults.buttonColors(
-                            contentColor = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text)),
+                            contentColor = Color(
+                                ContextCompat.getColor(
+                                    ctx,
+                                    R.color.light_green_for_text
+                                )
+                            ),
                             containerColor = Color(ContextCompat.getColor(ctx, R.color.header))
                         )
                     ) {
-                        Text(stringResource(R.string.create),
-                            color = textColor)
+                        Text(
+                            stringResource(R.string.create),
+                            color = textColor
+                        )
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(
                         onClick = {
                             if (state.selectedWhileTargetId.isNotEmpty()) {
-                                val i = state.whileBlocks.indexOfFirst { it.id == state.selectedWhileTargetId }
+                                val i =
+                                    state.whileBlocks.indexOfFirst { it.id == state.selectedWhileTargetId }
                                 if (i >= 0) {
                                     val newCommands = mutableStateListOf<CommandBlock>().apply {
                                         addAll(state.curWhileCommands)
@@ -439,12 +558,19 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                             state.targetCommandsList = null
                         },
                         colors = ButtonDefaults.buttonColors(
-                            contentColor = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text)),
+                            contentColor = Color(
+                                ContextCompat.getColor(
+                                    ctx,
+                                    R.color.light_green_for_text
+                                )
+                            ),
                             containerColor = Color(ContextCompat.getColor(ctx, R.color.dark_header))
                         )
                     ) {
-                        Text(stringResource(R.string.cancel),
-                            color = textColor)
+                        Text(
+                            stringResource(R.string.cancel),
+                            color = textColor
+                        )
                     }
                 }
             }
