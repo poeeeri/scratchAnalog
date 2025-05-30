@@ -98,15 +98,12 @@ class CodeBlockState {
     var showDeleteAllDialog by mutableStateOf(false)
     var showNewWhileDialog by mutableStateOf(false)
     var showNewArrayDialog by mutableStateOf(false)
-    var showArrayAccessDialog by mutableStateOf(false)
-    var showArraySetDialog by mutableStateOf(false)
     var showEditArrayDialog by mutableStateOf(false)
     var showNewForDialog by mutableStateOf(false)
 
     // меню с кнопками на выбор при создании команды в ифе или вайле
     var showChooseWhileDialog by mutableStateOf(false)
     var showChooseIfDialog by mutableStateOf(false)
-    var showChooseArrayDialog by mutableStateOf(false)
     var showChooseForDialog by mutableStateOf(false)
 
     var selectedTargetVar by mutableStateOf("")
@@ -138,9 +135,6 @@ class CodeBlockState {
     var curBlockCommands: SnapshotStateList<CommandBlock> = mutableStateListOf()
     var newWhileCommand by mutableStateOf("")
     var selectedWhileTargetId by mutableStateOf("")
-    var targetVarName by mutableStateOf("")
-    var arrayAccessError by mutableStateOf("")
-    var arraySetError by mutableStateOf("")
 
     // все для фор
     var originalForVar by mutableStateOf("")

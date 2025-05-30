@@ -333,35 +333,6 @@ fun executeCommands(
     }
 }
 
-// пересчет
-fun currentValue(
-    vars: SnapshotStateList<Variable>,
-    state: CodeBlockState,
-    block: ForBlock,
-    context: Context,
-    arrays: List<ArrayBlock>
-): Double {
-    val expr = vars.first { it.name == block.variable }.expression
-    val rpn = convertToReversePolishNotation(expr, context)
-    return calculateArithmeticExpression(
-        expression = rpn,
-        state = state,
-        context = context,
-        arrays = arrays,
-        targetVarType = VariableType.INT
-    )
-}
-
-// это для записи пересчитанного значения переменной после каждой итерации
-fun writeCurrValue(
-    v: Double,
-    vars: SnapshotStateList<Variable>,
-    index: Int
-) {
-    val s = if (vars[index].type == VariableType.INT) v.toInt().toString() else v.toString()
-    vars[index] = vars[index].copy(expression = s)
-}
-
 //приоритеты операций
 fun getPriority(operator: Char): Int = when (operator) {
     '+', '-' -> 1

@@ -158,34 +158,6 @@ fun ArrayCard(
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Operations:",
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        Button(
-                            onClick = {
-                                state.selectedArrayName = arrayBlock.name
-                                state.showArrayAccessDialog = true
-                            }
-                        ) {
-                            Text("Get element")
-                        }
-                        Button(
-                            onClick = {
-                                state.selectedArrayName = arrayBlock.name
-                                state.showArraySetDialog = true
-                            }
-                        ) {
-                            Text("Set element")
-                        }
-                    }
                 }
             }
         }

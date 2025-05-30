@@ -48,8 +48,6 @@ import com.example.test.ui.theme.blocks.ForBlockCard
 import com.example.test.ui.theme.blocks.IfBlockCard
 import com.example.test.ui.theme.blocks.VarCard
 import com.example.test.ui.theme.blocks.WhileBlockCard
-import com.example.test.ui.theme.dialogues.ArrayAccessDialog
-import com.example.test.ui.theme.dialogues.ArraySetDialog
 import com.example.test.ui.theme.dialogues.DeleteAllDialog
 import com.example.test.ui.theme.dialogues.EditArrayDialog
 import com.example.test.ui.theme.dialogues.ForDialog
@@ -131,8 +129,6 @@ fun CodeBlock() {
     if (states.showNewWhileDialog) WhileDialog(states, context)
     if (states.showNewArrayDialog) NewArrayDialog(states, context)
     if (states.showEditArrayDialog) EditArrayDialog(states, context)
-    if (states.showArrayAccessDialog) ArrayAccessDialog(states, context)
-    if (states.showArraySetDialog) ArraySetDialog(states, context)
     if (states.showNewForDialog) ForDialog(states, context)
 }
 
