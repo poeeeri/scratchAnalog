@@ -76,9 +76,6 @@ class CodeBlockState {
     var selectedForTargetId by mutableStateOf("")
     var isEditingForBlock by mutableStateOf(false)
 
-    var newForCommand by mutableStateOf("")
-
-
     var contextMenuState by mutableStateOf(ContextMenuState())
     var targetCommandsList by mutableStateOf<SnapshotStateList<CommandBlock>?>(null)
 

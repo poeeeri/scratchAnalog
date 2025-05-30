@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,7 +40,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.test.CodeBlockState
-import com.example.test.IfBlock
 import com.example.test.Variable
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.*
@@ -438,8 +436,6 @@ fun ChooseForBlockDialog(state: CodeBlockState, context: Context) {
                             tint = textColor
                         )
                     }
-                    // надо будет потом добавить списки когда сделаю
-                    // глобальные и локальные типы данных   
                 }
             }
         }

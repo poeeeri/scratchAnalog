@@ -8,8 +8,6 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -29,7 +27,6 @@ import androidx.compose.ui.unit.*
 import androidx.core.content.ContextCompat
 import com.example.test.*
 import com.example.test.R
-import com.example.test.utils.formatNumber
 import kotlin.math.roundToInt
 
 
@@ -117,7 +114,7 @@ fun PrintCard(
                             Icons.Default.ExpandLess
                         else Icons.Default.ExpandMore,
                         contentDescription = if (expanded) "Collapse" else "Expand",
-                        tint = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
+                        tint = textColor
                     )
                 }
             }
@@ -151,12 +148,7 @@ fun PrintCard(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     vars.forEach { variable ->
-                        val res = variable.value.toString().toDouble()
-                        val value1 = if (variable.type == VariableType.INT)
-                                res.toInt()
-                            else res
-
-                        val displayValue = when (val value = value1) {
+                        val displayValue = when (val value = variable.value) {
                             is List<*> -> value.joinToString(prefix = "[", postfix = "]")
                             is String -> value
                             else -> value.toString()

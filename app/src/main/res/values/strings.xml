@@ -82,8 +82,4 @@
     <string name="err_step_cannot_be_zero">Error: Step in for cannot be zero</string>
     <string name="edit_for_block">Edit For Block</string>
     <string name="err_var_already_exist">Variable \"%1$s\" already exists</string>
-    <string name="new_var_expression">New Var Expression</string>
-    <string name="start_value_must_not_be_empty">Start value must not be empty</string>
-    <string name="end_value_must_not_be_empty">End value must not be empty</string>
-    <string name="step_value_must_not_be_empty">Step value must not be empty</string>
 </resources>

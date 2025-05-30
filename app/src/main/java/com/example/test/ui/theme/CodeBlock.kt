@@ -276,6 +276,7 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
             )
         }
     }
+
     val hasContent = state.vars.isNotEmpty() ||
             state.ifBlock.isNotEmpty() ||
             state.whileBlocks.isNotEmpty() ||
@@ -346,7 +347,6 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
                     arrays = state.arrays,
                     onInteraction = onInteraction,
                     context = context
-
                 )
             }
         }
