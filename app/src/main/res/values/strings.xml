@@ -67,4 +67,5 @@
     <string name="create_if_block">Create If Block</string>
     <string name="create_var">Create Variable</string>
     <string name="crate_assign_top_bar">Create Assignment</string>
+    <string name="new_var_expression">New Var Expression</string>
 </resources>

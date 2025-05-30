@@ -108,7 +108,6 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                     color = textColor
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                // Left part
                 OutlinedTextField(
                     value = state.leftIfExpression,
                     onValueChange = { state.leftIfExpression = it },
@@ -239,10 +238,6 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                     .toSet() + state.arrays.map{it.name}.toSet()
                                 val notDeclared = usedVars-declaredVars
 
-//                                if (notDeclared.isNotEmpty()) {
-//                                    state.ifBlockError = ctx.getString(R.string.err_undeclared_var, notDeclared.joinToString(", "))
-//                                    return@IconButton
-//                                }
                                 notDeclared.forEach { name ->
                                     val newVar = Variable(name = name, expression = "0", pos = IntOffset(0, state.curBlockCommands.size * 220))
                                     state.vars.add(newVar)
@@ -250,7 +245,6 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                 }
                             }
 
-//                            if (state.newIfCommand.isNotBlank()) {
                             val parts = state.newIfCommand.split("=")
                             val name = parts.getOrNull(0)?.trim() ?: "var"
 
@@ -304,7 +298,8 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
 
                 Text(
                     text = "Commands (if condition is false):",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = textColor
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -345,7 +340,8 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                     OutlinedTextField(
                         value = state.newElseCommand,
                         onValueChange = { state.newElseCommand = it },
-                        label = { Text("New Command (Else)") },
+                        label = { Text("New Command (Else)",
+                            color = textColor) },
                         modifier = Modifier.weight(1f),
                         colors =  textAreaColor
                     )
@@ -371,12 +367,6 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                             val name = parts.getOrNull(0)?.trim() ?: "var"
                             val expr = parts.getOrNull(1)?.trim() ?: "0"
 
-
-
-//                            val parts = state.newIfCommand.split("=")
-//                            val name = parts.getOrNull(0)?.trim() ?: "var"
-//
-//                            val expr = parts.getOrNull(1)?.trim() ?: "0"
                             val existingVar = state.vars.find { it.name == name }
                             if (existingVar != null) {
                                 try {
@@ -421,9 +411,6 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                             tint = textColor)
                     }
                 }
-
-
-
 
                 if (state.ifBlockError.isNotBlank()) {
                     Text(

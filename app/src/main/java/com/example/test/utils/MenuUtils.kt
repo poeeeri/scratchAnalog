@@ -71,7 +71,7 @@ fun handleDeleteArrayBlock(state: CodeBlockState) {
     state.contextMenuState = ContextMenuState()
 }
 
-//<<<<<<< HEAD
+
 fun handleDeletePrintBlock(state: CodeBlockState) {
     state.contextMenuState.printBlockId?.let { blockId ->
         state.printBlocks.removeAll {it.id == blockId}
@@ -79,7 +79,7 @@ fun handleDeletePrintBlock(state: CodeBlockState) {
     state.contextMenuState = ContextMenuState()
 
 }
-//=======
+
 fun handleWhileEdit(state: CodeBlockState) {
     state.contextMenuState.whileBlockId?.let { blockId ->
         val block = state.whileBlocks.firstOrNull { it.id == blockId }
@@ -126,4 +126,3 @@ fun handleDeleteForBlock(state: CodeBlockState) {
         state.forBlocks.removeAll { it.id == blockId }
     }
 }
-//    >>>>>>> origin/develop

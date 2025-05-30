@@ -3,11 +3,9 @@ package com.example.test.ui.theme
 import android.content.Context
 import com.example.test.R
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -31,18 +29,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-//>>>>>>> origin/develop
 import com.example.test.ContextMenuState
 import com.example.test.CodeBlockState
-import com.example.test.PrintBlock
-import com.example.test.Variable
 import com.example.test.ui.theme.blocks.ArrayCard
 import com.example.test.ui.theme.blocks.ForBlockCard
 import com.example.test.ui.theme.blocks.IfBlockCard
@@ -60,7 +54,6 @@ import com.example.test.ui.theme.dialogues.VarDialog
 import com.example.test.ui.theme.dialogues.WhileDialog
 import com.example.test.ui.theme.menu.Menu
 import com.example.test.ui.theme.blocks.PrintCard
-import java.util.UUID
 
 
 class CodeBlockViewModel : ViewModel() {
@@ -305,7 +298,8 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
                     state = state,
                     arrayBlock = x,
                     vars = state.vars,
-                    onInteraction = onInteraction
+                    onInteraction = onInteraction,
+                    context = context
                 )
             }
             state.forBlocks.forEach { x ->
