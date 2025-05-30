@@ -195,48 +195,99 @@ fun executeCommands(
 
             is ForBlockCommand -> {
                 val block = command.forBlock
-                val initStr = block.startExpression
-                val index = state.vars.indexOfFirst { it.name == block.variable }
-                val rpnEndExpression = convertToReversePolishNotation(block.endExpression, context)
-                val calculEndExpr = calculateArithmeticExpression(
-                    rpnEndExpression, state, context, arrays
-                )
+                Log.d("FOR_DEBUG", "Starting for loop: ${block.variable}")
+                Log.d("FOR_DEBUG", "Start expression: ${block.startExpression}")
+                Log.d("FOR_DEBUG", "End expression: ${block.endExpression}")
 
-                if (block.doCommands.isNotEmpty()) {
-                    executeCommands(block.doCommands.toList(), state, context, arrays)
-                }
-//                val recalcResult = recalculateAllVariables(state, context, arrays)
-//                recalcResult.onSuccess { updated ->
-//                    state.vars.clear()
-//                    state.vars.addAll(updated)
-//                }.onFailure { e ->
-//                    Toast.makeText(context, e.message ?: "Error", Toast.LENGTH_LONG).show()
-//                    return
-//                }
-                if (index < 0) {
-                    state.vars.add(
-                        Variable(
-                            name = block.variable,
-                            expression = initStr,
-                            type = VariableType.INT
-                        )
-                    )
-                }
-                else {
-                    state.vars[index] = state.vars[index].copy(expression = initStr)
-                }
+                val originalVar = state.vars.find { it.name == block.variable }
+                val originalExpr = originalVar?.expression
+                val originalValue = originalVar?.value
 
-                var curLoopValue = initStr.toDoubleOrNull() ?: 0.0
-                while (when(block.comparisonOperator) {
-                        "<" ->  currentValue(state.vars, state, block, context, arrays) < calculEndExpr
-                        "<=" ->  currentValue(state.vars, state, block, context, arrays) <= calculEndExpr
-                        ">" ->  currentValue(state.vars, state, block, context, arrays) > calculEndExpr
-                        ">=" ->  currentValue(state.vars, state, block, context, arrays) >= calculEndExpr
-                        else -> false
-                }) {
-                    executeCommands(block.commands.toList(), state, context, arrays)
-                    writeCurrValue(currentValue(state.vars, state, block, context, arrays) + block.stepIter, state.vars, index)
+                try {
+                    fun calculateCurStart(): Int {
+                        val startRpn = convertToReversePolishNotation(block.startExpression, context)
+                        return calculateArithmeticExpression(
+                            startRpn,
+                            state,
+                            context,
+                            arrays
+                        ).toInt()
+                    }
+                    fun calculateCurEnd(): Int {
+                        val endRpn = convertToReversePolishNotation(block.endExpression, context)
+                        return calculateArithmeticExpression(
+                            endRpn,
+                            state,
+                            context,
+                            arrays
+                        ).toInt()
+                    }
+
+                    val startValue = calculateCurStart()
+                    val endValue = calculateCurEnd()
+
+                    Log.d("FOR_DEBUG", "Calculated start: $startValue, end: $endValue")
+                    var curValue = startValue
+                    Log.d("FOR_DEBUG", "Initial value: $curValue, End value: $endValue")
+                    while (when(block.comparisonOperator) {
+                            "<" -> {
+                                Log.d("FOR_DEBUG", "Checking: $curValue < $endValue = ${curValue < endValue}")
+                                curValue < endValue
+                            }
+                            "<=" -> {
+                                Log.d("FOR_DEBUG", "Checking: $curValue <= $endValue = ${curValue <= endValue}")
+                                curValue <= endValue
+                            }
+                            ">" -> {
+                                Log.d("FOR_DEBUG", "Checking: $curValue > $endValue = ${curValue > endValue}")
+                                curValue > endValue
+                            }
+                            ">=" -> {
+                                Log.d("FOR_DEBUG", "Checking: $curValue >= $endValue = ${curValue >= endValue}")
+                                curValue >= endValue
+                            }
+                            else -> false
+                    }) {
+                        val i = state.vars.indexOfFirst { it.name == block.variable }
+                        if (i >= 0) {
+                            state.vars[i] = state.vars[i].copy(
+                                expression = curValue.toString(),
+                                value = curValue.toDouble()
+                            )
+                        }
+                        else {
+                            state.vars.add(
+                                Variable(
+                                    name = block.variable,
+                                    expression = curValue.toString(),
+                                    value = curValue.toDouble(),
+                                    type = VariableType.INT,
+                                    pos = IntOffset(0, state.vars.size * 60)
+                                )
+                            )
+                        }
+                        Log.d("EXEC", "For loop ${block.variable}: iteration $curValue")
+                        executeCommands(block.commands.toList(), state, context, arrays)
+                        curValue += block.stepIter
+                        Log.d("FOR_DEBUG", "Next value: $curValue")
+                    }
                 }
+                finally {
+                    val i = state.vars.indexOfFirst { it.name == block.variable }
+                    if (originalVar != null && originalExpr != null) {
+                        if (i >= 0) {
+                            state.vars[i] = state.vars[i].copy(
+                                expression = originalExpr,
+                                value = originalValue ?: 0.0
+                            )
+                        }
+                    }
+                    else {
+                        if (i >= 0)
+                            state.vars.removeAt(i)
+                    }
+                }
+                Log.d("EXEC", "For loop ${block.variable}: completed, variable restored")
             }
         }
     }

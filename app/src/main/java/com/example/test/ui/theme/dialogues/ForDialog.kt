@@ -527,8 +527,8 @@ fun ForDialog(state: CodeBlockState,
 
                             val newFor = ForBlock(
                                 variable = state.newForVar,
-                                startExpression = calculatedValueStart.toInt().toString(),
-                                endExpression = calculatedValueEnd.toInt().toString(),
+                                startExpression = state.newForStartExpr,
+                                endExpression = state.newForEndExpr,
                                 comparisonOperator = state.selectedForOperator,
                                 stepIter = calculatedValueStep.toInt(),
                                 commands = commandsCopy,
