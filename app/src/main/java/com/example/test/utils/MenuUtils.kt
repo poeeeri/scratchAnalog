@@ -69,14 +69,14 @@ fun handleDeleteArrayBlock(state: CodeBlockState) {
 
 fun handleDeletePrintBlock(state: CodeBlockState) {
     state.contextMenuState.printBlockId?.let { blockId ->
-        state.printBlocks.removeAll {it.id == blockId}
+        state.printBlocks.removeAll { it.id == blockId }
     }
 }
 
 fun handleWhileEdit(state: CodeBlockState) {
     state.contextMenuState.whileBlockId?.let { blockId ->
         val block = state.whileBlocks.firstOrNull { it.id == blockId }
-        block?.let{
+        block?.let {
             state.selectedWhileOperator = it.comparisonOperator
             state.leftWhileExpression = it.leftExpression
             state.rightWhileExpression = it.rightExpression
@@ -91,7 +91,7 @@ fun handleWhileEdit(state: CodeBlockState) {
 
 fun handleWhileDelete(state: CodeBlockState) {
     state.contextMenuState.whileBlockId?.let { blockId ->
-        state.whileBlocks.removeAll{it.id == blockId }
+        state.whileBlocks.removeAll { it.id == blockId }
     }
 }
 
@@ -99,7 +99,7 @@ fun handleWhileDelete(state: CodeBlockState) {
 fun handleEditForBlock(state: CodeBlockState) {
     state.contextMenuState.forBlockId?.let { blockId ->
         val block = state.forBlocks.firstOrNull { it.id == blockId }
-        block?.let{
+        block?.let {
             state.selectedForOperator = it.comparisonOperator
             state.newForStartExpr = it.startExpression
             state.newForEndExpr = it.endExpression

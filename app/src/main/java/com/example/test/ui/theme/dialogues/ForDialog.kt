@@ -74,9 +74,11 @@ private fun String.filterExpressionChars() = filter {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ForDialog(state: CodeBlockState,
-              context: Context) {
-    var textAreaColor =OutlinedTextFieldDefaults.colors(
+fun ForDialog(
+    state: CodeBlockState,
+    context: Context
+) {
+    var textAreaColor = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = Color(ContextCompat.getColor(context, R.color.shadow)),
         unfocusedBorderColor = Color(ContextCompat.getColor(context, R.color.cycle_main_color)),
         errorBorderColor = Color(ContextCompat.getColor(context, R.color.error_color)),
@@ -101,12 +103,14 @@ fun ForDialog(state: CodeBlockState,
             state.isEditingForBlock = false
         }
     ) {
-        Surface (
+        Surface(
             color = Color(ContextCompat.getColor(context, R.color.dialog)),
             shape = MaterialTheme.shapes.medium,
             modifier = Modifier
-                .shadow(10.dp, shape = RoundedCornerShape(8.dp),
-                    spotColor = Color(ContextCompat.getColor(context, R.color.shadow)))
+                .shadow(
+                    10.dp, shape = RoundedCornerShape(8.dp),
+                    spotColor = Color(ContextCompat.getColor(context, R.color.shadow))
+                )
         ) {
             val start = stringResource(R.string.start_expression)
             val end = stringResource(R.string.end_expression)
@@ -482,10 +486,10 @@ fun ForDialog(state: CodeBlockState,
                                             state.vars[i] = varToRename.copy(name = newVarName)
                                         }
                                     }
-                                }
-                                else {
+                                } else {
                                     val existingVar = state.vars.firstOrNull { it.name == varName }
-                                    val existingArr = state.arrays.firstOrNull { it.name == varName }
+                                    val existingArr =
+                                        state.arrays.firstOrNull { it.name == varName }
                                     if (existingVar == null && existingArr == null) {
                                         state.vars.add(
                                             Variable(

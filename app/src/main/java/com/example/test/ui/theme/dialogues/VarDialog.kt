@@ -62,8 +62,10 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
             color = Color(ContextCompat.getColor(ctx, R.color.dialog)),
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier
-                .shadow(10.dp, shape = RoundedCornerShape(8.dp),
-                    spotColor = Color(ContextCompat.getColor(ctx, R.color.shadow)))
+                .shadow(
+                    10.dp, shape = RoundedCornerShape(8.dp),
+                    spotColor = Color(ContextCompat.getColor(ctx, R.color.shadow))
+                )
         ) {
             Column(
                 modifier = Modifier
@@ -80,11 +82,15 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                 OutlinedTextField(
                     value = state.newVarName,
                     onValueChange = { state.newVarName = it },
-                    label = { Text(stringResource(R.string.var_nam_or_several),
-                        color = textColor,) },
+                    label = {
+                        Text(
+                            stringResource(R.string.var_nam_or_several),
+                            color = textColor,
+                        )
+                    },
                     isError = state.newVarError != "",
                     modifier = Modifier.fillMaxWidth(),
-                    colors =  textAreaColor
+                    colors = textAreaColor
 
                 )
                 if (state.newVarError != "") {
@@ -96,8 +102,10 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Variable Type",
-                    color = textColor,)
+                Text(
+                    text = "Variable Type",
+                    color = textColor,
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -110,13 +118,25 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                                 selected = state.selectedVarType == type,
                                 onClick = { state.selectedVarType = type },
                                 colors = RadioButtonDefaults.colors(
-                                    unselectedColor = Color(ContextCompat.getColor(ctx, R.color.shadow)),
-                                    selectedColor = Color(ContextCompat.getColor(ctx, R.color.shadow))
+                                    unselectedColor = Color(
+                                        ContextCompat.getColor(
+                                            ctx,
+                                            R.color.shadow
+                                        )
+                                    ),
+                                    selectedColor = Color(
+                                        ContextCompat.getColor(
+                                            ctx,
+                                            R.color.shadow
+                                        )
+                                    )
                                 )
 
                             )
-                            Text(text = type.toString(),
-                                color = textColor,)
+                            Text(
+                                text = type.toString(),
+                                color = textColor,
+                            )
                         }
                     }
                 }
@@ -128,7 +148,8 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                     Button(
                         onClick = {
                             if (state.newVarName.isNotBlank()) {
-                                val varsArray = state.newVarName.split(',').map { it.trim() }.toSet()
+                                val varsArray =
+                                    state.newVarName.split(',').map { it.trim() }.toSet()
                                 var containsError = false
                                 for (v in varsArray) {
                                     when {
@@ -139,7 +160,8 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                                         }
 
                                         state.vars.any { it.name == v } -> {
-                                            val var_already_exist = ctx.getString(R.string.var_already_exist, v)
+                                            val var_already_exist =
+                                                ctx.getString(R.string.var_already_exist, v)
                                             state.newVarError =
                                                 var_already_exist
                                             containsError = true
@@ -147,7 +169,8 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                                         }
 
                                         state.arrays.any { it.name == v } -> {
-                                            state.newVarError = ctx.getString(R.string.var_already_exist, v)
+                                            state.newVarError =
+                                                ctx.getString(R.string.var_already_exist, v)
                                             containsError = true
                                             break
                                         }
@@ -184,7 +207,10 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                                                 name = v,
                                                 expression = "0",
                                                 value = 0,
-                                                pos = IntOffset(10 + state.vars.size, state.vars.size*10),
+                                                pos = IntOffset(
+                                                    10 + state.vars.size,
+                                                    state.vars.size * 10
+                                                ),
                                                 type = state.selectedVarType
                                             )
                                         )
@@ -195,15 +221,19 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                                     state.newVarError = ""
                                     state.selectedVarType = VariableType.INT
                                 }
-                            }
-                            else state.newVarError = "Variable name must not be empty"
+                            } else state.newVarError = "Variable name must not be empty"
                         },
                         colors = ButtonDefaults.buttonColors(
-                            contentColor = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text)),
+                            contentColor = Color(
+                                ContextCompat.getColor(
+                                    ctx,
+                                    R.color.light_green_for_text
+                                )
+                            ),
                             containerColor = Color(ContextCompat.getColor(ctx, R.color.header))
                         )
                     ) {
-                        Text(stringResource(R.string.create), color = textColor,)
+                        Text(stringResource(R.string.create), color = textColor)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(
@@ -214,11 +244,16 @@ fun VarDialog(state: CodeBlockState, ctx: Context) {
                             state.selectedVarType = VariableType.INT
                         },
                         colors = ButtonDefaults.buttonColors(
-                            contentColor = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text)),
+                            contentColor = Color(
+                                ContextCompat.getColor(
+                                    ctx,
+                                    R.color.light_green_for_text
+                                )
+                            ),
                             containerColor = Color(ContextCompat.getColor(ctx, R.color.dark_header))
                         )
                     ) {
-                        Text(stringResource(R.string.cancel), color = textColor,)
+                        Text(stringResource(R.string.cancel), color = textColor)
                     }
                 }
             }

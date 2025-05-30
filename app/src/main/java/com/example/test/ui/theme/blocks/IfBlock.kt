@@ -59,8 +59,13 @@ import com.example.test.utils.preprocessArrayExprForDisplay
 
 
 @Composable
-fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, onInteraction: (Offset, String) -> Unit,
-                context: Context) {
+fun IfBlockCard(
+    state: CodeBlockState,
+    ifBlock: IfBlock,
+    vars: List<Variable>,
+    onInteraction: (Offset, String) -> Unit,
+    context: Context
+) {
     var x by remember { mutableFloatStateOf(ifBlock.pos.x.toFloat()) }
     var y by remember { mutableFloatStateOf(ifBlock.pos.y.toFloat()) }
     var expanded by remember { mutableStateOf(true) }
@@ -143,7 +148,12 @@ fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, o
                     )
                     .border(
                         width = 0.2.dp,
-                        color = Color(ContextCompat.getColor(context, R.color.light_green_for_text)),
+                        color = Color(
+                            ContextCompat.getColor(
+                                context,
+                                R.color.light_green_for_text
+                            )
+                        ),
                         shape = RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
                     )
                     .padding(12.dp)
@@ -161,8 +171,10 @@ fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, o
                         state.targetCommandsList = ifBlock.commands
                         state.showChooseIfDialog = true
                     }) {
-                        Icon(Icons.Default.Add, contentDescription = "Add inner Block",
-                            tint = Color(ContextCompat.getColor(context, R.color.canvas)))
+                        Icon(
+                            Icons.Default.Add, contentDescription = "Add inner Block",
+                            tint = Color(ContextCompat.getColor(context, R.color.canvas))
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -188,8 +200,7 @@ fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, o
                                             ),
                                             modifier = Modifier.padding(vertical = 4.dp)
                                         )
-                                    }
-                                    else {
+                                    } else {
                                         VarCard(
                                             variable = cmd.variable,
                                             vars = thenVars,
@@ -250,11 +261,15 @@ fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, o
                                     if (cmd.variable.expression.contains(Regex("\\w+\\[(.*?)\\]\\s*="))) {
                                         Text(
                                             text = preprocessArrayExprForDisplay(cmd.variable.expression),
-                                            color = Color(ContextCompat.getColor(context, R.color.canvas)),
+                                            color = Color(
+                                                ContextCompat.getColor(
+                                                    context,
+                                                    R.color.canvas
+                                                )
+                                            ),
                                             modifier = Modifier.padding(vertical = 4.dp)
                                         )
-                                    }
-                                    else {
+                                    } else {
                                         VarCard(
                                             variable = cmd.variable,
                                             vars = elseVars,
@@ -292,9 +307,12 @@ fun IfBlockCard(state: CodeBlockState, ifBlock: IfBlock, vars: List<Variable>, o
     if (state.showChooseIfDialog)
         ChooseIfBlockDialog(state, context)
 }
+
 @Composable
-fun ChooseIfBlockDialog(state: CodeBlockState,
-                        context: Context) {
+fun ChooseIfBlockDialog(
+    state: CodeBlockState,
+    context: Context
+) {
     Dialog(
         onDismissRequest = {
             state.showNewIfDialog = false
@@ -309,17 +327,17 @@ fun ChooseIfBlockDialog(state: CodeBlockState,
         }
     ) {
         val textColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
-        Surface (
+        Surface(
             color = Color(ContextCompat.getColor(context, R.color.dialog)),
             shape = RoundedCornerShape(8.dp)
-        ){
+        ) {
             Column(
                 modifier = Modifier
                     .padding(20.dp)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                Text (
+                Text(
                     text = stringResource(R.string.choose_command),
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
@@ -337,35 +355,49 @@ fun ChooseIfBlockDialog(state: CodeBlockState,
                             state.showChooseIfDialog = false
                         }
                     ) {
-                        Icon(Icons.Default.Code, contentDescription = "Add If Block",
-                            tint = textColor)
+                        Icon(
+                            Icons.Default.Code, contentDescription = "Add If Block",
+                            tint = textColor
+                        )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     FloatingActionButton(
                         containerColor = Color(ContextCompat.getColor(context, R.color.header)),
-                        onClick = { state.showNewVarDialog = true
-                            state.showChooseIfDialog = false}
+                        onClick = {
+                            state.showNewVarDialog = true
+                            state.showChooseIfDialog = false
+                        }
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Var Block",
-                            tint = textColor)
+                        Icon(
+                            Icons.Default.Add, contentDescription = "Add Var Block",
+                            tint = textColor
+                        )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     FloatingActionButton(
                         containerColor = Color(ContextCompat.getColor(context, R.color.header)),
-                        onClick = { state.showNewWhileDialog = true
-                            state.showChooseIfDialog = false}
+                        onClick = {
+                            state.showNewWhileDialog = true
+                            state.showChooseIfDialog = false
+                        }
                     ) {
-                        Icon(Icons.Default.Loop, contentDescription = "Add While Block",
-                            tint = textColor)
+                        Icon(
+                            Icons.Default.Loop, contentDescription = "Add While Block",
+                            tint = textColor
+                        )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     FloatingActionButton(
                         containerColor = Color(ContextCompat.getColor(context, R.color.header)),
-                        onClick = { state.showNewForDialog = true
-                            state.showChooseIfDialog = false}
+                        onClick = {
+                            state.showNewForDialog = true
+                            state.showChooseIfDialog = false
+                        }
                     ) {
-                        Icon(Icons.Default.Replay5, contentDescription = "Add For Block",
-                            tint = textColor)
+                        Icon(
+                            Icons.Default.Replay5, contentDescription = "Add For Block",
+                            tint = textColor
+                        )
                     }
                 }
             }

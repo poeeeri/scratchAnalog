@@ -92,8 +92,10 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
             color = Color(ContextCompat.getColor(ctx, R.color.dialog)),
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier
-                .shadow(10.dp, shape = RoundedCornerShape(8.dp),
-                    spotColor = Color(ContextCompat.getColor(ctx, R.color.shadow)))
+                .shadow(
+                    10.dp, shape = RoundedCornerShape(8.dp),
+                    spotColor = Color(ContextCompat.getColor(ctx, R.color.shadow))
+                )
         ) {
             Column(
                 modifier = Modifier
@@ -112,10 +114,14 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                 OutlinedTextField(
                     value = state.leftIfExpression,
                     onValueChange = { state.leftIfExpression = it },
-                    label = { Text("Left Expression",
-                        color = textColor) },
+                    label = {
+                        Text(
+                            "Left Expression",
+                            color = textColor
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth(),
-                    colors =  textAreaColor
+                    colors = textAreaColor
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 val comparisonOpers = listOf("==", "!=", ">", "<", ">=", "<=")
@@ -129,8 +135,12 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                         value = state.selectedComparisonOperator,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Comparison Operator",
-                            color = textColor) },
+                        label = {
+                            Text(
+                                "Comparison Operator",
+                                color = textColor
+                            )
+                        },
                         trailingIcon = {
                             Icon(
                                 imageVector = if (expanded)
@@ -146,24 +156,40 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { expanded = true },
-                        colors =  textAreaColor
+                        colors = textAreaColor
 
                     )
                     DropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
-                        modifier = Modifier.background(Color(ContextCompat.getColor(ctx, R.color.dark_header)))
+                        modifier = Modifier.background(
+                            Color(
+                                ContextCompat.getColor(
+                                    ctx,
+                                    R.color.dark_header
+                                )
+                            )
+                        )
                     ) {
                         comparisonOpers.forEach { oper ->
                             DropdownMenuItem(
-                                text = { Text(oper,
-                                    color = textColor) },
+                                text = {
+                                    Text(
+                                        oper,
+                                        color = textColor
+                                    )
+                                },
                                 onClick = {
                                     state.selectedComparisonOperator = oper
                                     expanded = false
                                 },
-                                colors =  MenuDefaults.itemColors(
-                                    textColor = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text))
+                                colors = MenuDefaults.itemColors(
+                                    textColor = Color(
+                                        ContextCompat.getColor(
+                                            ctx,
+                                            R.color.light_green_for_text
+                                        )
+                                    )
                                 ),
                             )
                         }
@@ -175,10 +201,14 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                 OutlinedTextField(
                     value = state.rightIfExpression,
                     onValueChange = { state.rightIfExpression = it },
-                    label = { Text("Right Expression",
-                        color = textColor) },
+                    label = {
+                        Text(
+                            "Right Expression",
+                            color = textColor
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth(),
-                    colors =  textAreaColor
+                    colors = textAreaColor
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -217,8 +247,10 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                         IconButton(
                             onClick = { state.curBlockCommands.removeAt(i) }
                         ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Remove Command",
-                                tint = textColor)
+                            Icon(
+                                Icons.Default.Delete, contentDescription = "Remove Command",
+                                tint = textColor
+                            )
                         }
                     }
                     HorizontalDivider()
@@ -231,16 +263,21 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                     OutlinedTextField(
                         value = state.newIfCommand,
                         onValueChange = { state.newIfCommand = it },
-                        label = { Text("New Command",
-                            color = textColor) },
+                        label = {
+                            Text(
+                                "New Command",
+                                color = textColor
+                            )
+                        },
                         modifier = Modifier.weight(1f),
-                        colors =  textAreaColor
+                        colors = textAreaColor
                     )
                     IconButton(
                         onClick = {
                             val newCommand = state.newIfCommand.trim()
                             if (newCommand.isNotBlank()) {
-                                val arraySetPattern = Regex("([a-zA-Z_]\\w*)\\[(.*?)\\]\\s*=\\s*(.*)")
+                                val arraySetPattern =
+                                    Regex("([a-zA-Z_]\\w*)\\[(.*?)\\]\\s*=\\s*(.*)")
                                 val arrMatch = arraySetPattern.matchEntire(newCommand)
                                 if (arrMatch != null) {
                                     val arrName = arrMatch.groupValues[1]
@@ -262,8 +299,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                             )
                                         )
                                     )
-                                }
-                                else {
+                                } else {
                                     val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
                                     val usedVars =
                                         regex.findAll(newCommand).map { it.value }.toSet()
@@ -300,12 +336,13 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                                 arrays = state.arrays
                                             )
                                             if (existingVar.type == VariableType.INT &&
-                                                calculatedValue != calculatedValue.toInt().toDouble()) {
+                                                calculatedValue != calculatedValue.toInt()
+                                                    .toDouble()
+                                            ) {
                                                 state.ifBlockError = "Cannot convert float to int"
                                                 return@IconButton
                                             }
-                                        }
-                                        catch (e: Exception) {
+                                        } catch (e: Exception) {
                                             return@IconButton
                                         }
                                     }
@@ -325,8 +362,10 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                             }
                         }
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Command",
-                            tint = textColor)
+                        Icon(
+                            Icons.Default.Add, contentDescription = "Add Command",
+                            tint = textColor
+                        )
                     }
                 }
 
@@ -371,8 +410,10 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                         IconButton(
                             onClick = { state.curElseCommands.removeAt(i) }
                         ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Remove Command",
-                                tint = textColor)
+                            Icon(
+                                Icons.Default.Delete, contentDescription = "Remove Command",
+                                tint = textColor
+                            )
                         }
                     }
                     HorizontalDivider()
@@ -387,13 +428,14 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                         onValueChange = { state.newElseCommand = it },
                         label = { Text("New Command (Else)") },
                         modifier = Modifier.weight(1f),
-                        colors =  textAreaColor
+                        colors = textAreaColor
                     )
                     IconButton(
                         onClick = {
                             val newCommand = state.newElseCommand.trim()
                             if (newCommand.isNotBlank()) {
-                                val arraySetPattern = Regex("([a-zA-Z_]\\w*)\\[(.*?)\\]\\s*=\\s*(.*)")
+                                val arraySetPattern =
+                                    Regex("([a-zA-Z_]\\w*)\\[(.*?)\\]\\s*=\\s*(.*)")
                                 val arrMatch = arraySetPattern.matchEntire(newCommand)
                                 if (arrMatch != null) {
                                     val arrName = arrMatch.groupValues[1]
@@ -415,8 +457,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                             )
                                         )
                                     )
-                                }
-                                else {
+                                } else {
                                     val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
                                     val usedVars =
                                         regex.findAll(newCommand).map { it.value }.toSet()
@@ -452,12 +493,13 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                                 arrays = state.arrays
                                             )
                                             if (existingVar.type == VariableType.INT &&
-                                                calculatedValue != calculatedValue.toInt().toDouble()) {
+                                                calculatedValue != calculatedValue.toInt()
+                                                    .toDouble()
+                                            ) {
                                                 state.ifBlockError = "Cannot convert float to int"
                                                 return@IconButton
                                             }
-                                        }
-                                        catch (e: Exception) {
+                                        } catch (e: Exception) {
                                             return@IconButton
                                         }
                                     }
@@ -478,8 +520,10 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                             }
                         }
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Command",
-                            tint = textColor)
+                        Icon(
+                            Icons.Default.Add, contentDescription = "Add Command",
+                            tint = textColor
+                        )
                     }
                 }
 
@@ -489,7 +533,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                 if (state.ifBlockError.isNotBlank()) {
                     Text(
                         text = state.ifBlockError,
-                        color =Color(ContextCompat.getColor(ctx, R.color.light_green_for_text)),
+                        color = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text)),
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(start = 16.dp)
                     )
@@ -510,23 +554,33 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                 return@Button
                             }
 
-                            val declaredVarsNames = state.vars.map { it.name }.toSet() + state.arrays.map{it.name}.toSet()
+                            val declaredVarsNames =
+                                state.vars.map { it.name }.toSet() + state.arrays.map { it.name }
+                                    .toSet()
                             val regex = Regex("([a-zA-Z_]\\w*)(?:\\s*\\[.*?\\])?")
                             val leftPartVars = regex.findAll(state.leftIfExpression).map {
-                                if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
+                                if (it.value.contains("[")) it.value.substring(
+                                    0,
+                                    it.value.indexOf("[")
+                                ).trim()
                                 else it.value
                             }.toSet()
                             val rightPartVars = regex.findAll(state.rightIfExpression).map {
-                                if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
+                                if (it.value.contains("[")) it.value.substring(
+                                    0,
+                                    it.value.indexOf("[")
+                                ).trim()
                                 else it.value
                             }.toSet()
                             val notDeclared = (leftPartVars + rightPartVars) - declaredVarsNames
                             if (notDeclared.isNotEmpty()) {
-                                state.ifBlockError = "Undeclared variable(-s): ${notDeclared.joinToString(", ")}"
+                                state.ifBlockError =
+                                    "Undeclared variable(-s): ${notDeclared.joinToString(", ")}"
                                 return@Button
                             }
                             if (state.selectedIfBlock.isNotEmpty()) {
-                                val i = state.ifBlock.indexOfFirst { it.id == state.selectedIfBlock }
+                                val i =
+                                    state.ifBlock.indexOfFirst { it.id == state.selectedIfBlock }
                                 if (i >= 0) {
                                     state.ifBlock[i] = state.ifBlock[i].copy(
                                         leftExpression = state.leftIfExpression,
@@ -556,8 +610,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                     )
                                     state.newIfCommand = ""
                                 }
-                            }
-                            else {
+                            } else {
                                 if (state.newElseCommand.isNotBlank()) {
                                     val parts = state.newElseCommand.split("=")
                                     val name = parts.getOrNull(0)?.trim() ?: "var"
@@ -593,13 +646,15 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                 }
 
                                 // делаю копию команд чтобы при нажатии на креэйт не сохранялся пустой список
-                                val commandsCopy: SnapshotStateList<CommandBlock> = mutableStateListOf<CommandBlock>().apply {
-                                    addAll(state.curBlockCommands)
-                                }
+                                val commandsCopy: SnapshotStateList<CommandBlock> =
+                                    mutableStateListOf<CommandBlock>().apply {
+                                        addAll(state.curBlockCommands)
+                                    }
 
-                                val elseCommandCopy: SnapshotStateList<CommandBlock> = mutableStateListOf<CommandBlock>().apply {
-                                    addAll(state.curElseCommands)
-                                }
+                                val elseCommandCopy: SnapshotStateList<CommandBlock> =
+                                    mutableStateListOf<CommandBlock>().apply {
+                                        addAll(state.curElseCommands)
+                                    }
 
                                 // тут уже создаю саму карту с командой для иф-блока
                                 val newIf = IfBlock(
@@ -615,14 +670,14 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                 // илли вложенным
                                 if (state.targetCommandsList != null) {
                                     state.targetCommandsList?.add(IfBlockCommand(newIf))
-                                }
-                                else {
+                                } else {
                                     state.ifBlock.add(newIf)
                                 }
                             }
                             // здесь просто создаем новый список команд и его копию чтобы он не обнулялся при редактировании блока
                             if (state.selectedIfBlock.isNotEmpty()) {
-                                val i = state.ifBlock.indexOfFirst { it.id == state.selectedIfBlock }
+                                val i =
+                                    state.ifBlock.indexOfFirst { it.id == state.selectedIfBlock }
                                 if (i >= 0) {
                                     val newCommands = mutableStateListOf<CommandBlock>().apply {
                                         addAll(state.curBlockCommands)
@@ -652,19 +707,27 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                             state.targetCommandsList = null
                         },
                         colors = ButtonDefaults.buttonColors(
-                            contentColor = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text)),
+                            contentColor = Color(
+                                ContextCompat.getColor(
+                                    ctx,
+                                    R.color.light_green_for_text
+                                )
+                            ),
                             containerColor = Color(ContextCompat.getColor(ctx, R.color.header))
                         )
                     ) {
-                        Text(stringResource(R.string.create),
-                            color = textColor)
+                        Text(
+                            stringResource(R.string.create),
+                            color = textColor
+                        )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
 
                     TextButton(
                         onClick = {
                             if (state.selectedIfBlock.isNotEmpty()) {
-                                val i = state.ifBlock.indexOfFirst { it.id == state.selectedIfBlock }
+                                val i =
+                                    state.ifBlock.indexOfFirst { it.id == state.selectedIfBlock }
                                 if (i >= 0) {
                                     val newCommands = mutableStateListOf<CommandBlock>().apply {
                                         addAll(state.curBlockCommands)
@@ -695,12 +758,19 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                             state.targetCommandsList = null
                         },
                         colors = ButtonDefaults.buttonColors(
-                            contentColor = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text)),
+                            contentColor = Color(
+                                ContextCompat.getColor(
+                                    ctx,
+                                    R.color.light_green_for_text
+                                )
+                            ),
                             containerColor = Color(ContextCompat.getColor(ctx, R.color.dark_header))
                         )
                     ) {
-                        Text(stringResource(R.string.cancel),
-                            color = textColor,)
+                        Text(
+                            stringResource(R.string.cancel),
+                            color = textColor,
+                        )
                     }
                 }
             }

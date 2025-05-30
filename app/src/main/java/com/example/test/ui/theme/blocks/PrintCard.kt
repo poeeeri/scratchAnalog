@@ -88,7 +88,12 @@ fun PrintCard(
                 )
                 .border(
                     width = 1.dp,
-                    color = if (hasError) Color.Red else Color(ContextCompat.getColor(context, R.color.light_green_for_text)),
+                    color = if (hasError) Color.Red else Color(
+                        ContextCompat.getColor(
+                            context,
+                            R.color.light_green_for_text
+                        )
+                    ),
                     shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
                 )
                 .padding(12.dp),

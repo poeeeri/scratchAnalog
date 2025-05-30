@@ -84,10 +84,11 @@ class CodeBlockState {
     val errors: SnapshotStateList<VarError> = mutableStateListOf()
     val arrays: SnapshotStateList<ArrayBlock> = mutableStateListOf()
     val whileBlocks: SnapshotStateList<WhileBlock> = mutableStateListOf()
-//<<<<<<< HEAD
+
+    //<<<<<<< HEAD
     val printBlocks: SnapshotStateList<PrintBlock> = mutableStateListOf()
 
-//=======
+    //=======
     val forBlocks: SnapshotStateList<ForBlock> = mutableStateListOf()
 //>>>>>>> origin/develop
 
@@ -174,7 +175,7 @@ data class Variable(
 
 data class PrintBlock(
     val id: String = UUID.randomUUID().toString(),
-    val pos: IntOffset = IntOffset(0,0)
+    val pos: IntOffset = IntOffset(0, 0)
 )
 
 data class VarBlockCommand(
@@ -184,7 +185,9 @@ data class VarBlockCommand(
         get() = variable.id
     override var pos: IntOffset
         get() = variable.pos
-        set(value) { variable.pos = value }
+        set(value) {
+            variable.pos = value
+        }
 }
 
 data class VarError(
@@ -209,10 +212,12 @@ data class WhileBlockCommand(
         get() = whileBlock.id
     override var pos: IntOffset
         get() = whileBlock.pos
-        set(value) { whileBlock.pos = value }
+        set(value) {
+            whileBlock.pos = value
+        }
 }
 
-data class ForBlock (
+data class ForBlock(
     val id: String = UUID.randomUUID().toString(),
     val variable: String,
     val startExpression: String,
@@ -220,7 +225,7 @@ data class ForBlock (
     val comparisonOperator: String,
     val stepIter: Int,
     val commands: SnapshotStateList<CommandBlock> = mutableStateListOf(),
-    var pos : IntOffset = IntOffset(0,0),
+    var pos: IntOffset = IntOffset(0, 0),
     val doCommands: SnapshotStateList<CommandBlock> = mutableStateListOf()
 )
 
@@ -231,9 +236,10 @@ data class ForBlockCommand(
         get() = forBlock.id
     override var pos: IntOffset
         get() = forBlock.pos
-        set(value) { forBlock.pos = value }
+        set(value) {
+            forBlock.pos = value
+        }
 }
-
 
 
 data class IfBlock(
@@ -258,7 +264,9 @@ data class IfBlockCommand(
         get() = ifBlock.id
     override var pos: IntOffset
         get() = ifBlock.pos
-        set(value) { ifBlock.pos = value }
+        set(value) {
+            ifBlock.pos = value
+        }
 }
 
 data class ArrayBlock(
@@ -276,7 +284,9 @@ data class ArrayBlockCommand(
         get() = arrayBlock.id
     override var pos: IntOffset
         get() = arrayBlock.pos
-        set(value) { arrayBlock.pos = value }
+        set(value) {
+            arrayBlock.pos = value
+        }
 }
 
 sealed class CommandBlock {
@@ -296,12 +306,12 @@ data class ContextMenuState(
 )
 
 sealed class BlockItem {
-    data class VarBlock(val variable: Variable): BlockItem()
-    data class IfBlockItem(val block: IfBlock): BlockItem()
-    data class WhileBlockItem(val block: WhileBlock): BlockItem()
-    data class ForBlockItem(val block: ForBlock): BlockItem()
-    data class ArrayBlockItem(val block: ArrayBlock): BlockItem()
-    data class PrintBlockItem(val block: PrintBlock): BlockItem()
+    data class VarBlock(val variable: Variable) : BlockItem()
+    data class IfBlockItem(val block: IfBlock) : BlockItem()
+    data class WhileBlockItem(val block: WhileBlock) : BlockItem()
+    data class ForBlockItem(val block: ForBlock) : BlockItem()
+    data class ArrayBlockItem(val block: ArrayBlock) : BlockItem()
+    data class PrintBlockItem(val block: PrintBlock) : BlockItem()
 
     val id: String
         get() = when (this) {

@@ -87,7 +87,12 @@ fun CodeBlock() {
                 title = { Text(stringResource(R.string.app_name)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(ContextCompat.getColor(context, R.color.header)),
-                    titleContentColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
+                    titleContentColor = Color(
+                        ContextCompat.getColor(
+                            context,
+                            R.color.light_green_for_text
+                        )
+                    )
                 ),
                 actions = {
                     Box {
@@ -110,10 +115,12 @@ fun CodeBlock() {
         },
         floatingActionButton = { FloatingActivationButtons(states, context) }
     ) { innerPadding ->
-        Canvas(states, Modifier
-            .padding(innerPadding)
-            .fillMaxSize(),
-            context)
+        Canvas(
+            states, Modifier
+                .padding(innerPadding)
+                .fillMaxSize(),
+            context
+        )
         Menu(states, context)
     }
 
@@ -145,8 +152,12 @@ fun TopBarDropdownMenu(
         val textColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
         DropdownMenuItem(
             text = { Text("Create Variable") },
-            leadingIcon = { Icon(Icons.Default.Add, contentDescription = null,
-                tint = textColor) },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Add, contentDescription = null,
+                    tint = textColor
+                )
+            },
             onClick = {
                 states.showNewVarDialog = true
                 onDismissRequest()
@@ -156,8 +167,12 @@ fun TopBarDropdownMenu(
         create = stringResource(R.string.create_if_block)
         DropdownMenuItem(
             text = { Text("Create If Block") },
-            leadingIcon = { Icon(Icons.Default.Check, contentDescription = null,
-                tint = textColor )},
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Check, contentDescription = null,
+                    tint = textColor
+                )
+            },
             onClick = {
                 states.showNewIfDialog = true
                 onDismissRequest()
@@ -167,8 +182,12 @@ fun TopBarDropdownMenu(
         create = stringResource(R.string.create_while_block)
         DropdownMenuItem(
             text = { Text("Create While Block") },
-            leadingIcon = { Icon(Icons.Default.Refresh, contentDescription = null,
-                tint = textColor )},
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Refresh, contentDescription = null,
+                    tint = textColor
+                )
+            },
             onClick = {
                 states.showNewWhileDialog = true
                 onDismissRequest()
@@ -178,8 +197,12 @@ fun TopBarDropdownMenu(
         create = stringResource(R.string.create_array)
         DropdownMenuItem(
             text = { Text("Create Array") },
-            leadingIcon = { Icon(Icons.Default.List, contentDescription = null,
-                tint = textColor) },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.List, contentDescription = null,
+                    tint = textColor
+                )
+            },
             onClick = {
                 states.showNewArrayDialog = true
                 onDismissRequest()
@@ -189,8 +212,12 @@ fun TopBarDropdownMenu(
         create = stringResource(R.string.crate_assign_top_bar)
         DropdownMenuItem(
             text = { Text("Create Assignment") },
-            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null,
-                tint =textColor) },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Edit, contentDescription = null,
+                    tint = textColor
+                )
+            },
             onClick = {
                 states.showNewAssignmentDialog = true
                 onDismissRequest()
@@ -200,8 +227,12 @@ fun TopBarDropdownMenu(
         create = stringResource(R.string.create_for_block)
         DropdownMenuItem(
             text = { Text(create) },
-            leadingIcon = { Icon(Icons.Default.Replay5, contentDescription = null,
-                tint = textColor) },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Replay5, contentDescription = null,
+                    tint = textColor
+                )
+            },
             onClick = {
                 states.showNewForDialog = true
                 onDismissRequest()
@@ -232,19 +263,19 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
                 whileBlockId = id
             )
 
-            state.arrays.any { it.id == id} -> ContextMenuState(
+            state.arrays.any { it.id == id } -> ContextMenuState(
                 shown = true,
                 position = position,
                 arrayBlockId = id
             )
 
-            state.printBlocks.any { it.id == id} -> ContextMenuState(
+            state.printBlocks.any { it.id == id } -> ContextMenuState(
                 shown = true,
                 position = position,
                 printBlockId = id
             )
 
-            state.forBlocks.any { it.id == id} -> ContextMenuState(
+            state.forBlocks.any { it.id == id } -> ContextMenuState(
                 shown = true,
                 position = position,
                 forBlockId = id
@@ -329,8 +360,7 @@ fun Canvas(state: CodeBlockState, modifier: Modifier, context: Context) {
                 )
             }
         }
-    }
-    else {
+    } else {
         Box(
             modifier = Modifier
                 .fillMaxSize()

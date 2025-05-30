@@ -19,20 +19,32 @@ import com.example.test.R
 
 
 @Composable
-fun DeleteAllDialog(state: CodeBlockState,
-                    context: Context) {
+fun DeleteAllDialog(
+    state: CodeBlockState,
+    context: Context
+) {
     val textColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
     AlertDialog(
         modifier = Modifier
-            .shadow(10.dp, shape = RoundedCornerShape(8.dp),
-                spotColor = Color(ContextCompat.getColor(context, R.color.shadow))),
+            .shadow(
+                10.dp, shape = RoundedCornerShape(8.dp),
+                spotColor = Color(ContextCompat.getColor(context, R.color.shadow))
+            ),
         onDismissRequest = { state.showDeleteAllDialog = false },
 
         containerColor = Color(ContextCompat.getColor(context, R.color.dialog)),
-        title = { Text(stringResource(R.string.delete_all),
-            color = textColor ) },
-        text = { Text(stringResource(R.string.are_you_sure),
-            color = textColor ) },
+        title = {
+            Text(
+                stringResource(R.string.delete_all),
+                color = textColor
+            )
+        },
+        text = {
+            Text(
+                stringResource(R.string.are_you_sure),
+                color = textColor
+            )
+        },
         confirmButton = {
             Button(
                 onClick = {
@@ -55,24 +67,38 @@ fun DeleteAllDialog(state: CodeBlockState,
                     state.arrayError = ""
                 },
                 colors = ButtonDefaults.buttonColors(
-                    contentColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text)),
+                    contentColor = Color(
+                        ContextCompat.getColor(
+                            context,
+                            R.color.light_green_for_text
+                        )
+                    ),
                     containerColor = Color(ContextCompat.getColor(context, R.color.header))
                 )
             ) {
-                Text(stringResource(R.string.delete_all),
-                    color = textColor )
+                Text(
+                    stringResource(R.string.delete_all),
+                    color = textColor
+                )
             }
         },
         dismissButton = {
             TextButton(
                 onClick = { state.showDeleteAllDialog = false },
                 colors = ButtonDefaults.buttonColors(
-                    contentColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text)),
+                    contentColor = Color(
+                        ContextCompat.getColor(
+                            context,
+                            R.color.light_green_for_text
+                        )
+                    ),
                     containerColor = Color(ContextCompat.getColor(context, R.color.dark_header))
                 )
             ) {
-                Text(stringResource(R.string.cancel),
-                    color = textColor )
+                Text(
+                    stringResource(R.string.cancel),
+                    color = textColor
+                )
             }
         }
     )
