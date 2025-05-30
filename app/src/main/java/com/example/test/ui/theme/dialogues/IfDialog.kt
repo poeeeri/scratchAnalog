@@ -110,7 +110,6 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                     color = textColor
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                // Left part
                 OutlinedTextField(
                     value = state.leftIfExpression,
                     onValueChange = { state.leftIfExpression = it },
@@ -196,8 +195,6 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                // Right part
-                // Я русский я иду до конца!!!!
                 OutlinedTextField(
                     value = state.rightIfExpression,
                     onValueChange = { state.rightIfExpression = it },

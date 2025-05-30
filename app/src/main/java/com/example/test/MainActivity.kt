@@ -21,11 +21,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// ребята как же андроид студио тормозит епрст
-// (」＞＜)」
-// как же андроид студио жрёт заряд батареи...
-// как же адроид студио...
-
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {

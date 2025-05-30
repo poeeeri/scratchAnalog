@@ -54,7 +54,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
-import com.example.test.BlockItem
 import com.example.test.CodeBlockState
 import com.example.test.CommandBlock
 import com.example.test.ForBlock
@@ -66,11 +65,6 @@ import com.example.test.VariableType
 import com.example.test.utils.calculateArithmeticExpression
 import com.example.test.utils.convertToReversePolishNotation
 import com.example.test.utils.preprocessArrayExprForDisplay
-
-private fun String.filterDigits() = this
-private fun String.filterExpressionChars() = filter {
-    it.isLetterOrDigit() || it in "+-*/%()[]._" || it.isWhitespace()
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

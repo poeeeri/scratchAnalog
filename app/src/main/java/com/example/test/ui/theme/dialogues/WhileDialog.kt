@@ -193,8 +193,6 @@ fun WhileDialog(state: CodeBlockState, ctx: Context) {
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                // Right part
-                // Я русский я иду до конца!!!!
                 OutlinedTextField(
                     value = state.rightWhileExpression,
                     onValueChange = { state.rightWhileExpression = it },
