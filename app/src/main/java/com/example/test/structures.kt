@@ -142,6 +142,7 @@ class CodeBlockState {
     var arraySetError by mutableStateOf("")
 
     // все для фор
+    var originalForVar by mutableStateOf("")
     var newForVar by mutableStateOf("")
     var newForStartExpr by mutableStateOf("0")
     var newForEndExpr by mutableStateOf("10")
@@ -151,6 +152,7 @@ class CodeBlockState {
     var newForCommand by mutableStateOf("")
     var curForCommands = mutableStateListOf<CommandBlock>()
     var selectedForTargetId by mutableStateOf("")
+    var isEditingForBlock by mutableStateOf(false)
 
     var contextMenuState by mutableStateOf(ContextMenuState())
     var targetCommandsList by mutableStateOf<SnapshotStateList<CommandBlock>?>(null)

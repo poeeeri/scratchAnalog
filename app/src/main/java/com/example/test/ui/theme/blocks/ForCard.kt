@@ -389,15 +389,18 @@ fun ChooseForBlockDialog(state: CodeBlockState, context: Context) {
                     Spacer(modifier = Modifier.width(12.dp))
                     FloatingActionButton(
                         containerColor = Color(ContextCompat.getColor(context, R.color.header)),
-                        onClick = { state.showNewForDialog = true
-                            state.showChooseForDialog = false}
+                        onClick = {
+                            state.showNewForDialog = true
+                            state.showChooseForDialog = false
+                            state.isEditingForBlock = false
+                        }
                     ) {
                         Icon(Icons.Default.Replay5, contentDescription = "Add For " +
                                 "Block",
                             tint = textColor)
                     }
                     // надо будет потом добавить списки когда сделаю
-                    // глобальные и локальные типы данных
+                    // глобальные и локальные типы данных   
                 }
             }
         }

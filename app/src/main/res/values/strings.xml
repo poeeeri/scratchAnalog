@@ -80,4 +80,6 @@
     <string name="new_command">New Command</string>
     <string name="add_command">Add Command</string>
     <string name="err_step_cannot_be_zero">Error: Step in for cannot be zero</string>
+    <string name="edit_for_block">Edit For Block</string>
+    <string name="err_var_already_exist">Variable \"%1$s\" already exists</string>
 </resources>

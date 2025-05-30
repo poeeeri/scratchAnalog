@@ -104,9 +104,11 @@ fun handleEditForBlock(state: CodeBlockState) {
             state.newForStartExpr = it.startExpression
             state.newForEndExpr = it.endExpression
             state.newForVar = it.variable
+            state.originalForVar = it.variable
             state.newForStepIter = it.stepIter.toString()
             state.curForCommands.clear()
             state.selectedForTargetId = blockId
+            state.isEditingForBlock = true
             state.showNewForDialog = true
             state.curForCommands.addAll(block.commands)
             state.targetCommandsList = block.commands
