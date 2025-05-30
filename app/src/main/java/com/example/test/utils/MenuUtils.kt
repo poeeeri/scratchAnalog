@@ -13,7 +13,6 @@ fun handleEdit(state: CodeBlockState) {
             state.showNewAssignmentDialog = true
         }
     }
-    state.contextMenuState = ContextMenuState()
 }
 
 //обработчик для удаления переменной
@@ -21,7 +20,6 @@ fun handleDelete(state: CodeBlockState) {
     state.contextMenuState.variableName?.let { varName ->
         state.vars.removeAll { it.name == varName }
     }
-    state.contextMenuState = ContextMenuState()
 }
 
 // Обработка изменения условия
@@ -61,22 +59,18 @@ fun handleEditArrayBlock(state: CodeBlockState) {
             state.showEditArrayDialog = true
         }
     }
-    state.contextMenuState = ContextMenuState()
 }
 
 fun handleDeleteArrayBlock(state: CodeBlockState) {
     state.contextMenuState.arrayBlockId?.let { blockId ->
         state.arrays.removeAll { it.id == blockId }
     }
-    state.contextMenuState = ContextMenuState()
 }
 
 fun handleDeletePrintBlock(state: CodeBlockState) {
     state.contextMenuState.printBlockId?.let { blockId ->
         state.printBlocks.removeAll {it.id == blockId}
     }
-    state.contextMenuState = ContextMenuState()
-
 }
 
 fun handleWhileEdit(state: CodeBlockState) {
@@ -122,6 +116,10 @@ fun handleEditForBlock(state: CodeBlockState) {
 
 fun handleDeleteForBlock(state: CodeBlockState) {
     state.contextMenuState.forBlockId?.let { blockId ->
+        val forBlock = state.forBlocks.firstOrNull { it.id == blockId }
+        forBlock?.let { block ->
+            state.vars.removeAll { it.name == block.variable }
+        }
         state.forBlocks.removeAll { it.id == blockId }
     }
 }
