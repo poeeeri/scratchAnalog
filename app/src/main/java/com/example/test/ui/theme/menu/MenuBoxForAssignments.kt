@@ -32,16 +32,16 @@ fun MenuBoxForAssignments(
     selected: String,
     onSelected: (String) -> Unit,
 
-) {
+    ) {
     val textAreaColor = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = Color(ContextCompat.getColor(context, R.color.shadow)),
         unfocusedBorderColor = Color(ContextCompat.getColor(context, R.color.cycle_main_color)),
         errorBorderColor = Color(ContextCompat.getColor(context, R.color.error_color)),
         cursorColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
     )
-    var expanded by remember {mutableStateOf(false)}
+    var expanded by remember { mutableStateOf(false) }
 
-    Box (
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentSize(Alignment.TopStart)
@@ -62,22 +62,34 @@ fun MenuBoxForAssignments(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { expanded = true },
-            colors =  textAreaColor
+            colors = textAreaColor
         )
         DropdownMenu(
             expanded = expanded,
-            modifier = Modifier.background(Color(ContextCompat.getColor(context, R.color.dark_header))),
-            onDismissRequest = {expanded=false}) {
+            modifier = Modifier.background(
+                Color(
+                    ContextCompat.getColor(
+                        context,
+                        R.color.dark_header
+                    )
+                )
+            ),
+            onDismissRequest = { expanded = false }) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = {Text(option)},
-                    leadingIcon = {Icon(Icons.Outlined.Star, contentDescription = null)},
+                    text = { Text(option) },
+                    leadingIcon = { Icon(Icons.Outlined.Star, contentDescription = null) },
                     onClick = {
                         onSelected(option)
                         expanded = false
                     },
-                    colors =  MenuDefaults.itemColors(
-                        textColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
+                    colors = MenuDefaults.itemColors(
+                        textColor = Color(
+                            ContextCompat.getColor(
+                                context,
+                                R.color.light_green_for_text
+                            )
+                        )
                     ),
                 )
             }

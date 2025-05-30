@@ -53,12 +53,22 @@ fun VarCard(
                 )
             }
             .background(
-                color = if (hasError) Color(0xFFFFEBEE) else Color(ContextCompat.getColor(context, R.color.var_color)),
+                color = if (hasError) Color(0xFFFFEBEE) else Color(
+                    ContextCompat.getColor(
+                        context,
+                        R.color.var_color
+                    )
+                ),
                 shape = RoundedCornerShape(8.dp)
             )
             .border(
                 width = if (hasError) 2.dp else 0.2.dp,
-                color = if (hasError) Color.Red else Color(ContextCompat.getColor(context, R.color.light_green_for_text)),
+                color = if (hasError) Color.Red else Color(
+                    ContextCompat.getColor(
+                        context,
+                        R.color.light_green_for_text
+                    )
+                ),
                 shape = RoundedCornerShape(8.dp)
             )
             .padding(12.dp)
@@ -67,8 +77,8 @@ fun VarCard(
                 blockPosition = coords.localToWindow(Offset.Zero)
             }
 
-            .pointerInput(Unit){
-                detectTapGestures (
+            .pointerInput(Unit) {
+                detectTapGestures(
                     onDoubleTap = {
                         onInteraction(blockPosition, variable.name)
                     },
@@ -95,12 +105,22 @@ fun VarCard(
             Text(
                 text = "${variable.type.toString().capitalize()} ${variable.name} = $value",
                 fontWeight = FontWeight.Bold,
-                color = if (hasError) Color.Red else Color(ContextCompat.getColor(context, R.color.light_green_for_text))
+                color = if (hasError) Color.Red else Color(
+                    ContextCompat.getColor(
+                        context,
+                        R.color.light_green_for_text
+                    )
+                )
             )
             Text(
                 text = variable.type.toString(),
                 fontSize = 12.sp,
-                color = if (hasError) Color.Red else Color(ContextCompat.getColor(context, R.color.light_green_for_text))
+                color = if (hasError) Color.Red else Color(
+                    ContextCompat.getColor(
+                        context,
+                        R.color.light_green_for_text
+                    )
+                )
             )
         }
     }

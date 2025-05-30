@@ -100,11 +100,11 @@ fun WhileBlockCard(
                 )
                 .padding(12.dp)
         ) {
-            Row (
+            Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
-            ){
+            ) {
                 IconButton(
                     onClick = { expanded = !expanded }
                 ) {
@@ -114,10 +114,10 @@ fun WhileBlockCard(
                         tint = textColor
                     )
                 }
-                Text (
+                Text(
                     modifier = Modifier.fillMaxWidth(),
                     text = "while (${preprocessArrayExprForDisplay(whileBlock.leftExpression)}" +
-                            " ${whileBlock.comparisonOperator} "+
+                            " ${whileBlock.comparisonOperator} " +
                             "${preprocessArrayExprForDisplay(whileBlock.rightExpression)})",
                     fontWeight = FontWeight.Bold,
                     color = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
@@ -127,7 +127,7 @@ fun WhileBlockCard(
         }
 
         if (expanded) {
-            Box (
+            Box(
                 modifier = Modifier
                     .background(
                         color = Color(ContextCompat.getColor(context, R.color.cycle_body_color)),
@@ -135,26 +135,33 @@ fun WhileBlockCard(
                     )
                     .border(
                         width = 0.2.dp,
-                        color = Color(ContextCompat.getColor(context, R.color.light_green_for_text)),
+                        color = Color(
+                            ContextCompat.getColor(
+                                context,
+                                R.color.light_green_for_text
+                            )
+                        ),
                         shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
                     )
                     .padding(12.dp)
             ) {
 
-                Column (
+                Column(
                     modifier = Modifier.fillMaxWidth()
-                ){
+                ) {
                     Text(
                         text = "Do:",
                         fontWeight = FontWeight.Bold,
                         color = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
                     )
-                    IconButton( onClick = {
+                    IconButton(onClick = {
                         state.targetCommandsList = whileBlock.commands
                         state.showChooseWhileDialog = true
                     }) {
-                        Icon(Icons.Default.Add, contentDescription = "Add inner Block",
-                            tint = textColor)
+                        Icon(
+                            Icons.Default.Add, contentDescription = "Add inner Block",
+                            tint = textColor
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -162,14 +169,18 @@ fun WhileBlockCard(
                     if (whileBlock.commands.isEmpty()) {
                         Text(
                             text = stringResource(R.string.no_commands),
-                            color = Color(ContextCompat.getColor(context, R.color.light_green_for_text)),
+                            color = Color(
+                                ContextCompat.getColor(
+                                    context,
+                                    R.color.light_green_for_text
+                                )
+                            ),
                             fontSize = 12.sp
                         )
-                    }
-                    else {
+                    } else {
                         // для отрисовки карточек внутри блока
                         whileBlock.commands.forEach { cmd ->
-                            when(cmd) {
+                            when (cmd) {
                                 is WhileBlockCommand -> WhileBlockCard(
                                     state = state,
                                     whileBlock = cmd.whileBlock,
@@ -177,6 +188,7 @@ fun WhileBlockCard(
                                     vars = vars,
                                     context = context
                                 )
+
                                 is IfBlockCommand -> IfBlockCard(
                                     state = state,
                                     ifBlock = cmd.ifBlock,
@@ -184,18 +196,15 @@ fun WhileBlockCard(
                                     vars = vars,
                                     context = context
                                 )
+
                                 is VarBlockCommand -> VarCard(
                                     variable = cmd.variable,
                                     vars = vars,
                                     hasError = false,
-//<<<<<<< HEAD
-//                                    onInteraction = onInteraction
-//=======
                                     onInteraction = onInteraction,
                                     context = context
-
-//>>>>>>> origin/develop
                                 )
+
                                 is ForBlockCommand -> ForBlockCard(
                                     state = state,
                                     forBlock = cmd.forBlock,
@@ -203,6 +212,7 @@ fun WhileBlockCard(
                                     vars = vars,
                                     context = context
                                 )
+
                                 else -> Text(stringResource(R.string.unknown_block))
                             }
                         }
@@ -217,8 +227,10 @@ fun WhileBlockCard(
 }
 
 @Composable
-fun ChooseWhileBlockDialog(state: CodeBlockState,
-                           context: Context) {
+fun ChooseWhileBlockDialog(
+    state: CodeBlockState,
+    context: Context
+) {
     Dialog(
         onDismissRequest = {
             state.showNewIfDialog = false
@@ -259,39 +271,55 @@ fun ChooseWhileBlockDialog(state: CodeBlockState,
 
                     FloatingActionButton(
                         containerColor = Color(ContextCompat.getColor(context, R.color.header)),
-                        onClick = { state.showNewIfDialog = true
-                            state.showChooseWhileDialog = false}
+                        onClick = {
+                            state.showNewIfDialog = true
+                            state.showChooseWhileDialog = false
+                        }
                     ) {
-                        Icon(Icons.Default.Code, contentDescription = "Add If Block",
-                            tint = textColor)
+                        Icon(
+                            Icons.Default.Code, contentDescription = "Add If Block",
+                            tint = textColor
+                        )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     FloatingActionButton(
                         containerColor = Color(ContextCompat.getColor(context, R.color.header)),
-                        onClick = { state.showNewWhileDialog = true
-                            state.showChooseWhileDialog = false}
+                        onClick = {
+                            state.showNewWhileDialog = true
+                            state.showChooseWhileDialog = false
+                        }
                     ) {
-                        Icon(Icons.Default.Loop, contentDescription = "Add While Block",
-                            tint = textColor)
+                        Icon(
+                            Icons.Default.Loop, contentDescription = "Add While Block",
+                            tint = textColor
+                        )
                     }
 
                     Spacer(modifier = Modifier.width(12.dp))
                     FloatingActionButton(
                         containerColor = Color(ContextCompat.getColor(context, R.color.header)),
-                        onClick = { state.showNewVarDialog = true
-                            state.showChooseWhileDialog = false}
+                        onClick = {
+                            state.showNewVarDialog = true
+                            state.showChooseWhileDialog = false
+                        }
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Var Block",
-                            tint = textColor)
+                        Icon(
+                            Icons.Default.Add, contentDescription = "Add Var Block",
+                            tint = textColor
+                        )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     FloatingActionButton(
                         containerColor = Color(ContextCompat.getColor(context, R.color.header)),
-                        onClick = { state.showNewForDialog = true
-                            state.showChooseWhileDialog = false}
+                        onClick = {
+                            state.showNewForDialog = true
+                            state.showChooseWhileDialog = false
+                        }
                     ) {
-                        Icon(Icons.Default.Replay5, contentDescription = "Add For Block",
-                            tint = textColor)
+                        Icon(
+                            Icons.Default.Replay5, contentDescription = "Add For Block",
+                            tint = textColor
+                        )
                     }
                 }
             }

@@ -25,15 +25,12 @@ class CodeBlockState {
     var showDeleteAllDialog by mutableStateOf(false)
     var showNewWhileDialog by mutableStateOf(false)
     var showNewArrayDialog by mutableStateOf(false)
-    var showArrayAccessDialog by mutableStateOf(false)
-    var showArraySetDialog by mutableStateOf(false)
     var showEditArrayDialog by mutableStateOf(false)
     var showNewForDialog by mutableStateOf(false)
 
     // меню с кнопками на выбор при создании команды в ифе или вайле
     var showChooseWhileDialog by mutableStateOf(false)
     var showChooseIfDialog by mutableStateOf(false)
-    var showChooseArrayDialog by mutableStateOf(false)
     var showChooseForDialog by mutableStateOf(false)
 
     var selectedTargetVar by mutableStateOf("")
@@ -65,20 +62,22 @@ class CodeBlockState {
     var curBlockCommands: SnapshotStateList<CommandBlock> = mutableStateListOf()
     var newWhileCommand by mutableStateOf("")
     var selectedWhileTargetId by mutableStateOf("")
-    var targetVarName by mutableStateOf("")
-    var arrayAccessError by mutableStateOf("")
-    var arraySetError by mutableStateOf("")
 
     // все для фор
+    var originalForVar by mutableStateOf("")
     var newForVar by mutableStateOf("")
     var newForStartExpr by mutableStateOf("0")
     var newForEndExpr by mutableStateOf("10")
     var selectedForOperator by mutableStateOf("<")
     var forBlockError by mutableStateOf("")
     var newForStepIter by mutableStateOf("1")
-    var curForCommands:  SnapshotStateList<CommandBlock> = mutableStateListOf()
-    var selectedForTargetId by mutableStateOf("")
     var newForCommand by mutableStateOf("")
+    var curForCommands = mutableStateListOf<CommandBlock>()
+    var selectedForTargetId by mutableStateOf("")
+    var isEditingForBlock by mutableStateOf(false)
+
+    var newForCommand by mutableStateOf("")
+
 
     var contextMenuState by mutableStateOf(ContextMenuState())
     var targetCommandsList by mutableStateOf<SnapshotStateList<CommandBlock>?>(null)
@@ -100,7 +99,7 @@ data class Variable(
 
 data class PrintBlock(
     val id: String = UUID.randomUUID().toString(),
-    val pos: IntOffset = IntOffset(0,0)
+    val pos: IntOffset = IntOffset(0, 0)
 )
 
 data class VarBlockCommand(
@@ -110,7 +109,9 @@ data class VarBlockCommand(
         get() = variable.id
     override var pos: IntOffset
         get() = variable.pos
-        set(value) { variable.pos = value }
+        set(value) {
+            variable.pos = value
+        }
 }
 
 data class VarError(
@@ -135,10 +136,12 @@ data class WhileBlockCommand(
         get() = whileBlock.id
     override var pos: IntOffset
         get() = whileBlock.pos
-        set(value) { whileBlock.pos = value }
+        set(value) {
+            whileBlock.pos = value
+        }
 }
 
-data class ForBlock (
+data class ForBlock(
     val id: String = UUID.randomUUID().toString(),
     val variable: String,
     val startExpression: String,
@@ -146,7 +149,7 @@ data class ForBlock (
     val comparisonOperator: String,
     val stepIter: Int,
     val commands: SnapshotStateList<CommandBlock> = mutableStateListOf(),
-    var pos : IntOffset = IntOffset(0,0),
+    var pos: IntOffset = IntOffset(0, 0),
     val doCommands: SnapshotStateList<CommandBlock> = mutableStateListOf()
 )
 
@@ -157,9 +160,10 @@ data class ForBlockCommand(
         get() = forBlock.id
     override var pos: IntOffset
         get() = forBlock.pos
-        set(value) { forBlock.pos = value }
+        set(value) {
+            forBlock.pos = value
+        }
 }
-
 
 
 data class IfBlock(
@@ -184,7 +188,9 @@ data class IfBlockCommand(
         get() = ifBlock.id
     override var pos: IntOffset
         get() = ifBlock.pos
-        set(value) { ifBlock.pos = value }
+        set(value) {
+            ifBlock.pos = value
+        }
 }
 
 data class ArrayBlock(
@@ -202,7 +208,9 @@ data class ArrayBlockCommand(
         get() = arrayBlock.id
     override var pos: IntOffset
         get() = arrayBlock.pos
-        set(value) { arrayBlock.pos = value }
+        set(value) {
+            arrayBlock.pos = value
+        }
 }
 
 sealed class CommandBlock {
@@ -222,12 +230,12 @@ data class ContextMenuState(
 )
 
 sealed class BlockItem {
-    data class VarBlock(val variable: Variable): BlockItem()
-    data class IfBlockItem(val block: IfBlock): BlockItem()
-    data class WhileBlockItem(val block: WhileBlock): BlockItem()
-    data class ForBlockItem(val block: ForBlock): BlockItem()
-    data class ArrayBlockItem(val block: ArrayBlock): BlockItem()
-    data class PrintBlockItem(val block: PrintBlock): BlockItem()
+    data class VarBlock(val variable: Variable) : BlockItem()
+    data class IfBlockItem(val block: IfBlock) : BlockItem()
+    data class WhileBlockItem(val block: WhileBlock) : BlockItem()
+    data class ForBlockItem(val block: ForBlock) : BlockItem()
+    data class ArrayBlockItem(val block: ArrayBlock) : BlockItem()
+    data class PrintBlockItem(val block: PrintBlock) : BlockItem()
 
     val id: String
         get() = when (this) {

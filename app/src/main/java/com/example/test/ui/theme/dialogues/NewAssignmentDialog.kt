@@ -59,8 +59,10 @@ fun NewAssignmentDialog(state: CodeBlockState, ctx: Context) {
             color = Color(ContextCompat.getColor(ctx, R.color.dialog)),
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier
-                .shadow(10.dp, shape = RoundedCornerShape(8.dp),
-                    spotColor = Color(ContextCompat.getColor(ctx, R.color.shadow)))
+                .shadow(
+                    10.dp, shape = RoundedCornerShape(8.dp),
+                    spotColor = Color(ContextCompat.getColor(ctx, R.color.shadow))
+                )
         ) {
             Column(
                 modifier = Modifier
@@ -95,7 +97,7 @@ fun NewAssignmentDialog(state: CodeBlockState, ctx: Context) {
                     label = { Text("Expression 7(2x + 5)") },
                     isError = state.assignmentError != "",
                     modifier = Modifier.fillMaxWidth(),
-                    colors =  textAreaColor
+                    colors = textAreaColor
                 )
                 if (state.assignmentError.isNotBlank()) {
                     Text(
@@ -116,14 +118,14 @@ fun NewAssignmentDialog(state: CodeBlockState, ctx: Context) {
                             if (state.selectedTargetVar.isBlank()) {
                                 state.assignmentError = R.string.please_select_var.toString()
                                 return@Button
-                            }
-                            else if (state.assignmentArithmExpr.isBlank()) {
+                            } else if (state.assignmentArithmExpr.isBlank()) {
                                 state.assignmentError = R.string.exp_cannot_be_empty.toString()
                                 return@Button
-                            }
-                            else {
-                                val arrayAssignPattern = Regex("([a-zA-Z_]\\w*)\\s*\\[(.*?)\\]\\s*=\\s*(.*)")
-                                val arrMatch = arrayAssignPattern.matchEntire(state.assignmentArithmExpr)
+                            } else {
+                                val arrayAssignPattern =
+                                    Regex("([a-zA-Z_]\\w*)\\s*\\[(.*?)\\]\\s*=\\s*(.*)")
+                                val arrMatch =
+                                    arrayAssignPattern.matchEntire(state.assignmentArithmExpr)
 
                                 if (arrMatch != null) {
                                     val arrName = arrMatch.groupValues[1]
@@ -134,7 +136,7 @@ fun NewAssignmentDialog(state: CodeBlockState, ctx: Context) {
                                         arrName,
                                         idExpr,
                                         valueExpr,
-                                        state.arrays.toMutableList(),
+                                        state.arrays,
                                         state,
                                         ctx
                                     )
@@ -147,29 +149,36 @@ fun NewAssignmentDialog(state: CodeBlockState, ctx: Context) {
                                     return@Button
                                 }
                                 // здесь чекаем есть ли переменная вообще такая
-                                val declaredVarsName = state.vars.map {it.name}.toSet() + state.arrays.map {it.name}.toSet()
+                                val declaredVarsName = state.vars.map { it.name }
+                                    .toSet() + state.arrays.map { it.name }.toSet()
                                 val regex = Regex("([a-zA-Z_]\\w*)(?:\\s*\\[.*?\\])?")
                                 val findVars = regex.findAll(state.assignmentArithmExpr).map {
-                                    if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
+                                    if (it.value.contains("[")) it.value.substring(
+                                        0,
+                                        it.value.indexOf("[")
+                                    ).trim()
                                     else it.value
                                 }.toSet()
                                 var notDeclared = findVars - declaredVarsName
 
                                 if (notDeclared.isNotEmpty()) {
-                                    state.assignmentError = "Undeclared variable|variables: ${notDeclared.joinToString(", ")}"
+                                    state.assignmentError =
+                                        "Undeclared variable|variables: ${notDeclared.joinToString(", ")}"
                                     return@Button
-                                }
-                                else {
+                                } else {
                                     // здесь происходит проверка валидности арифметического выражения
-                                    if (!isValidArithmExpression(state)){
+                                    if (!isValidArithmExpression(state)) {
                                         state.assignmentError = "Invalid expression"
                                         return@Button
-                                    }
-                                    else {
-                                        val targetVar = state.vars.find { it.name == state.selectedTargetVar }
+                                    } else {
+                                        val targetVar =
+                                            state.vars.find { it.name == state.selectedTargetVar }
                                         if (targetVar != null) {
                                             try {
-                                                val rpn = convertToReversePolishNotation(state.assignmentArithmExpr, ctx)
+                                                val rpn = convertToReversePolishNotation(
+                                                    state.assignmentArithmExpr,
+                                                    ctx
+                                                )
                                                 val calculatedValue = calculateArithmeticExpression(
                                                     rpn,
                                                     state,
@@ -177,8 +186,11 @@ fun NewAssignmentDialog(state: CodeBlockState, ctx: Context) {
                                                     arrays = state.arrays
                                                 )
                                                 if (targetVar.type == VariableType.INT &&
-                                                    calculatedValue != calculatedValue.toInt().toDouble()) {
-                                                    state.assignmentError = "Cannot convert float to int"
+                                                    calculatedValue != calculatedValue.toInt()
+                                                        .toDouble()
+                                                ) {
+                                                    state.assignmentError =
+                                                        "Cannot convert float to int"
                                                     return@Button
                                                 }
 
@@ -193,9 +205,9 @@ fun NewAssignmentDialog(state: CodeBlockState, ctx: Context) {
                                                 state.selectedTargetVar = ""
                                                 state.assignmentError = ""
                                                 state.assignmentArithmExpr = ""
-                                            }
-                                            catch (e: Exception) {
-                                                state.assignmentError = "Error evaluating expression: ${e.message}"
+                                            } catch (e: Exception) {
+                                                state.assignmentError =
+                                                    "Error evaluating expression: ${e.message}"
                                                 return@Button
                                             }
                                         }
@@ -204,28 +216,42 @@ fun NewAssignmentDialog(state: CodeBlockState, ctx: Context) {
                             }
                         },
                         colors = ButtonDefaults.buttonColors(
-                            contentColor = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text)),
+                            contentColor = Color(
+                                ContextCompat.getColor(
+                                    ctx,
+                                    R.color.light_green_for_text
+                                )
+                            ),
                             containerColor = Color(ContextCompat.getColor(ctx, R.color.header))
                         )
                     ) {
-                        Text(stringResource(R.string.create),
-                            color = textColor,)
+                        Text(
+                            stringResource(R.string.create),
+                            color = textColor,
+                        )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(
                         onClick = {
                             state.showNewAssignmentDialog = false
                             state.selectedTargetVar = ""
-                            state.assignmentError= ""
+                            state.assignmentError = ""
                             state.assignmentArithmExpr = ""
                         },
                         colors = ButtonDefaults.buttonColors(
-                            contentColor = Color(ContextCompat.getColor(ctx, R.color.light_green_for_text)),
+                            contentColor = Color(
+                                ContextCompat.getColor(
+                                    ctx,
+                                    R.color.light_green_for_text
+                                )
+                            ),
                             containerColor = Color(ContextCompat.getColor(ctx, R.color.dark_header))
                         )
                     ) {
-                        Text(stringResource(R.string.cancel),
-                            color = textColor)
+                        Text(
+                            stringResource(R.string.cancel),
+                            color = textColor
+                        )
                     }
                 }
             }

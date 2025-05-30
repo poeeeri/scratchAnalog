@@ -29,8 +29,10 @@ import com.example.test.utils.handleWhileDelete
 import com.example.test.utils.handleWhileEdit
 
 @Composable
-fun Menu(state: CodeBlockState,
-         context: Context) {
+fun Menu(
+    state: CodeBlockState,
+    context: Context
+) {
     val edit = stringResource(R.string.edit_button_menu)
     val delete = stringResource(R.string.delete_button_menu)
 
@@ -121,9 +123,7 @@ fun Menu(state: CodeBlockState,
                     },
                     colors = textColor
                 )
-            }
-
-            else if (state.contextMenuState.forBlockId != null) {
+            } else if (state.contextMenuState.forBlockId != null) {
                 DropdownMenuItem(
                     text = { Text(edit) },
                     onClick = {

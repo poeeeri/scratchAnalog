@@ -29,8 +29,10 @@ fun FloatingActivationButtons(state: CodeBlockState, context: Context) {
                 recCalAll(state, context)
             }
         ) {
-            Icon(Icons.Default.PlayArrow, contentDescription = "Recalculate All",
-                tint = Color(ContextCompat.getColor(context, R.color.light_green_for_text)))
+            Icon(
+                Icons.Default.PlayArrow, contentDescription = "Recalculate All",
+                tint = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
+            )
         }
         Spacer(modifier = Modifier.width(4.dp))
 
@@ -38,8 +40,10 @@ fun FloatingActivationButtons(state: CodeBlockState, context: Context) {
             containerColor = Color(ContextCompat.getColor(context, R.color.header)),
             onClick = { state.showDeleteAllDialog = true }
         ) {
-            Icon(Icons.Default.Delete, contentDescription = "Delete All",
-                tint = Color(ContextCompat.getColor(context, R.color.light_green_for_text)))
+            Icon(
+                Icons.Default.Delete, contentDescription = "Delete All",
+                tint = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
+            )
         }
     }
 }
