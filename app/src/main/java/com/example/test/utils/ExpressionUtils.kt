@@ -1,9 +1,6 @@
 package com.example.test.utils
 
-//<<<<<<< HEAD
-//=======
 import android.annotation.SuppressLint
-//>>>>>>> origin/develop
 import com.example.test.R
 import android.content.Context
 import android.util.Log
@@ -21,8 +18,6 @@ import com.example.test.Variable
 import com.example.test.VariableType
 import com.example.test.WhileBlockCommand
 import java.util.Stack
-//<<<<<<< HEAD
-//=======
 
 @SuppressLint("DefaultLocale")
 fun formatNumber(value: Double) : String {
@@ -42,7 +37,6 @@ fun checkTypeCompatibility(variable: Variable, value: Double, context: Context) 
     }
     return true
 }
-//>>>>>>> origin/develop
 
 fun evaluateIfCondition(
     leftExpression: String,
@@ -56,7 +50,6 @@ fun evaluateIfCondition(
         val leftRpn = convertToReversePolishNotation(leftExpression, context)
         val rightRpn = convertToReversePolishNotation(rightExpression, context)
 
-//<<<<<<< HEAD
         Log.d("EXEC", "Left RPN: $leftRpn")
         Log.d("EXEC", "Right RPN: $rightRpn")
 
@@ -67,10 +60,6 @@ fun evaluateIfCondition(
 
         Log.d("EXEC", "Left value: $leftValue, Right value: $rightValue")
 
-//=======
-//        val leftValue: Double = calculateArithmeticExpression(leftRpn, vars, context = context, arrays = arrays)
-//        val rightValue: Double = calculateArithmeticExpression(rightRpn, vars, context = context, arrays = arrays)
-//>>>>>>> origin/develop
         return when (comparisonOperator) {
             "==" -> leftValue == rightValue
             "!=" -> leftValue != rightValue
@@ -139,7 +128,7 @@ fun executeCommands(
                         arrName,
                         idExpr,
                         valueExpr,
-                        arrays.toMutableList(),
+                        state.arrays.toMutableList(),
                         state,
                         context
                     )
@@ -147,47 +136,17 @@ fun executeCommands(
                 else {
                     val index = state.vars.indexOfFirst { it.name == command.variable.name }
                     if (index >= 0) {
-//<<<<<<< HEAD
-                        val result = calculateArithmeticExpression(command.variable.expression, state, context = context,  arrays = arrays)
-                        state.vars[index] = state.vars[index].copy(expression = command.variable.expression, value = result)
-                        Log.d("EXEC", "After update: a = ${state.vars.find { it.name == "a" }?.value}, b = ${state.vars.find { it.name == "b" }?.value}")
+                        val index = state.vars.indexOfFirst { it.name == variable.name }
+                        if (index >= 0) {
+                            val res = calculateArithmeticExpression(expr, state, context, arrays)
+                            val formatted = if (state.vars[index].type == VariableType.INT)
+                                res.toInt().toString()
+                            else formatNumber(res)
+                            state.vars[index] = state.vars[index].copy(expression = formatted, value = res)
+                        }
                     }
                 }
             }
-//=======
-//                        val rpn = convertToReversePolishNotation(
-//                            command.variable.expression,
-//                            context
-//                        )
-//                        val calculatedValue = calculateArithmeticExpression(
-//                            rpn,
-//                            vars,
-//                            context = context,
-//                            arrays = arrays
-//                        )
-//                        if (checkTypeCompatibility(vars[index], calculatedValue, context)) {
-//                            val formatted = if (vars[index].type == VariableType.INT)
-//                                calculatedValue.toInt().toString()
-//                            else formatNumber(calculatedValue)
-//                            vars[index] = vars[index].copy(expression = formatted)
-//                        }
-//                    }
-//                }
-//            }
-//            is IfBlockCommand -> {
-//                val cond = evaluateIfCondition(
-//                    command.ifBlock.leftExpression,
-//                    command.ifBlock.rightExpression,
-//                    command.ifBlock.comparisonOperator,
-//                    vars,
-//                    context,
-//                    arrays
-//                )
-//                if (cond) {
-//                    executeCommands(command.ifBlock.commands, vars, context, arrays)
-//                }
-//            }
-//>>>>>>> origin/develop
 
             is WhileBlockCommand -> {
                 while (evaluateIfCondition(
@@ -198,20 +157,7 @@ fun executeCommands(
                         context,
                         arrays
                     )) {
-//<<<<<<< HEAD
                     executeCommands(command.whileBlock.commands, state, context, arrays)
-
-                    val recalcResult = recalculateAllVariables(state, context, arrays)
-                    recalcResult.onSuccess { updated ->
-                        state.vars.clear()
-                        state.vars.addAll(updated)
-                    }.onFailure { e ->
-                        Toast.makeText(context, e.message ?: "Error", Toast.LENGTH_LONG).show()
-                        return
-                    }
-//=======
-//                    executeCommands(command.whileBlock.commands, vars, context, arrays)
-//>>>>>>> origin/develop
                 }
             }
 
@@ -223,7 +169,7 @@ fun executeCommands(
 
             is ForBlockCommand -> {
                 val block = command.forBlock
-                val initStr = block.startExpression
+                val initStr = block.startExpression.toString()
                 val index = state.vars.indexOfFirst { it.name == block.variable }
                 val rpnEndExpression = convertToReversePolishNotation(block.endExpression, context)
                 val calculEndExpr = calculateArithmeticExpression(
@@ -231,14 +177,6 @@ fun executeCommands(
                 )
 
                 executeCommands(block.doCommands.toList(), state, context, arrays)
-//                val recalcResult = recalculateAllVariables(state, context, arrays)
-//                recalcResult.onSuccess { updated ->
-//                    state.vars.clear()
-//                    state.vars.addAll(updated)
-//                }.onFailure { e ->
-//                    Toast.makeText(context, e.message ?: "Error", Toast.LENGTH_LONG).show()
-//                    return
-//                }
 
 
                 if (index < 0) {
@@ -250,7 +188,7 @@ fun executeCommands(
                     )
                 }
                 else {
-                    state.vars[index] = state.vars[index].copy(expression = initStr)
+                    state.vars[index] = state.vars[index].copy(expression = initStr, value = initStr.toDouble())
                 }
 
                 while (when(block.comparisonOperator) {
@@ -288,7 +226,7 @@ fun currentValue(vars: SnapshotStateList<Variable>,
 fun writeCurrValue(v: Double,
           vars: SnapshotStateList<Variable>,
           index: Int) {
-    val s = if (vars[index].type == VariableType.INT) v.toInt().toString() else v.toString()
+    val s = if (vars[index].type == VariableType.INT) v.toInt().toString() else formatNumber(v)
     vars[index] = vars[index].copy(expression = s)
 }
 
@@ -475,9 +413,6 @@ fun getArrayElementValue(
         }
 
         val idRpn = convertToReversePolishNotation(indexExpression, context)
-//<<<<<<< HEAD
-//        val i = calculateArithmeticExpression(idRpn, state, context = context, arrays = arrays)
-//=======
         val iVal = calculateArithmeticExpression(idRpn, state, context = context, arrays = arrays)
         if (iVal != iVal.toInt().toDouble()) {
             Toast.makeText(
@@ -488,7 +423,6 @@ fun getArrayElementValue(
             return 0.0
         }
         val i = iVal.toInt()
-//>>>>>>> origin/develop
         if (i < 0 || i >= mas.size) {
             Toast.makeText(
                 context,
@@ -528,9 +462,6 @@ fun setArrayElement(
             return false
         }
         val idRpn = convertToReversePolishNotation(indexExpression, context)
-//<<<<<<< HEAD
-//        val i = calculateArithmeticExpression(idRpn, state, context = context, arrays = arrays)
-//=======
         val iVal = calculateArithmeticExpression(idRpn, state, context = context, arrays = arrays)
         if (iVal != iVal.toInt().toDouble()) {
             Toast.makeText(
@@ -542,7 +473,6 @@ fun setArrayElement(
         }
 
         val i = iVal.toInt()
-//>>>>>>> origin/develop
         if (i < 0 || i >= mas.size) {
             Toast.makeText(
                 context,
@@ -574,21 +504,11 @@ fun setArrayElement(
 fun calculateArithmeticExpression(
     expression: String,
     state: CodeBlockState,
-//<<<<<<< HEAD
-//    state: CodeBlockState,
-//    context: Context,
-//    arrays: List<ArrayBlock> = emptyList()
-//): Int{
-//    Log.d("CalcExpr", "Evaluating expression: $expression")
-//
-//    if (state.vars.any {it.name.isEmpty()}){
-//=======
     context: Context,
     arrays: List<ArrayBlock> = emptyList()
 ): Double {
     Log.d("CalcExpr", "Evaluating expression: $expression")
     if (state.vars.any {it.name.isEmpty()}){
-//>>>>>>> origin/develop
         Toast.makeText(context, R.string.err_var_with_enpty_name_found, Toast.LENGTH_LONG).show()
     }
 
@@ -597,8 +517,6 @@ fun calculateArithmeticExpression(
 
     val arrayAccessPattern = Regex("([a-zA-Z_]\\w*)\\[(.*)\\]")
 
-//<<<<<<< HEAD
-//    val stack = mutableListOf<Int>()
     val isAlreadyRpn = processedExpr.trim().split(" ").all {
         it.toIntOrNull() != null || it in listOf("+", "-", "*", "/", "%") || state.vars.any { v -> v.name == it } || Regex("[a-zA-Z_]\\w*\\[.*\\]").matches(it)
     }
@@ -610,10 +528,8 @@ fun calculateArithmeticExpression(
     }
 
     val tokens = rpnExpr.split(" ").filter { it.isNotBlank() }
-//=======
     val stack = mutableListOf<Double>()
-//    val tokens = processedExpr.split(" ").filter { it.isNotBlank() }
-//>>>>>>> origin/develop
+
     Log.d("CalcExpr", "Tokens: $tokens")
 
     if (tokens.isEmpty()){
@@ -633,9 +549,6 @@ fun calculateArithmeticExpression(
                     val mas = arrays.firstOrNull { it.name == arrName }
                     if (mas != null) {
                         val idRpn = convertToReversePolishNotation(idExpr, context)
-//<<<<<<< HEAD
-//
-//=======
                         val iVal = calculateArithmeticExpression(
                             idRpn,
                             state,
@@ -652,7 +565,6 @@ fun calculateArithmeticExpression(
                             stack.add(0.0)
                             continue
                         }
-//>>>>>>> origin/develop
                         var i = calculateArithmeticExpression(idRpn, state, context = context, arrays = arrays).toInt()
                         if (i >= 0 && i < mas.size) {
                             val value = mas.elems.getOrNull(i)?.toDoubleOrNull() ?: 0
@@ -686,7 +598,6 @@ fun calculateArithmeticExpression(
                 state.vars.any { it.name == token } -> {
                     val variable = state.vars.first {it.name == token}
                     Log.d("CalcExpr", "Variable token: ${variable.name} = ${variable.expression}")
-//<<<<<<< HEAD
 
                     if (variable.expression.contains(Regex("\\b${variable.name}\\b"))){
                         stack.add(variable.value.toString().toDouble())
@@ -702,14 +613,6 @@ fun calculateArithmeticExpression(
                         }
                         Log.d("CalcExpr", "Variable value: $value")
                         stack.add(value)
-//=======
-//                    val value = if (variable.expression.isBlank()){
-//                        0.0
-//                    } else{
-//                        val rpn = convertToReversePolishNotation(variable.expression, context)
-//                        Log.d("CalcExpr", "Variable expression RPN: $rpn")
-//                        calculateArithmeticExpression(rpn, vars, context=context, arrays=arrays)
-//>>>>>>> origin/develop
                     }
                 }
 
@@ -789,6 +692,7 @@ fun calculateArithmeticExpression(
     return result
 }
 
+
 //находим зависимость переменной от других переменных
 fun extractDependencies(expression: String): Set<String>{
     val varPattern = Regex("[a-zA-Z_]\\w*")
@@ -851,14 +755,6 @@ fun recalculateAllVariables(
                         state,
                         context
                     )
-//<<<<<<< HEAD
-//                    computedValues[varName] = value
-//                    updatedVars.replaceAll {
-//                        if (it.name == varName)
-//                            it.copy(value = value)
-//                        else
-//                            it
-//=======
                     if (checkTypeCompatibility(variable, value, context)) {
                         computedValues[varName] = value
                         updatedVars.replaceAll {
@@ -869,7 +765,6 @@ fun recalculateAllVariables(
                                 it.copy(value = formatted)
                             } else it
                         }
-//>>>>>>> origin/develop
                     }
                 }
                 else {
@@ -888,12 +783,6 @@ fun recalculateAllVariables(
                     )
                     computedValues[varName] = value
                     updatedVars.replaceAll {
-//<<<<<<< HEAD
-//                        if (it.name == varName)
-//                            it.copy(value = value)
-//                        else
-//                            it
-//=======
                         if (it.name == varName) {
                             val formatted = if (it.type == VariableType.INT)
                                 value.toInt().toString()
@@ -901,7 +790,6 @@ fun recalculateAllVariables(
                             it.copy(value = formatted)
                         }
                         else it
-//>>>>>>> origin/develop
                     }
                 }
             } catch (e: Exception) {
@@ -971,16 +859,11 @@ fun recCalAll(state: CodeBlockState, context: Context) {
                 context,
                 state.arrays
             )
-//<<<<<<< HEAD
             if (conditionRes) {
                 executeCommands(block.commands, state, context, state.arrays)
             } else {
                 executeCommands(block.elseCommands, state, context, state.arrays)
             }
-//=======
-//            if (conditionRes)
-//                executeCommands(block.commands, state.vars, context, state.arrays)
-//>>>>>>> origin/develop
         }
         // и с циклом while
         state.whileBlocks.forEach {

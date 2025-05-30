@@ -10,86 +10,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-//class CodeBlockState {
-//    val vars: SnapshotStateList<Variable> = mutableStateListOf()
-//    val ifBlock: SnapshotStateList<IfBlock> = mutableStateListOf()
-//    val errors: SnapshotStateList<VarError> = mutableStateListOf()
-//    val arrays: SnapshotStateList<ArrayBlock> = mutableStateListOf()
-//    val whileBlocks: SnapshotStateList<WhileBlock> = mutableStateListOf()
-//    val printBlocks: SnapshotStateList<PrintBlock> = mutableStateListOf()
-//
-//
-//    var showNewAssignmentDialog by mutableStateOf(false)
-//    var showNewIfDialog by mutableStateOf(false)
-//    var showNewVarDialog by mutableStateOf(false)
-//    var showDeleteAllDialog by mutableStateOf(false)
-//    var showNewWhileDialog by mutableStateOf(false)
-//    var showNewArrayDialog by mutableStateOf(false)
-//    var showArrayAccessDialog by mutableStateOf(false)
-//    var showArraySetDialog by mutableStateOf(false)
-//    var showEditArrayDialog by mutableStateOf(false)
-//
-//    // меню с кнопками на выбор при создании команды в ифе или вайле
-//    var showChooseWhileDialog by mutableStateOf(false)
-//    var showChooseIfDialog by mutableStateOf(false)
-//    var showChooseArrayDialog by mutableStateOf(false)
-//
-//    var selectedTargetVar by mutableStateOf("")
-//    var assignmentArithmExpr by mutableStateOf("")
-//    var assignmentError by mutableStateOf("")
-//
-//    var leftIfExpression by mutableStateOf("")
-//    var rightIfExpression by mutableStateOf("")
-//    var ifBlockError by mutableStateOf("")
-//    var newIfCommand by mutableStateOf("")
-//    var newVarName by mutableStateOf("")
-//    var newVarError by mutableStateOf("")
-//    var newArrayName by mutableStateOf("")
-//    var arrayError by mutableStateOf("")
-//    var newArraySize by mutableStateOf("")
-//    var selectedIfBlock by mutableStateOf("")
-//    var selectedArrayId by mutableStateOf("")
-//    var selectedArrayName by mutableStateOf("")
-//    var selectedComparisonOperator by mutableStateOf("==")
-//
-//    var leftWhileExpression by mutableStateOf("")
-//    var rightWhileExpression by mutableStateOf("")
-//    var arrayIndexExpression by mutableStateOf("")
-//    var arrayValueExpression by mutableStateOf("")
-//    var selectedWhileOperator by mutableStateOf("==")
-//    var whileBlockError by mutableStateOf("")
-//    var curWhileCommands: SnapshotStateList<CommandBlock> = mutableStateListOf()
-//    var curBlockCommands: SnapshotStateList<CommandBlock> = mutableStateListOf()
-//    var newWhileCommand by mutableStateOf("")
-//    var selectedWhileTargetId by mutableStateOf("")
-//    var targetVarName by mutableStateOf("")
-//    var arrayAccessError by mutableStateOf("")
-//    var arraySetError by mutableStateOf("")
-//
-//    var contextMenuState by mutableStateOf(ContextMenuState())
-//    //var targetCommandsList: SnapshotStateList<CommandBlock>? = null
-//    var targetCommandsList by mutableStateOf<SnapshotStateList<CommandBlock>?>(null)
-//
-//    var curElseCommands = mutableStateListOf<CommandBlock>()
-//    var newElseCommand by mutableStateOf("")
-//    var selectedBlockId by mutableStateOf<String?>(null)
-//
-//    val blocks: SnapshotStateList<CommandBlock> = mutableStateListOf()
-//}
-
-
 class CodeBlockState {
     val vars: SnapshotStateList<Variable> = mutableStateListOf()
     val ifBlock: SnapshotStateList<IfBlock> = mutableStateListOf()
     val errors: SnapshotStateList<VarError> = mutableStateListOf()
     val arrays: SnapshotStateList<ArrayBlock> = mutableStateListOf()
     val whileBlocks: SnapshotStateList<WhileBlock> = mutableStateListOf()
-//<<<<<<< HEAD
     val printBlocks: SnapshotStateList<PrintBlock> = mutableStateListOf()
-
-//=======
     val forBlocks: SnapshotStateList<ForBlock> = mutableStateListOf()
-//>>>>>>> origin/develop
 
     var showNewAssignmentDialog by mutableStateOf(false)
     var showNewIfDialog by mutableStateOf(false)
@@ -150,6 +78,7 @@ class CodeBlockState {
     var newForStepIter by mutableStateOf("1")
     var curForCommands:  SnapshotStateList<CommandBlock> = mutableStateListOf()
     var selectedForTargetId by mutableStateOf("")
+    var newForCommand by mutableStateOf("")
 
     var contextMenuState by mutableStateOf(ContextMenuState())
     var targetCommandsList by mutableStateOf<SnapshotStateList<CommandBlock>?>(null)

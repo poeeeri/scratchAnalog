@@ -18,13 +18,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
@@ -55,11 +59,16 @@ import com.example.test.CommandBlock
 import com.example.test.ForBlock
 import com.example.test.ForBlockCommand
 import com.example.test.R
+import com.example.test.VarBlockCommand
 import com.example.test.Variable
 import com.example.test.utils.calculateArithmeticExpression
 import com.example.test.utils.convertToReversePolishNotation
+import com.example.test.utils.preprocessArrayExprForDisplay
 
-private fun String.filterDigits() = filter { it.isDigit() } // изменить на обработчик еше и массивов
+
+private fun String.filterExpr() = filter {
+    char -> char.isDigit() || char.isLetter() || char == '_' || char in listOf('+', '-', '*', '/', '(', ')', '[', ']', '%')
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,8 +98,11 @@ fun ForDialog(state: CodeBlockState,
             color = Color(ContextCompat.getColor(context, R.color.dialog)),
             shape = MaterialTheme.shapes.medium,
             modifier = Modifier
-                .shadow(10.dp, shape = RoundedCornerShape(8.dp),
+                .shadow(
+                    elevation = 10.dp,
+                    shape = RoundedCornerShape(8.dp),
                     spotColor = Color(ContextCompat.getColor(context, R.color.shadow)))
+                .fillMaxWidth(),
         ) {
             val start = stringResource(R.string.start_expression)
             val end = stringResource(R.string.end_expression)
@@ -125,18 +137,18 @@ fun ForDialog(state: CodeBlockState,
                 Row{
                     OutlinedTextField(
                         value = state.newForStartExpr,
-                        onValueChange = { state.newForStartExpr = it.filterDigits() },
+                        onValueChange = { state.newForStartExpr = it.filterExpr() },
                         label = { Text(start,
                             color = textColor) },
                         modifier = Modifier.weight(1f),
                         colors =  textAreaColor
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
 
                     OutlinedTextField(
                         value = state.newForEndExpr,
-                        onValueChange = { state.newForEndExpr = it },
+                        onValueChange = { state.newForEndExpr = it.filterExpr() },
                         label = { Text(end,
                             color = textColor) },
                         modifier = Modifier.weight(1f),
@@ -206,7 +218,7 @@ fun ForDialog(state: CodeBlockState,
                 val step = stringResource(R.string.step_iter)
                 OutlinedTextField(
                     value = state.newForStepIter,
-                    onValueChange = { state.newForStepIter = it.filterDigits() },
+                    onValueChange = { state.newForStepIter = it.filterExpr() },
                     label = { Text(step,
                         color = textColor) },
                     modifier = Modifier.fillMaxWidth(),
@@ -214,6 +226,113 @@ fun ForDialog(state: CodeBlockState,
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
+
+
+                state.curForCommands.forEachIndexed { i, com ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (com is VarBlockCommand) {
+                            var istr = i + 1
+                            var varName = com.variable.name
+                            var varExpr = preprocessArrayExprForDisplay(com.variable.expression)
+                            Text(
+                                text = context.getString(R.string.expression, istr.toString(), varName, varExpr),
+                                modifier = Modifier.weight(1f),
+                                color = textColor
+                            )
+                        } else {
+                            var istr = i + 1
+                            Text(
+                                text = context.getString(R.string.remove_command, istr.toString()),
+                                modifier = Modifier.weight(1f),
+                                color = textColor
+                            )
+                        }
+                        IconButton(
+                            onClick = { state.curForCommands.removeAt(i) }
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "Remove Command",
+                                tint = Color(ContextCompat.getColor(context, R.color.light_green_for_text)))
+                        }
+                    }
+                    HorizontalDivider()
+                }
+
+
+
+                Spacer(Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                )
+                {
+                    OutlinedTextField(
+                        value = state.newForCommand,
+                        onValueChange = {
+                            state.newForCommand = it
+                            state.forBlockError = ""
+                        },
+                        label = {
+                            Text(
+                                stringResource(R.string.new_var_expression),
+                                color = textColor
+                            )
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = textAreaColor
+                    )
+                    IconButton(
+                        onClick = {
+                            val newCommand = state.newForCommand.trim()
+                            if (newCommand.isNotBlank()) {
+                                val regex = Regex("(?!_|\\d+)([a-zA-Z_]\\w*)")
+                                val usedVars = regex.findAll(newCommand).map {it.value }.toSet()
+
+                                val declaredVars = state.vars.map{it.name}.toSet() + state.arrays.map{it.name}.toSet()
+                                val notDeclared = usedVars-declaredVars
+
+                                if (notDeclared.isNotEmpty()) {
+                                    state.forBlockError = context.getString(R.string.err_undeclared_var, notDeclared.joinToString(", "))
+                                    return@IconButton
+                                }
+                            }
+
+                            if (state.newForCommand.isNotBlank()) {
+                                val parts = state.newForCommand.split("=")
+                                val name = parts.getOrNull(0)?.trim() ?: "var"
+                                val expr = parts.getOrNull(1)?.trim() ?: "0.0"
+                                state.curForCommands.add(
+                                    VarBlockCommand(
+                                        Variable(
+                                            name = name,
+                                            expression = expr,
+                                            pos = IntOffset(0, state.curForCommands.size * 220)
+                                        )
+                                    )
+                                )
+                                state.newForCommand = ""
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Command",
+                            tint = Color(ContextCompat.getColor(context, R.color.light_green_for_text)))
+                    }
+
+                }
+
+                if (state.forBlockError.isNotBlank()) {
+                    Text (
+                        text = state.forBlockError,
+                        color = textColor,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Row (
                     modifier = Modifier.fillMaxWidth(),
@@ -236,11 +355,13 @@ fun ForDialog(state: CodeBlockState,
 
                     Button(
                         onClick = {
-                            if (state.newForVar.isNotBlank()) {
+                            if (state.newForVar.isBlank()) {
+                                state.forBlockError = errvar_not_be_empty
+                            }
+                            else {
                                 val varName = state.newForVar
                                 var containsError = false
                                 var isExist = false
-
 
                                 when {
                                     !varName[0].isLetter() && varName[0] != '_' -> {
@@ -281,40 +402,11 @@ fun ForDialog(state: CodeBlockState,
                                     state.vars.add(
                                         Variable(
                                             name = state.newForVar,
-                                            expression = "0",
+                                            expression = state.newForStartExpr,
                                             type = state.selectedVarType
                                         )
                                     )
                                 }
-                            }
-                            else {
-                                state.forBlockError = errvar_not_be_empty
-                                return@Button
-                            }
-
-                            val commandsCopy: SnapshotStateList<CommandBlock> = mutableStateListOf<CommandBlock>().apply {
-                                addAll(state.curForCommands)
-                            }
-
-                            val calculatedValueStart = calculatedValue(state.newForStartExpr)
-                            val calculatedValueEnd = calculatedValue(state.newForEndExpr)
-                            val calculatedValueStep = calculatedValue(state.newForStepIter)
-
-                            val newFor = ForBlock(
-                                variable = state.newForVar,
-                                startExpression = calculatedValueStart.toInt().toString(),
-                                endExpression = calculatedValueEnd.toInt().toString(),
-                                comparisonOperator = state.selectedForOperator,
-                                stepIter = calculatedValueStep.toInt(),
-                                commands = commandsCopy,
-                                pos = IntOffset(10, 10 + (state.forBlocks.size * 120))
-                            )
-
-                            if (state.targetCommandsList != null) {
-                                state.targetCommandsList?.add(ForBlockCommand(newFor))
-                            }
-                            else {
-                                state.forBlocks.add(newFor)
                             }
 
                             if (state.selectedForTargetId.isNotEmpty()) {
@@ -327,11 +419,89 @@ fun ForDialog(state: CodeBlockState,
                                         startExpression = state.newForStartExpr,
                                         endExpression = state.newForEndExpr,
                                         comparisonOperator = state.selectedForOperator,
+                                        stepIter = state.newForStepIter.toInt(),
                                         commands = newCommands,
                                         pos = state.forBlocks[i].pos
                                     )
                                 }
+                                if (state.newForCommand.isNotBlank()) {
+                                    val parts = state.newForCommand.split("=")
+                                    val name = parts.getOrNull(0)?.trim() ?: "var"
+
+                                    val expr = parts.getOrNull(1)?.trim() ?: "0.0"
+                                    state.curForCommands.add(
+                                        VarBlockCommand(
+                                            Variable(
+                                                name = name,
+                                                expression = expr,
+                                                pos = IntOffset(0, state.curForCommands.size * 60)
+                                            )
+                                        )
+                                    )
+                                    state.newForCommand = ""
+                                }
                             }
+                            else {
+                                if (state.newForCommand.isNotBlank()) {
+                                    val parts = state.newForCommand.split("=")
+                                    val name = parts.getOrNull(0)?.trim() ?: "var"
+
+                                    val expr = parts.getOrNull(1)?.trim() ?: "0.0"
+                                    state.curForCommands.add(
+                                        VarBlockCommand(
+                                            Variable(
+                                                name = name,
+                                                expression = expr,
+                                                pos = IntOffset(0, state.curForCommands.size * 60)
+                                            )
+                                        )
+                                    )
+                                    state.newForCommand = ""
+                                }
+                                val commandsCopy: SnapshotStateList<CommandBlock> = mutableStateListOf<CommandBlock>().apply {
+                                    addAll(state.curForCommands)
+                                }
+
+                                val calculatedValueStart = calculatedValue(state.newForStartExpr)
+                                val calculatedValueEnd = calculatedValue(state.newForEndExpr)
+                                val calculatedValueStep = calculatedValue(state.newForStepIter)
+                                // тут уже создаю саму карту
+                                val newFor = ForBlock(
+                                    variable = state.newForVar,
+                                    startExpression = calculatedValueStart.toInt().toString(),
+                                    endExpression = calculatedValueEnd.toInt().toString(),
+                                    comparisonOperator = state.selectedForOperator,
+                                    stepIter = calculatedValueStep.toInt(),
+                                    commands = commandsCopy,
+                                    pos = IntOffset(10, 10 + (state.forBlocks.size * 120))
+                                )
+
+                                // проерка куда вставлять блок, будет ли он являться независимым
+                                // илли вложенным
+                                if (state.targetCommandsList != null) {
+                                    state.targetCommandsList?.add(ForBlockCommand(newFor))
+                                }
+                                else {
+                                    state.forBlocks.add(newFor)
+                                }
+                            }
+                            if (state.selectedForTargetId.isNotEmpty()) {
+                                val i = state.forBlocks.indexOfFirst { it.id == state.selectedForTargetId }
+                                if (i >= 0) {
+                                    val newCommands = mutableStateListOf<CommandBlock>().apply {
+                                        addAll(state.curForCommands)
+                                    }
+                                    state.forBlocks[i] = state.forBlocks[i].copy(
+                                        startExpression = state.newForStartExpr,
+                                        endExpression = state.newForEndExpr,
+                                        comparisonOperator = state.selectedForOperator,
+                                        commands = newCommands,
+                                        stepIter = state.newForStepIter.toInt(),
+                                        pos = state.forBlocks[i].pos
+                                    )
+                                }
+                            }
+
                             state.showNewForDialog = false
                             state.newForStartExpr = "0"
                             state.newForEndExpr = "10"
@@ -339,6 +509,7 @@ fun ForDialog(state: CodeBlockState,
                             state.forBlockError = ""
                             state.curForCommands.clear()
                             state.newForVar = ""
+                            state.newForCommand = ""
                             state.newForStepIter = "1"
                             state.showChooseForDialog = false
                         },
@@ -365,6 +536,7 @@ fun ForDialog(state: CodeBlockState,
                                         startExpression = state.newForStartExpr,
                                         endExpression = state.newForEndExpr,
                                         comparisonOperator = state.selectedForOperator,
+                                        stepIter = state.newForStepIter.toInt(),
                                         commands = newCommands,
                                         pos = state.forBlocks[i].pos
                                     )
@@ -376,6 +548,7 @@ fun ForDialog(state: CodeBlockState,
                             state.selectedForOperator = "<"
                             state.forBlockError = ""
                             state.curForCommands.clear()
+                            state.newForCommand = ""
                             state.newForVar = ""
                             state.newForStepIter = "1"
                             state.showChooseForDialog = false },
@@ -387,15 +560,6 @@ fun ForDialog(state: CodeBlockState,
                         Text(stringResource(R.string.cancel),
                             color = textColor)
                     }
-                }
-
-                if (state.forBlockError.isNotBlank()) {
-                    Text (
-                        text = state.forBlockError,
-                        color = textColor,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
                 }
             }
         }
