@@ -1,5 +1,6 @@
 package com.example.test.ui.theme.blocks
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -19,9 +20,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.text.font.Font
+import com.example.test.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
+import androidx.core.content.ContextCompat
 import com.example.test.*
 import com.example.test.utils.preprocessArrayExprForDisplay
 import kotlin.math.roundToInt
@@ -32,12 +34,27 @@ fun ArrayCard(
     arrayBlock: ArrayBlock,
     vars: List<Variable>,
     onInteraction: (Offset, String) -> Unit,
-    hasError: Boolean = false
+    hasError: Boolean = false,
+    context: Context
 ) {
     var x by remember { mutableFloatStateOf(arrayBlock.pos.x.toFloat()) }
     var y by remember { mutableFloatStateOf(arrayBlock.pos.y.toFloat()) }
     var expanded by remember { mutableStateOf(true) }
     var blockPos by remember { mutableStateOf(Offset.Zero) }
+    val bodyTextColor = Color(ContextCompat.getColor(context, R.color.canvas))
+    val bodyColor = Color(ContextCompat.getColor(context, R.color.if_body_color))
+    val mainColor = Color(ContextCompat.getColor(context, R.color.if_main_color))
+    val mainTextColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
+    val textAreaColor = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = Color(ContextCompat.getColor(context, R.color.shadow)),
+        unfocusedBorderColor = Color(ContextCompat.getColor(context, R.color.cycle_main_color)),
+        errorBorderColor = Color(ContextCompat.getColor(context, R.color.error_color)),
+        cursorColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
+    )
+    val buttonColors = ButtonDefaults.buttonColors(
+        contentColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text)),
+        containerColor = Color(ContextCompat.getColor(context, R.color.if_main_color))
+    )
 
     Column(
         modifier = Modifier
@@ -72,12 +89,12 @@ fun ArrayCard(
         Box(
             modifier = Modifier
                 .background(
-                    color = if (hasError) Color.Red else MaterialTheme.colorScheme.primaryContainer,
+                    color = if (hasError) Color.Red else mainColor,
                     shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
                 )
                 .border(
                     width = 1.dp,
-                    color = if (hasError) Color.Red else MaterialTheme.colorScheme.outline,
+                    color = if (hasError) Color.Red else mainTextColor,
                     shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
                 )
                 .padding(12.dp)
@@ -90,7 +107,7 @@ fun ArrayCard(
                 Text(
                     text = "Array ${arrayBlock.name}[${arrayBlock.size}]",
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = mainTextColor
                 )
                 IconButton(
                     onClick = { expanded = !expanded }
@@ -108,12 +125,12 @@ fun ArrayCard(
             Box(
                 modifier = Modifier
                     .background(
-                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        color = bodyColor,
                         shape = RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
                     )
                     .border(
                         width = 1.dp,
-                        color = if (hasError) Color.Red else MaterialTheme.colorScheme.outline,
+                        color = if (hasError) Color.Red else mainTextColor,
                         shape = RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
                     )
                     .padding(12.dp)
@@ -124,7 +141,7 @@ fun ArrayCard(
                     Text(
                         text = "Elements:",
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = bodyTextColor
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     LazyColumn(
@@ -142,7 +159,8 @@ fun ArrayCard(
                                 Text(
                                     text = "$i:",
                                     fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.width(32.dp)
+                                    modifier = Modifier.width(32.dp),
+                                    color = bodyTextColor
                                 )
                                 var elemValue by remember { mutableStateOf(arrayBlock.elems[i]) }
                                 val displayValue = preprocessArrayExprForDisplay(elemValue)
@@ -153,7 +171,8 @@ fun ArrayCard(
                                         arrayBlock.elems[i] = it
                                     },
                                     modifier = Modifier.fillMaxWidth(),
-                                    singleLine = true
+                                    singleLine = true,
+                                    colors = textAreaColor
                                 )
                             }
                         }

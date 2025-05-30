@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.*
 import androidx.core.content.ContextCompat
 import com.example.test.*
 import com.example.test.R
+import com.example.test.utils.formatNumber
 import kotlin.math.roundToInt
 
 
@@ -43,8 +44,8 @@ fun PrintCard(
     context: Context
 ) {
     val block = state.printBlocks.firstOrNull { it.id == blockId } ?: return
-    val color = Color(ContextCompat.getColor(context, R.color.print_color))
-    val textColor = Color(ContextCompat.getColor(context, R.color.print_text_color))
+    val color = Color(ContextCompat.getColor(context, R.color.cycle_main_color))
+    val textColor = Color(ContextCompat.getColor(context, R.color.light_green_for_text))
 
     var x by remember { mutableFloatStateOf(block.pos.x.toFloat()) }
     var y by remember { mutableFloatStateOf(block.pos.y.toFloat()) }
@@ -150,7 +151,12 @@ fun PrintCard(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     vars.forEach { variable ->
-                        val displayValue = when (val value = variable.value) {
+                        val res = variable.value.toString().toDouble()
+                        val value1 = if (variable.type == VariableType.INT)
+                                res.toInt()
+                            else res
+
+                        val displayValue = when (val value = value1) {
                             is List<*> -> value.joinToString(prefix = "[", postfix = "]")
                             is String -> value
                             else -> value.toString()

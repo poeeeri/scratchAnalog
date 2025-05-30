@@ -166,6 +166,7 @@ fun executeCommands(
 
                     val index = state.vars.indexOfFirst { it.name == varName }
                     if (index >= 0) {
+
                         state.vars[index] = state.vars[index].copy(
                             expression = formatNumber(result),
                             value = result
@@ -180,6 +181,7 @@ fun executeCommands(
                         )
                         state.vars.add(newVar)
                         Log.d("EXEC", "Created new variable $varName = $result")
+
                     }
                 }
             }
@@ -208,6 +210,7 @@ fun executeCommands(
                         ).show()
                         return
                     }
+
                 }
             }
 
@@ -248,6 +251,7 @@ fun executeCommands(
                             arrays
                         ).toInt()
                     }
+
 
                     val startValue = calculateCurStart()
                     val endValue = calculateCurEnd()
@@ -535,6 +539,7 @@ fun getArrayElementValue(
             arrays = arrays,
             targetVarType = VariableType.INT
         )
+
         if (iVal != iVal.toInt().toDouble()) {
             Toast.makeText(
                 context,
@@ -584,6 +589,7 @@ fun setArrayElement(
             return false
         }
         val idRpn = convertToReversePolishNotation(indexExpression, context)
+
         val iVal = calculateArithmeticExpression(
             idRpn,
             state,
@@ -591,6 +597,7 @@ fun setArrayElement(
             arrays = arrays,
             targetVarType = VariableType.INT
         )
+
         if (iVal != iVal.toInt().toDouble()) {
             Log.e("SetArray", "Index $iVal is not integer")
             Toast.makeText(
@@ -664,6 +671,7 @@ fun calculateArithmeticExpression(
 ): Double {
     Log.d("CalcExpr", "Evaluating expression: $expression")
     if (state.vars.any { it.name.isEmpty() }) {
+
         Toast.makeText(context, R.string.err_var_with_enpty_name_found, Toast.LENGTH_LONG).show()
     }
 
@@ -767,6 +775,7 @@ fun calculateArithmeticExpression(
                 state.vars.any { it.name == token } -> {
                     val variable = state.vars.first { it.name == token }
                     Log.d("CalcExpr", "Variable token: ${variable.name} = ${variable.expression}")
+
                     if (variable.expression.contains(Regex("\\b${variable.name}\\b"))) {
                         stack.add(variable.value.toString().toDouble())
                     } else {
@@ -898,6 +907,7 @@ fun calculateArithmeticExpression(
     return result
 }
 
+
 //находим зависимость переменной от других переменных
 fun extractDependencies(expression: String): Set<String> {
     val varPattern = Regex("[a-zA-Z_]\\w*")
@@ -997,6 +1007,7 @@ fun recalculateAllVariables(
                             else formatNumber(value)
                             it.copy(value = formatted)
                         } else it
+
                     }
                 }
             } catch (e: Exception) {

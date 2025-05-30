@@ -125,3 +125,4 @@ fun handleDeleteForBlock(state: CodeBlockState) {
         state.forBlocks.removeAll { it.id == blockId }
     }
 }
+

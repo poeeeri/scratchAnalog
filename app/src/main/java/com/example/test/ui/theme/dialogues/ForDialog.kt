@@ -104,6 +104,7 @@ fun ForDialog(
         }
     ) {
         Surface(
+
             color = Color(ContextCompat.getColor(context, R.color.dialog)),
             shape = MaterialTheme.shapes.medium,
             modifier = Modifier
@@ -147,6 +148,7 @@ fun ForDialog(
                     colors = textAreaColor,
                 )
 
+
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row {
@@ -163,7 +165,7 @@ fun ForDialog(
                         colors = textAreaColor
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
 
                     OutlinedTextField(
                         value = state.newForEndExpr,
@@ -174,6 +176,7 @@ fun ForDialog(
                                 color = textColor
                             )
                         },
+
                         modifier = Modifier.weight(1f),
                         colors = textAreaColor
                     )
@@ -260,7 +263,7 @@ fun ForDialog(
 
                 val step = stringResource(R.string.step_iter)
                 OutlinedTextField(
-                    value = state.newForStepIter,
+                    value = state.newForStepIter
                     onValueChange = { state.newForStepIter = it },
                     label = {
                         Text(
@@ -419,6 +422,7 @@ fun ForDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
+
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
@@ -443,13 +447,6 @@ fun ForDialog(
                             if (state.newForVar.isNotBlank()) {
                                 val varName = state.newForVar
                                 var containsError = false
-
-                                when {
-                                    !varName[0].isLetter() && varName[0] != '_' -> {
-                                        state.forBlockError = var_must_start
-                                        containsError = true
-                                        return@Button
-                                    }
 
                                     varName.any { !it.isLetterOrDigit() && it != '_' } -> {
                                         state.forBlockError = var_must_start
@@ -574,6 +571,7 @@ fun ForDialog(
                                     val parts = newCommand.split("=")
                                     val name = parts.getOrNull(0)?.trim() ?: "var"
                                     val expr = parts.getOrNull(1)?.trim() ?: "0"
+
                                     state.curForCommands.add(
                                         VarBlockCommand(
                                             Variable(
@@ -606,6 +604,7 @@ fun ForDialog(
                                         endExpression = state.newForEndExpr,
                                         comparisonOperator = state.selectedForOperator,
                                         commands = newCommands,
+                                        stepIter = state.newForStepIter.toInt(),
                                         pos = state.forBlocks[i].pos
                                     )
                                 }
@@ -625,6 +624,7 @@ fun ForDialog(
                                     state.forBlocks.add(newFor)
                                 }
                             }
+
                             state.showNewForDialog = false
                             state.newForStartExpr = "0"
                             state.newForEndExpr = "10"
@@ -664,6 +664,7 @@ fun ForDialog(
                             state.selectedForOperator = "<"
                             state.forBlockError = ""
                             state.curForCommands.clear()
+                            state.newForCommand = ""
                             state.newForVar = ""
                             state.newForCommand = ""
                             state.newForStepIter = "1"

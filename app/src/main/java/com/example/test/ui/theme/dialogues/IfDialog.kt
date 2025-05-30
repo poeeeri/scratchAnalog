@@ -110,7 +110,6 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                     color = textColor
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                // Left part
                 OutlinedTextField(
                     value = state.leftIfExpression,
                     onValueChange = { state.leftIfExpression = it },
@@ -321,6 +320,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                     val parts = newCommand.split("=")
                                     val name = parts.getOrNull(0)?.trim() ?: "var"
 
+
                                     val expr = parts.getOrNull(1)?.trim() ?: "0"
                                     val existingVar = state.vars.find { it.name == name }
                                     if (existingVar != null) {
@@ -426,7 +426,8 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                     OutlinedTextField(
                         value = state.newElseCommand,
                         onValueChange = { state.newElseCommand = it },
-                        label = { Text("New Command (Else)") },
+                        label = { Text("New Command (Else)",
+                            color = textColor) },
                         modifier = Modifier.weight(1f),
                         colors = textAreaColor
                     )
@@ -445,6 +446,7 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                                             R.string.err_array_not_found,
                                             arrName
                                         )
+
                                         return@IconButton
                                     }
 
@@ -526,9 +528,6 @@ fun IfDialog(state: CodeBlockState, ctx: Context) {
                         )
                     }
                 }
-
-
-
 
                 if (state.ifBlockError.isNotBlank()) {
                     Text(
