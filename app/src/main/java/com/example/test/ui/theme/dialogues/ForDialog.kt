@@ -70,6 +70,8 @@ private fun String.filterExpr() = filter {
     char -> char.isDigit() || char.isLetter() || char == '_' || char in listOf('+', '-', '*', '/', '(', ')', '[', ']', '%')
 }
 
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForDialog(state: CodeBlockState,
@@ -94,6 +96,15 @@ fun ForDialog(state: CodeBlockState,
             state.showChooseForDialog = false
         }
     ) {
+        fun calculatedValue(v: String) : Double {
+            val rpn = convertToReversePolishNotation(v, context)
+            return calculateArithmeticExpression(
+                rpn,
+                state,
+                context = context,
+                arrays = state.arrays
+            )
+        }
         Surface (
             color = Color(ContextCompat.getColor(context, R.color.dialog)),
             shape = MaterialTheme.shapes.medium,
@@ -123,14 +134,75 @@ fun ForDialog(state: CodeBlockState,
                 Spacer(modifier = Modifier.height(16.dp))
 
                 val varName = stringResource(R.string.var_name)
-                OutlinedTextField(
-                    label = { Text(varName,
-                        color = textColor) },
-                    value = state.newForVar,
-                    onValueChange = {state.newForVar = it },
+                val errvar_not_be_empty = stringResource(R.string.errvar_not_be_empty)
+                val var_must_start = stringResource(R.string.var_must_start)
+                val var_must_only_digit = stringResource(R.string.var_must_only_digit)
+                val cannotConvert = stringResource(R.string.cannot_convert_float_to_int)
+
+                Row (
                     modifier = Modifier.fillMaxWidth(),
-                    colors =  textAreaColor
-                )
+                    verticalAlignment = Alignment.CenterVertically
+                ){
+                    OutlinedTextField(
+                        label = { Text(varName,
+                            color = textColor) },
+                        value = state.newForVar,
+                        onValueChange = {state.newForVar = it },
+                        modifier = Modifier.weight(1f),
+                        colors =  textAreaColor
+                    )
+                    IconButton(
+                        onClick = {
+
+                            if (state.newForVar.isBlank()) {
+                                state.forBlockError = errvar_not_be_empty
+                                return@IconButton
+                            }
+                            else {
+                                val varName = state.newForVar
+                                var containsError = false
+                                var isExist = false
+
+                                when {
+                                    !varName[0].isLetter() && varName[0] != '_' -> {
+                                        state.forBlockError = var_must_start
+                                        containsError = true
+                                        return@IconButton
+                                    }
+
+                                    varName.any{!it.isLetterOrDigit() && it != '_'} -> {
+                                        state.forBlockError = var_must_start
+                                        containsError = true
+                                        return@IconButton
+                                    }
+
+                                    varName.any { !it.isLetterOrDigit() && it != '_' } -> {
+                                        state.newVarError = var_must_only_digit
+                                        containsError = true
+                                        return@IconButton
+                                    }
+
+                                    state.vars.any { it.name == varName } -> {
+                                        isExist = true
+                                    }
+                                }
+                                if (!containsError && !isExist) {
+                                    state.vars.add(
+                                        Variable(
+                                            name = state.newForVar,
+                                            expression = state.newForStartExpr,
+                                            type = state.selectedVarType
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Command",
+                            tint = textColor)
+                    }
+
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -343,71 +415,56 @@ fun ForDialog(state: CodeBlockState,
                     val var_must_only_digit = stringResource(R.string.var_must_only_digit)
                     val cannotConvert = stringResource(R.string.cannot_convert_float_to_int)
 
-                    fun calculatedValue(v: String) : Double {
-                        val rpn = convertToReversePolishNotation(v, context)
-                        return calculateArithmeticExpression(
-                            rpn,
-                            state,
-                            context = context,
-                            arrays = state.arrays
-                        )
-                    }
+                    val start_value_must_not_be_empty = stringResource(R.string.start_value_must_not_be_empty)
+                    val end_value_must_not_be_empty = stringResource(R.string.end_value_must_not_be_empty)
+                    val step_value_must_not_be_empty = stringResource(R.string.step_value_must_not_be_empty)
+
+
+
+
 
                     Button(
                         onClick = {
-                            if (state.newForVar.isBlank()) {
-                                state.forBlockError = errvar_not_be_empty
+
+
+
+
+
+                            if (state.newForStartExpr.isBlank()) {
+                                state.forBlockError = start_value_must_not_be_empty
+                                return@Button
                             }
-                            else {
-                                val varName = state.newForVar
-                                var containsError = false
-                                var isExist = false
-
-                                when {
-                                    !varName[0].isLetter() && varName[0] != '_' -> {
-                                        state.forBlockError = var_must_start
-                                        containsError = true
-                                        return@Button
-                                    }
-
-                                    varName.any{!it.isLetterOrDigit() && it != '_'} -> {
-                                        state.forBlockError = var_must_start
-                                        containsError = true
-                                        return@Button
-                                    }
-
-                                    varName.any { !it.isLetterOrDigit() && it != '_' } -> {
-                                        state.newVarError = var_must_only_digit
-                                        containsError = true
-                                        return@Button
-                                    }
-
-                                    state.vars.any { it.name == varName } -> {
-                                        isExist = true
-                                    }
-                                }
-
-                                val calculatedValueStart = calculatedValue(state.newForStartExpr)
-                                val calculatedValueEnd = calculatedValue(state.newForEndExpr)
-                                val calculatedValueStep = calculatedValue(state.newForStepIter)
-
-                                if (calculatedValueStart != calculatedValueStart.toInt().toDouble() ||
-                                    calculatedValueEnd != calculatedValueEnd.toInt().toDouble() ||
-                                    calculatedValueStep != calculatedValueStep.toInt().toDouble()) {
-                                    state.forBlockError = cannotConvert
-                                    return@Button
-                                }
-
-                                if (!containsError && !isExist) {
-                                    state.vars.add(
-                                        Variable(
-                                            name = state.newForVar,
-                                            expression = state.newForStartExpr,
-                                            type = state.selectedVarType
-                                        )
-                                    )
-                                }
+                            if (state.newForEndExpr.isBlank()) {
+                                state.forBlockError = end_value_must_not_be_empty
+                                return@Button
                             }
+                            if (state.newForStepIter.isBlank()) {
+                                state.forBlockError = step_value_must_not_be_empty
+                                return@Button
+                            }
+
+                            val declaredVarsNames = state.vars.map { it.name }.toSet() + state.arrays.map{it.name}.toSet()
+                            val regex = Regex("([a-zA-Z_]\\w*)(?:\\s*\\[.*?\\])?")
+                            val startVars = regex.findAll(state.newForStartExpr).map {
+                                if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
+                                else it.value
+                            }.toSet()
+                            val endVars = regex.findAll(state.newForEndExpr).map {
+                                if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
+                                else it.value
+                            }.toSet()
+                            val varsName = regex.findAll(state.newVarName).map {
+                                if (it.value.contains("[")) it.value.substring(0, it.value.indexOf("[")).trim()
+                                else it.value
+                            }.toSet()
+
+                            val notDeclared = (startVars + endVars + varsName) - declaredVarsNames
+                            if (notDeclared.isNotEmpty()) {
+                                state.ifBlockError = "Undeclared variable(-s): ${notDeclared.joinToString(", ")}"
+                                return@Button
+                            }
+
+
 
                             if (state.selectedForTargetId.isNotEmpty()) {
                                 val i = state.forBlocks.indexOfFirst { it.id == state.selectedForTargetId }
