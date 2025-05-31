@@ -217,9 +217,6 @@ fun executeCommands(
 
             is ForBlockCommand -> {
                 val block = command.forBlock
-                Log.d("FOR_DEBUG", "Starting for loop: ${block.variable}")
-                Log.d("FOR_DEBUG", "Start expression: ${block.startExpression}")
-                Log.d("FOR_DEBUG", "End expression: ${block.endExpression}")
 
                 val originalVar = state.vars.find { it.name == block.variable }
                 val originalExpr = originalVar?.expression
@@ -306,10 +303,9 @@ fun executeCommands(
                                 )
                             )
                         }
-                        Log.d("EXEC", "For loop ${block.variable}: iteration $curValue")
+
                         executeCommands(block.commands.toList(), state, context, arrays)
                         curValue += block.stepIter
-                        Log.d("FOR_DEBUG", "Next value: $curValue")
                     }
                 } finally {
                     val i = state.vars.indexOfFirst { it.name == block.variable }
@@ -325,7 +321,6 @@ fun executeCommands(
                             state.vars.removeAt(i)
                     }
                 }
-                Log.d("EXEC", "For loop ${block.variable}: completed, variable restored")
             }
         }
     }
@@ -660,7 +655,6 @@ fun calculateArithmeticExpression(
     arrays: List<ArrayBlock> = emptyList(),
     targetVarType: VariableType? = null
 ): Double {
-    Log.d("CalcExpr", "Evaluating expression: $expression")
     if (state.vars.any { it.name.isEmpty() }) {
         Toast.makeText(context, R.string.err_var_with_enpty_name_found, Toast.LENGTH_LONG).show()
     }
@@ -688,10 +682,8 @@ fun calculateArithmeticExpression(
 
     val tokens = rpnExpr.split(" ").filter { it.isNotBlank() }
     val stack = mutableListOf<Double>()
-    Log.d("CalcExpr", "Tokens: $tokens")
 
     if (tokens.isEmpty()) {
-        Log.e("CalcExpr", "Empty expression")
         Toast.makeText(context, R.string.err_empty_exp, Toast.LENGTH_LONG).show()
         return 0.0
     }
@@ -758,13 +750,11 @@ fun calculateArithmeticExpression(
                 }
 
                 token.toDoubleOrNull() != null -> {
-                    Log.d("CalcExpr", "Numeric token: $token")
                     stack.add(token.toDouble())
                 }
 
                 state.vars.any { it.name == token } -> {
                     val variable = state.vars.first { it.name == token }
-                    Log.d("CalcExpr", "Variable token: ${variable.name} = ${variable.expression}")
                     if (variable.expression.contains(Regex("\\b${variable.name}\\b"))) {
                         stack.add(variable.value.toString().toDouble())
                     } else {
@@ -774,7 +764,6 @@ fun calculateArithmeticExpression(
                             variable.value.toString().toDouble()
                         else {
                             val rpn = convertToReversePolishNotation(variable.expression, context)
-                            Log.d("CalcExpr", "Variable expression RPN: $rpn")
                             calculateArithmeticExpression(
                                 rpn,
                                 state,
@@ -783,7 +772,6 @@ fun calculateArithmeticExpression(
                                 targetVarType = variable.type
                             )
                         }
-                        Log.d("CalcExpr", "Variable $token,  value: $value")
                         stack.add(value)
                     }
                 }
@@ -970,15 +958,10 @@ fun recalculateAllVariables(
                         }
                     }
                 } else {
-                    Log.d(
-                        "RecalculateVars",
-                        "Variable ${variable.name} original expr: ${variable.value}"
-                    )
                     var processed = variable.expression
                     computedValues.forEach { (name, oldValue) ->
                         processed = processed.replace(name, oldValue.toString())
                     }
-                    Log.d("RecalculateVars", "Variable ${variable.name} processed expr: $processed")
                     val rpn = convertToReversePolishNotation(processed, context)
                     val value = calculateArithmeticExpression(
                         rpn,

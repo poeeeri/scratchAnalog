@@ -227,6 +227,14 @@ fun IfBlockCard(
                                     context = context
                                 )
 
+                                is ForBlockCommand -> ForBlockCard(
+                                    state = state,
+                                    forBlock = cmd.forBlock,
+                                    onInteraction = onInteraction,
+                                    vars = thenVars,
+                                    context = context
+                                )
+
                                 else -> stringResource(R.string.unknown_block)
                             }
                         }
@@ -291,6 +299,14 @@ fun IfBlockCard(
                                 is WhileBlockCommand -> WhileBlockCard(
                                     state = state,
                                     whileBlock = cmd.whileBlock,
+                                    onInteraction = onInteraction,
+                                    vars = elseVars,
+                                    context = context
+                                )
+
+                                is ForBlockCommand -> ForBlockCard(
+                                    state = state,
+                                    forBlock = cmd.forBlock,
                                     onInteraction = onInteraction,
                                     vars = elseVars,
                                     context = context
